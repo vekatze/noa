@@ -1,0 +1,40 @@
+import {
+  core.int {abs-int},
+  core.list {for-each},
+  core.random {random-in-range},
+  this.gen {Gen, gen},
+}
+
+define _div-seq(k: int): list(int) {
+  if eq-int(k, 0) {
+    []
+  } else {
+    Cons(k, _div-seq(div-int(k, 2)))
+  }
+}
+
+constant ints: gen(int) {
+  Gen of {
+    generate = {
+      function (size) {
+        random-in-range(mul-int(-1, size), size)
+      }
+    },
+    shrink = {
+      function (x) {
+        let x = *x in
+        let tmp =
+          for-each(_div-seq(x), function (diff) {
+            sub-int(x, diff)
+          })
+        in
+        if lt-int(x, 0) {
+          Cons(abs-int(x), tmp)
+        } else {
+          tmp
+        }
+      }
+    },
+    viewer = core.int.show.as-show,
+  }
+}

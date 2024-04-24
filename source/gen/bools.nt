@@ -1,0 +1,29 @@
+import {
+  core.random {random},
+  this.gen {Gen, gen},
+}
+
+constant bools: gen(bool) {
+  Gen of {
+    generate = {
+      function (_) {
+        let i = random(2) in
+        if eq-int(i, 0) {
+          False
+        } else {
+          True
+        }
+      }
+    },
+    shrink = {
+      function (x) {
+        if *x {
+          [False]
+        } else {
+          []
+        }
+      }
+    },
+    viewer = core.bool.show.as-show,
+  }
+}

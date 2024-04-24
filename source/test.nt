@@ -1,0 +1,99 @@
+import {
+  core.int.entity,
+  core.list.entity,
+  core.text {pack, unpack},
+  core.text.entity {eq-text},
+  this.gen {one-of},
+  this.gen.ints {ints},
+  this.gen.lists {lists},
+  this.gen.pairs {pairs},
+  this.gen.texts {texts},
+  this.suite {noa},
+}
+
+define _find-int(i: int, xs: list(int)): bool {
+  match xs {
+  | Nil =>
+    False
+  | Cons(x, xs) =>
+    if eq-int(x, i) {
+      True
+    } else {
+      _find-int(i, xs)
+    }
+  }
+}
+
+define zen(): unit {
+  noa::check(
+    "unpack then pack is identity",
+    texts,
+    function (t) {
+      let xs on t = unpack(t) in
+      let t' on xs = pack(xs) in
+      let b on t, t' = eq-text(t, t') in
+      let _ = xs in
+      let _ = t in
+      let _ = t' in
+      b
+    },
+  );
+  noa::check(
+    "(length as text) == (length as list of chars)",
+    texts,
+    function (t) {
+      let xs on t = unpack(t) in
+      let len1 on t = core.text.length(t) in
+      let len2 on xs = length(xs) in
+      let _ = t in
+      let _ = xs in
+      eq-int(len1, len2)
+    },
+  );
+  noa::check(
+    "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
+    pairs(lists(ints), lists(ints)),
+    function (p) {
+      let Pair(xs, ys) = p in
+      let left = append(reverse(ys), reverse(xs)) in
+      let right = reverse(append(xs, ys)) in
+      let eq = core.list.entity.as-entity(core.int.entity.as-entity) in
+      eq::identity(left, right)
+    },
+  );
+  let xs = [1, 2, 3] in
+  let _ on xs =
+    noa::check(
+      "one-of (should fail)",
+      one-of(ints, xs),
+      function (x) {
+        let b1 = eq-int(x, 1) in
+        let b2 = eq-int(x, 3) in
+        let b3 = eq-int(x, 3) in
+        or(b1, or(b2, b3))
+      },
+    )
+  in
+  let _ = xs in
+  noa::check(
+    "shrinking texts (should fail)",
+    texts,
+    function (t) {
+      let len on t = core.text.length(t) in
+      let _ = t in
+      lt-int(len, 10)
+    },
+  );
+  // use `noa-verbose` instead of `noa` to get more detailed outputs
+  noa::check(
+    "there is no list that contains 15 (should fail and report [15])",
+    lists(ints),
+    function (xs) {
+      not(_find-int(15, xs))
+    },
+  )
+}
+
+define main(): unit {
+  zen()
+}

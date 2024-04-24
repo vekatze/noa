@@ -1,0 +1,87 @@
+import {
+  core.control {loop},
+  core.list {for-each, for-each-N, is-empty, split-N},
+  core.list.show,
+  core.random {random},
+  this.gen {Gen, draw, gen},
+}
+
+inline _shrink-one<a>(shrink: (&a) -> list(a)): (&list(a)) -> list(list(a)) {
+  define self(xs: &list(a)) {
+    case xs {
+    | Nil =>
+      []
+    | Cons(x, xs) =>
+      let former =
+        for-each(shrink(x), function (x') {
+          Cons(x', *xs)
+        })
+      in
+      let tmp = self(xs) in
+      let latter on tmp =
+        for-each-N(tmp, function (xs') {
+          Cons(*x, *xs')
+        })
+      in
+      let _ = tmp in
+      append(former, latter)
+    }
+  }
+}
+
+define _removes<a>(k: int, n: int, xs: &list(a)): list(list(a)) {
+  if gt-int(k, n) {
+    []
+  } else {
+    let Pair(xs1, xs2) = split-N(k, xs) in
+    let _ = xs in
+    let b on xs2 = is-empty(xs2) in
+    if b {
+      [[]]
+    } else {
+      let foo on xs2 = _removes(k, sub-int(n, k), xs2) in
+      let rest =
+        for-each(foo, function (xs2') {
+          append(xs1, xs2')
+        })
+      in
+      Cons(xs2, rest)
+    }
+  }
+}
+
+define _div-seq(k: int): list(int) {
+  if eq-int(k, 0) {
+    []
+  } else {
+    Cons(k, _div-seq(div-int(k, 2)))
+  }
+}
+
+inline _shrink-list<a>(g: gen(a)): (&list(a)) -> list(list(a)) {
+  function (xs) {
+    let n = length(xs) in
+    let xsss =
+      for-each(_div-seq(n), function (k) {
+        _removes(k, n, xs)
+      })
+    in
+    let yss = _shrink-one(g::shrink)(xs) in
+    append(concat(xsss), yss)
+  }
+}
+
+inline lists<a>(g: gen(a)): gen(list(a)) {
+  Gen of {
+    generate = {
+      function (size) {
+        loop(size, [], function (acc, _) {
+          let elem = draw(random(size), g) in
+          Cons(elem, acc)
+        })
+      }
+    },
+    shrink = _shrink-list(g),
+    viewer = core.list.show.as-show(g::viewer),
+  }
+}

@@ -1,0 +1,69 @@
+import {
+  core.except.show {as-show},
+  core.list {nth},
+  core.random {random-in-range},
+  core.show {show},
+  core.unit.show,
+}
+
+constant sample-size: tau {
+  int
+}
+
+data gen(a) {
+| Gen(
+    generate: (sample-size) -> a,
+    shrink: (&a) -> list(a),
+    viewer: show(a),
+  )
+}
+
+define draw<a>(s: sample-size, g: gen(a)): a {
+  use g {generate} in
+  generate(s)
+}
+
+define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
+  Gen of {
+    generate = {
+      function (_) {
+        let len = length(xs) in
+        let index = random-in-range(1, len) in
+        let elem-or-none = nth(index, xs) in
+        match elem-or-none {
+        | Fail(_) =>
+          panic("one-of can't be used against the empty list")
+        | Pass(elem) =>
+          elem
+        }
+      }
+    },
+    shrink = {
+      function (_) {
+        []
+      }
+    },
+    viewer = g::viewer,
+  }
+}
+
+define optional<a>(g: gen(a)): gen(?a) {
+  Gen of {
+    generate = {
+      function (size) {
+        let dice = random-in-range(0, 1) in
+        if eq-int(dice, 0) {
+          none()
+        } else {
+          Pass(g::generate(size))
+        }
+      }
+    },
+    shrink = {
+      function (_) {
+        []
+      }
+    },
+    viewer = as-show(core.unit.show.as-show, g::viewer),
+  }
+}
