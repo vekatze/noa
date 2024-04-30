@@ -107,7 +107,7 @@ inline _check(c: config): <a>(label: &text, g: gen(a), property: (a) -> bool) ->
           _OK
         } else {
           when c::verbose {
-            _print-red-bold("  ✗ ");
+            _print-red-bold("  ✘ ");
             _printf-red-bold("{}\n", [g::viewer::show(value)])
           };
           _Failure(i, value, property, g, c::verbose)
