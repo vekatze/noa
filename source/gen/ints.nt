@@ -38,3 +38,41 @@ constant ints: gen(int) {
     viewer = core.int.show.as-show,
   }
 }
+
+constant positive-ints: gen(int) {
+  Gen of {
+    generate = {
+      function (size) {
+        random-in-range(0, size)
+      }
+    },
+    shrink = {
+      function (x) {
+        let x = *x in
+        for-each(_div-seq(x), function (diff) {
+          sub-int(x, diff)
+        })
+      }
+    },
+    viewer = core.int.show.as-show,
+  }
+}
+
+constant negative-ints: gen(int) {
+  Gen of {
+    generate = {
+      function (size) {
+        mul-int(-1, random-in-range(0, size))
+      }
+    },
+    shrink = {
+      function (x) {
+        let x = *x in
+        for-each(_div-seq(x), function (diff) {
+          sub-int(x, diff)
+        })
+      }
+    },
+    viewer = core.int.show.as-show,
+  }
+}
