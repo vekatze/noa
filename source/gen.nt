@@ -28,7 +28,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
     generate = {
       function (_) {
         let len = length(xs) in
-        let index = random-in-range(1, len) in
+        let index = random-in-range(0, sub-int(len, 1)) in
         let elem-or-none = nth(index, xs) in
         match elem-or-none {
         | Fail(_) =>
