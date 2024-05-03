@@ -1,26 +1,12 @@
 import {
-  core.char {Char1, Char2, Char3, Char4, char},
   core.control {loop},
   core.list {map-N},
   core.random {random},
   core.text {join, pack, unpack},
   core.text.show,
   this.gen {Gen, gen},
-  this.gen.chars {_gen-char, chars},
   this.gen.lists {_shrink-list},
-}
-
-define _char-to-text(c: char): text {
-  match c {
-  | Char1(piece-0) =>
-    core.text.create([piece-0])
-  | Char2(piece-0, piece-1) =>
-    core.text.create([piece-0, piece-1])
-  | Char3(piece-0, piece-1, piece-2) =>
-    core.text.create([piece-0, piece-1, piece-2])
-  | Char4(piece-0, piece-1, piece-2, piece-3) =>
-    core.text.create([piece-0, piece-1, piece-2, piece-3])
-  }
+  this.gen.runes {_gen-rune, runes},
 }
 
 constant texts: gen(text) {
@@ -30,7 +16,7 @@ constant texts: gen(text) {
         let text-len = random(size) in
         let tmp =
           loop(text-len, [], function (acc, _) {
-            Cons(_char-to-text(_gen-char(size)), acc)
+            Cons(core.text.singleton(_gen-rune(size)), acc)
           })
         in
         join(tmp)
@@ -38,11 +24,11 @@ constant texts: gen(text) {
     },
     shrink = {
       function (t: &text) {
-        let char-seq = unpack(t) in
-        let char-lists on char-seq = _shrink-list(chars)(char-seq) in
-        let result on char-lists = map-N(pack, char-lists) in
-        let _ = char-lists in
-        let _ = char-seq in
+        let rune-seq = unpack(t) in
+        let rune-lists on rune-seq = _shrink-list(runes)(rune-seq) in
+        let result on rune-lists = map-N(pack, rune-lists) in
+        let _ = rune-lists in
+        let _ = rune-seq in
         result
       }
     },

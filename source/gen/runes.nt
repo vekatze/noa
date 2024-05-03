@@ -1,0 +1,134 @@
+import {
+  core.entity {Entity, entity},
+  core.entity.list {from-entity, trope},
+  core.list {filter},
+  core.random {random, random-in-range},
+  core.rune.entity {as-entity},
+  core.rune.loset {as-loset},
+  core.rune.show,
+  this.gen {Gen, gen},
+}
+
+// [U+0000, U+007F]
+define _random-1-byte-rune(): rune {
+  let r = trunc-int-int8(random(0x80)) in
+  magic cast(int8, rune, r)
+}
+
+// [U+0080, U+07FF]
+define _random-2-byte-rune(): rune {
+  let mask-X = 0b_1100_0000_1000_0000 in
+  let mask-0 = 0b_0000_0111_1100_0000 in
+  let mask-1 = 0b_0000_0000_0011_1111 in
+  let value = trunc-int-int16(random-in-range(0x0080, 0x07ff)) in
+  let value-0 = and-int16(mask-0, value) in
+  let value-1 = and-int16(mask-1, value) in
+  let value-0' = shl-int16(value-0, 2) in
+  magic cast(int16, rune, or-int16(or-int16(mask-X, value-0'), value-1))
+}
+
+// [U+0800, U+FFFF]
+define _random-3-byte-rune(): rune {
+  let mask-X = 0b_1110_0000_1000_0000_1000_0000 in
+  let mask-0 = 0b_0000_0000_1111_0000_0000_0000 in
+  let mask-1 = 0b_0000_0000_0000_1111_1100_0000 in
+  let mask-2 = 0b_0000_0000_0000_0000_0011_1111 in
+  let value = trunc-int-int24(random-in-range(0x0800, 0xffff)) in
+  let value-0 = and-int24(mask-0, value) in
+  let value-1 = and-int24(mask-1, value) in
+  let value-2 = and-int24(mask-2, value) in
+  let value-0' = shl-int24(value-0, 4) in
+  let value-1' = shl-int24(value-1, 2) in
+  magic cast(int24, rune, or-int24(or-int24(or-int24(mask-X, value-0'), value-1'), value-2))
+}
+
+// [U+10000, U+10FFFF]
+define _random-4-byte-rune(): rune {
+  let mask-X: int32 = 0b_1111_0000_1000_0000_1000_0000_1000_0000 in
+  let mask-0: int32 = 0b_0000_0000_0001_1100_0000_0000_0000_0000 in
+  let mask-1: int32 = 0b_0000_0000_0000_0011_1111_0000_0000_0000 in
+  let mask-2: int32 = 0b_0000_0000_0000_0000_0000_1111_1100_0000 in
+  let mask-3: int32 = 0b_0000_0000_0000_0000_0000_0000_0011_1111 in
+  let value = trunc-int-int32(random-in-range(0x10000, 0x10FFFF)) in
+  let value-0 = and-int32(mask-0, value) in
+  let value-1 = and-int32(mask-1, value) in
+  let value-2 = and-int32(mask-2, value) in
+  let value-3 = and-int32(mask-3, value) in
+  let value-0' = shl-int32(value-0, 6) in
+  let value-1' = shl-int32(value-1, 4) in
+  let value-2' = shl-int32(value-2, 2) in
+  or-int32(or-int32(or-int32(or-int32(mask-X, value-0'), value-1'), value-2'), value-3)
+}
+
+define _gen-rune(_: int): rune {
+  let rune-kind = random(4) in
+  if eq-int(rune-kind, 0) {
+    _random-1-byte-rune()
+  } else-if eq-int(rune-kind, 1) {
+    _random-2-byte-rune()
+  } else-if eq-int(rune-kind, 2) {
+    _random-3-byte-rune()
+  } else {
+    _random-4-byte-rune()
+  }
+}
+
+constant _rune-entity-N: entity(&rune) {
+  Entity of {
+    identity = {
+      function (x, y) {
+        as-entity::identity(*x, *y)
+      }
+    },
+  }
+}
+
+constant _list-rune-ops: trope(rune) {
+  from-entity(_rune-entity-N)
+}
+
+constant _simple-runes: list(rune) {
+  [
+    // "b"
+    0x62,
+    // "a"
+    0x61,
+    // "B",
+    0x42,
+    // "A",
+    0x41,
+  ]
+}
+
+define _extract-candidates(c: rune): list(rune) {
+  let cs = _simple-runes in
+  let is-elem on c, cs = _list-rune-ops::elem(c, cs) in
+  let _ = cs in
+  if is-elem {
+    let pred =
+      function (c') {
+        match as-loset::cmp(c, c') {
+        | GT =>
+          True
+        | _ =>
+          False
+        }
+      }
+    in
+    filter(pred, _simple-runes)
+  } else {
+    [0x41]
+  }
+}
+
+constant runes: gen(rune) {
+  Gen of {
+    generate = _gen-rune,
+    shrink = {
+      function (c) {
+        _extract-candidates(*c)
+      }
+    },
+    viewer = core.rune.show.as-show,
+  }
+}
