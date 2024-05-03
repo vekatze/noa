@@ -13,7 +13,7 @@ constant sample-size: tau {
 data gen(a) {
 | Gen(
     generate: (sample-size) -> a,
-    shrink: (&a) -> list(a),
+    shrink: (a) -> list(a),
     viewer: show(a),
   )
 }

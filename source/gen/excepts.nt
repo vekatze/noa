@@ -18,7 +18,7 @@ inline excepts<a, b>(g1: gen(a), g2: gen(b)): gen(except(a, b)) {
     },
     shrink = {
       function (error-or-value) {
-        case error-or-value {
+        match error-or-value {
         | Fail(e) =>
           map(exact Fail, g1::shrink(e))
         | Pass(v) =>

@@ -18,11 +18,11 @@ inline pairs<a, b>(g1: gen(a), g2: gen(b)): gen(pair(a, b)) {
     },
     shrink = {
       function (p) {
-        tie Pair(x, y) = p in
+        let Pair(x, y) = p in
         let xs = g1::shrink(x) in
         let ys = g2::shrink(y) in
-        let xys1 = product(xs, [*y]) in
-        let xys2 = product([*x], ys) in
+        let xys1 = product(xs, [y]) in
+        let xys2 = product([x], ys) in
         append(xys1, xys2)
       }
     },

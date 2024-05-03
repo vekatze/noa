@@ -57,7 +57,7 @@ define _find-refutation<a>(property: (a) -> bool, cands: list(a), g: gen(a), ver
 }
 
 define _repeat-shrink<a>(cand: a, property: (a) -> bool, g: gen(a), verbose: bool): a {
-  let alts on cand = g::shrink(cand) in
+  let alts = g::shrink(cand) in
   match _find-refutation(property, alts, g, verbose) {
   | Fail(_) =>
     cand

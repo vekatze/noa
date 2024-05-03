@@ -23,9 +23,10 @@ constant texts: gen(text) {
       }
     },
     shrink = {
-      function (t: &text) {
-        let rune-seq = unpack(t) in
-        let rune-lists on rune-seq = _shrink-list(runes)(rune-seq) in
+      function (t: text) {
+        let rune-seq on t = unpack(t) in
+        let _ = t in
+        let rune-lists = _shrink-list(runes)(rune-seq) in
         let result on rune-lists = map-N(pack, rune-lists) in
         let _ = rune-lists in
         let _ = rune-seq in

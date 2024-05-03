@@ -1,26 +1,26 @@
 import {
   core.control {loop},
-  core.list {for-each, for-each-N, is-empty, split-N},
+  core.list {for-each, is-empty},
   core.list.show,
   core.random {random},
   this.gen {Gen, draw, gen},
 }
 
-inline _shrink-one<a>(shrink: (&a) -> list(a)): (&list(a)) -> list(list(a)) {
-  define self(xs: &list(a)) {
-    case xs {
+inline _shrink-one<a>(shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
+  define self(xs: list(a)) {
+    match xs {
     | Nil =>
       []
     | Cons(x, xs) =>
       let former =
         for-each(shrink(x), function (x') {
-          Cons(x', *xs)
+          Cons(x', xs)
         })
       in
       let tmp = self(xs) in
-      let latter on tmp =
-        for-each-N(tmp, function (xs') {
-          Cons(*x, *xs')
+      let latter =
+        for-each(tmp, function (xs') {
+          Cons(x, xs')
         })
       in
       let _ = tmp in
@@ -29,17 +29,34 @@ inline _shrink-one<a>(shrink: (&a) -> list(a)): (&list(a)) -> list(list(a)) {
   }
 }
 
-define _removes<a>(k: int, n: int, xs: &list(a)): list(list(a)) {
+define _split<a>(n: int, xs: list(a), head-acc: list(a)): pair(list(a), list(a)) {
+  if le-int(n, 0) {
+    Pair(reverse(head-acc), xs)
+  } else {
+    match xs {
+    | Nil =>
+      Pair(head-acc, Nil)
+    | Cons(y, ys) =>
+      _split(sub-int(n, 1), ys, Cons(y, head-acc))
+    }
+  }
+}
+
+define split<a>(n: int, xs: list(a)): pair(list(a), list(a)) {
+  _split(n, xs, [])
+}
+
+define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
   if gt-int(k, n) {
     []
   } else {
-    let Pair(xs1, xs2) = split-N(k, xs) in
+    let Pair(xs1, xs2) = split(k, xs) in
     let _ = xs in
     let b on xs2 = is-empty(xs2) in
     if b {
       [[]]
     } else {
-      let foo on xs2 = _removes(k, sub-int(n, k), xs2) in
+      let foo = _removes(k, sub-int(n, k), xs2) in
       let rest =
         for-each(foo, function (xs2') {
           append(xs1, xs2')
@@ -58,9 +75,9 @@ define _div-seq(k: int): list(int) {
   }
 }
 
-inline _shrink-list<a>(g: gen(a)): (&list(a)) -> list(list(a)) {
+inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
   function (xs) {
-    let n = length(xs) in
+    let n on xs = length(xs) in
     let xsss =
       for-each(_div-seq(n), function (k) {
         _removes(k, n, xs)

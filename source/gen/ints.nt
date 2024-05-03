@@ -22,7 +22,6 @@ constant ints: gen(int) {
     },
     shrink = {
       function (x) {
-        let x = *x in
         let tmp =
           for-each(_div-seq(x), function (diff) {
             sub-int(x, diff)
@@ -48,7 +47,6 @@ constant positive-ints: gen(int) {
     },
     shrink = {
       function (x) {
-        let x = *x in
         for-each(_div-seq(x), function (diff) {
           sub-int(x, diff)
         })
@@ -67,7 +65,6 @@ constant negative-ints: gen(int) {
     },
     shrink = {
       function (x) {
-        let x = *x in
         for-each(_div-seq(x), function (diff) {
           sub-int(x, diff)
         })

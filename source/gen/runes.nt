@@ -126,7 +126,7 @@ constant runes: gen(rune) {
     generate = _gen-rune,
     shrink = {
       function (c) {
-        _extract-candidates(*c)
+        _extract-candidates(c)
       }
     },
     viewer = core.rune.show.as-show,

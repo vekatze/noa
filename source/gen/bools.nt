@@ -17,7 +17,7 @@ constant bools: gen(bool) {
     },
     shrink = {
       function (x) {
-        if *x {
+        if x {
           [False]
         } else {
           []
