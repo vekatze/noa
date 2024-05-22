@@ -1,6 +1,8 @@
 {
   target {
-    test "test.nt",
+    test {
+      main "test.nt",
+    },
   },
   dependency {
     core {
@@ -11,9 +13,9 @@
       enable-preset true,
     },
     ansi {
-      digest "93Sjt98tVpl6SfGetdaZXcQR-fgoQujH5OlI95YvzEw",
+      digest "DfT2YZ-7_RpBc6hMt7tj-kkrmCnObJk-YPRPY5eqO7M",
       mirror [
-        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-4-1.tar.zst",
+        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-4-2.tar.zst",
       ],
       enable-preset false,
     },
