@@ -116,10 +116,10 @@ inline _check(c: config): <a>(label: &text, g: gen(a), property: (a) -> bool) ->
     in
     match result {
     | Right(Unit) =>
-      _print-green-bold("✔ Right: ");
+      _print-green-bold("✔ Pass: ");
       printf("{}\n", [*label])
     | Left(Pair(_, counterexample)) =>
-      _print-red-bold("✘ Left: ");
+      _print-red-bold("✘ Fail: ");
       printf("{}\n", [*label]);
       _print-red-bold("  → ");
       let txt = viewer::show(counterexample) in
