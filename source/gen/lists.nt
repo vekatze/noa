@@ -1,5 +1,5 @@
 import {
-  core.control {loop},
+  core.control {grow},
   core.list {for-each, is-empty},
   core.list.show,
   core.random {random},
@@ -92,7 +92,7 @@ inline lists<a>(g: gen(a)): gen(list(a)) {
   Gen of {
     generate = {
       function (size) {
-        loop(size, [], function (acc, _) {
+        grow([], size, function (acc, _) {
           let elem = draw(random(size), g) in
           Cons(elem, acc)
         })

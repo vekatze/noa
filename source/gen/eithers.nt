@@ -1,31 +1,31 @@
 import {
-  core.except.show,
+  core.either.show,
   core.random {random-in-range},
   this.gen {Gen, gen},
 }
 
-inline excepts<a, b>(g1: gen(a), g2: gen(b)): gen(except(a, b)) {
+inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
   Gen of {
     generate = {
       function (size) {
         let dice = random-in-range(0, 1) in
         if eq-int(dice, 0) {
-          Fail(g1::generate(size))
+          Left(g1::generate(size))
         } else {
-          Pass(g2::generate(size))
+          Right(g2::generate(size))
         }
       }
     },
     shrink = {
       function (error-or-value) {
         match error-or-value {
-        | Fail(e) =>
-          map(exact Fail, g1::shrink(e))
-        | Pass(v) =>
-          map(exact Pass, g2::shrink(v))
+        | Left(e) =>
+          map(exact Left, g1::shrink(e))
+        | Right(v) =>
+          map(exact Right, g2::shrink(v))
         }
       }
     },
-    viewer = core.except.show.as-show(g1::viewer, g2::viewer),
+    viewer = core.either.show.as-show(g1::viewer, g2::viewer),
   }
 }

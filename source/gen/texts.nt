@@ -1,5 +1,5 @@
 import {
-  core.control {loop},
+  core.control {grow},
   core.list {map-N},
   core.random {random},
   core.text {join, pack, unpack},
@@ -15,7 +15,7 @@ constant texts: gen(text) {
       function (size) {
         let text-len = random(size) in
         let tmp =
-          loop(text-len, [], function (acc, _) {
+          grow([], text-len, function (acc, _) {
             Cons(core.text.singleton(_gen-rune(size)), acc)
           })
         in

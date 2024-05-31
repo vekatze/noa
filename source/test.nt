@@ -9,7 +9,7 @@ import {
   this.gen.pairs {pairs},
   this.gen.runes {runes},
   this.gen.texts {texts},
-  this.suite {noa},
+  this.suite {noa, noa-verbose},
 }
 
 define _find-int(i: int, xs: list(int)): bool {
@@ -86,7 +86,7 @@ define zen(): unit {
     },
   );
   // use `noa-verbose` instead of `noa` to get more detailed outputs
-  noa::check(
+  noa-verbose::check(
     "there is no list that contains 15 (should fail and report [15])",
     lists(ints),
     function (xs) {

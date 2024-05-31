@@ -51,7 +51,7 @@ define _find-refutation<a>(property: (a) -> bool, cands: list(a), g: gen(a), ver
         _print-red-bold("      ✘ ");
         _printf-red-bold("{}\n", [g::viewer::show(cand)])
       };
-      Pass(cand)
+      Right(cand)
     }
   }
 }
@@ -59,18 +59,18 @@ define _find-refutation<a>(property: (a) -> bool, cands: list(a), g: gen(a), ver
 define _repeat-shrink<a>(cand: a, property: (a) -> bool, g: gen(a), verbose: bool): a {
   let alts = g::shrink(cand) in
   match _find-refutation(property, alts, g, verbose) {
-  | Fail(_) =>
+  | Left(_) =>
     cand
-  | Pass(smaller-cand) =>
+  | Right(smaller-cand) =>
     _repeat-shrink(smaller-cand, property, g, verbose)
   }
 }
 
-inline _run-tests<a>(num-of-tests: int, f: (int) -> _result(a)): except(pair(int, a), unit) {
+inline _run-tests<a>(num-of-tests: int, f: (int) -> _result(a)): either(pair(int, a), unit) {
   let helper =
-    define self(iteration: int): except(pair(int, a), unit) {
+    define self(iteration: int): either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
-        Pass(Unit)
+        Right(Unit)
       } else {
         match f(iteration) {
         | _OK =>
@@ -80,7 +80,7 @@ inline _run-tests<a>(num-of-tests: int, f: (int) -> _result(a)): except(pair(int
             _print-blue-bold("    ↻ Shrink:\n")
           };
           let value' = _repeat-shrink(value, property, g, verbose) in
-          Fail(Pair(iteration, value'))
+          Left(Pair(iteration, value'))
         }
       }
     }
@@ -115,11 +115,11 @@ inline _check(c: config): <a>(label: &text, g: gen(a), property: (a) -> bool) ->
       })
     in
     match result {
-    | Pass(Unit) =>
-      _print-green-bold("✔ Pass: ");
+    | Right(Unit) =>
+      _print-green-bold("✔ Right: ");
       printf("{}\n", [*label])
-    | Fail(Pair(_, counterexample)) =>
-      _print-red-bold("✘ Fail: ");
+    | Left(Pair(_, counterexample)) =>
+      _print-red-bold("✘ Left: ");
       printf("{}\n", [*label]);
       _print-red-bold("  → ");
       let txt = viewer::show(counterexample) in

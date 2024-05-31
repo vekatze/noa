@@ -57,7 +57,7 @@ define _random-4-byte-rune(): rune {
   let value-0' = shl-int32(value-0, 6) in
   let value-1' = shl-int32(value-1, 4) in
   let value-2' = shl-int32(value-2, 2) in
-  or-int32(or-int32(or-int32(or-int32(mask-X, value-0'), value-1'), value-2'), value-3)
+  magic cast(int32, rune, or-int32(or-int32(or-int32(or-int32(mask-X, value-0'), value-1'), value-2'), value-3))
 }
 
 define _gen-rune(_: int): rune {
@@ -89,14 +89,10 @@ constant _list-rune-ops: trope(rune) {
 
 constant _simple-runes: list(rune) {
   [
-    // "b"
-    0x62,
-    // "a"
-    0x61,
-    // "B",
-    0x42,
-    // "A",
-    0x41,
+    `b`,
+    `a`,
+    `B`,
+    `A`,
   ]
 }
 
@@ -117,7 +113,7 @@ define _extract-candidates(c: rune): list(rune) {
     in
     filter(pred, _simple-runes)
   } else {
-    [0x41]
+    [`A`]
   }
 }
 
