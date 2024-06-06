@@ -6,7 +6,7 @@ import {
   core.unit.show,
 }
 
-constant sample-size: tau {
+constant sample-size: type {
   int
 }
 
