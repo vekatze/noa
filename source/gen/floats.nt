@@ -1,0 +1,44 @@
+import {
+  core.float {fabs},
+  core.list {for-each},
+  core.random {random-float},
+  this.gen {Gen, gen},
+}
+
+constant _epsilon: float {
+  1
+}
+
+define _div-seq(k: float): list(float) {
+  if lt-float(fabs(k), _epsilon) {
+    []
+  } else {
+    Cons(k, _div-seq(div-float(k, 2)))
+  }
+}
+
+constant floats: gen(float) {
+  Gen of {
+    generate = {
+      function (size) {
+        let size = uitofp-int-float(size) in
+        random-float(mul-float(-1, size), size)
+      }
+    },
+    shrink = {
+      function (x: float) {
+        let tmp =
+          for-each(_div-seq(x), function (diff) {
+            sub-float(x, diff)
+          })
+        in
+        if lt-float(x, 0) {
+          Cons(fabs(x), tmp)
+        } else {
+          tmp
+        }
+      }
+    },
+    viewer = core.float.show.as-show,
+  }
+}

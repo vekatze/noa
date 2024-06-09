@@ -4,6 +4,7 @@ import {
   core.text {pack, unpack},
   core.text.entity {eq-text},
   this.gen {one-of},
+  this.gen.floats {floats},
   this.gen.ints {ints},
   this.gen.lists {lists},
   this.gen.pairs {pairs},
@@ -25,29 +26,38 @@ define _find-int(i: int, xs: list(int)): bool {
   }
 }
 
+define _find-float(i: float, xs: list(float)): bool {
+  match xs {
+  | Nil =>
+    False
+  | Cons(x, xs) =>
+    if gt-float(x, i) {
+      True
+    } else {
+      _find-float(i, xs)
+    }
+  }
+}
+
 define zen(): unit {
   noa::check(
     "unpack then pack is identity",
     texts,
     function (t) {
-      let xs on t = unpack(t) in
-      let t' on xs = pack(xs) in
-      let b on t, t' = eq-text(t, t') in
-      let _ = xs in
-      let _ = t in
-      let _ = t' in
-      b
+      pin t = t in
+      pin xs = unpack(t) in
+      pin t' = pack(xs) in
+      eq-text(t, t')
     },
   );
   noa::check(
     "(length as text) == (length as list of chars)",
     texts,
     function (t) {
-      let xs on t = unpack(t) in
-      let len1 on t = core.text.length(t) in
-      let len2 on xs = length(xs) in
-      let _ = t in
-      let _ = xs in
+      pin t = t in
+      pin xs = unpack(t) in
+      let len1 = core.text.length(t) in
+      let len2 = length(xs) in
       eq-int(len1, len2)
     },
   );
@@ -92,7 +102,14 @@ define zen(): unit {
     function (xs) {
       not(_find-int(15, xs))
     },
-  )
+  );
+  noa-verbose::check(
+    "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
+    lists(floats),
+    function (xs) {
+      not(_find-float(15, xs))
+    },
+  );
 }
 
 define main(): unit {
