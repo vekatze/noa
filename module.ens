@@ -13,9 +13,9 @@
       enable-preset true,
     },
     ansi {
-      digest "DLMCyBI4azKhwnNAK2CUzC5FjCd9a4n_nW6ZGh4ipws",
+      digest "oIiB4prJOZwJVH8roXLJ0O55tnEHZfovzhQzRe9MmgQ",
       mirror [
-        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-4-5.tar.zst",
+        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-4-6.tar.zst",
       ],
     },
   },
