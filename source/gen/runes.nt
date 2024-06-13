@@ -1,10 +1,10 @@
 import {
-  core.entity {Entity, entity},
-  core.entity.list {from-entity, trope},
+  core.eq {Eq, eq},
+  core.eq.list {from-eq, trope},
   core.list {filter},
   core.random {random, random-in-range},
-  core.rune.entity {as-entity},
-  core.rune.loset {as-loset},
+  core.rune.eq {as-eq},
+  core.rune.ord {as-ord},
   core.rune.show,
   this.gen {Gen, gen},
 }
@@ -73,18 +73,18 @@ define _gen-rune(_: int): rune {
   }
 }
 
-constant _rune-entity-N: entity(&rune) {
-  Entity of {
-    identity = {
+constant _rune-eq-N: eq(&rune) {
+  Eq of {
+    equal = {
       function (x, y) {
-        as-entity::identity(*x, *y)
+        as-eq::equal(*x, *y)
       }
     },
   }
 }
 
 constant _list-rune-ops: trope(rune) {
-  from-entity(_rune-entity-N)
+  from-eq(_rune-eq-N)
 }
 
 constant _simple-runes: list(rune) {
@@ -103,7 +103,7 @@ define _extract-candidates(c: rune): list(rune) {
   if is-elem {
     let pred =
       function (c') {
-        match as-loset::cmp(c, c') {
+        match as-ord::compare(c, c') {
         | GT =>
           True
         | _ =>

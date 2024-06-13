@@ -1,8 +1,6 @@
 import {
-  core.list.entity,
-  core.rune.entity,
+  core.list.eq,
   core.text {pack, unpack},
-  core.text.entity {eq-text},
   this.gen {one-of},
   this.gen.floats {floats},
   this.gen.ints {ints},
@@ -68,8 +66,8 @@ define zen(): unit {
       let Pair(xs, ys) = p in
       let left = append(reverse(ys), reverse(xs)) in
       let right = reverse(append(xs, ys)) in
-      let eq = core.list.entity.as-entity(core.rune.entity.as-entity) in
-      eq::identity(left, right)
+      let eq = core.list.eq.as-eq(core.rune.eq.as-eq) in
+      eq::equal(left, right)
     },
   );
   let xs = [1, 2, 3] in
