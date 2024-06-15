@@ -5,27 +5,27 @@ import {
   this.gen {Gen, draw, gen},
 }
 
-inline pairs<a, b>(g1: gen(a), g2: gen(b)): gen(pair(a, b)) {
+inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
   Gen of {
     generate = {
       function (size) {
         let x-size = random(size) in
         let y-size = sub-int(size, x-size) in
-        let x = draw(x-size, g1) in
-        let y = draw(y-size, g2) in
+        let x = draw(x-size, !g1) in
+        let y = draw(y-size, !g2) in
         Pair(x, y)
       }
     },
     shrink = {
       function (p) {
-        let Pair(x, y) = p in
-        let xs = g1::shrink(x) in
-        let ys = g2::shrink(y) in
-        let xys1 = product(xs, [y]) in
-        let xys2 = product([x], ys) in
+        let Pair(!x, !y) = p in
+        let xs = !g1::shrink(!x) in
+        let ys = !g2::shrink(!y) in
+        let xys1 = product(xs, [!y]) in
+        let xys2 = product([!x], ys) in
         append(xys1, xys2)
       }
     },
-    viewer = core.pair.show.as-show(g1::viewer, g2::viewer),
+    viewer = core.pair.show.as-show(!g1::viewer, !g2::viewer),
   }
 }

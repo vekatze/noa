@@ -1,6 +1,6 @@
 import {
   core.control {grow},
-  core.list {for-each, is-empty},
+  core.list {is-empty},
   core.list.show,
   core.random {random},
   this.gen {Gen, draw, gen},
@@ -11,19 +11,18 @@ inline _shrink-one<a>(shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
     match xs {
     | Nil =>
       []
-    | Cons(x, xs) =>
+    | Cons(!x, !xs) =>
       let former =
-        for-each(shrink(x), function (x') {
-          Cons(x', xs)
+        for-each(shrink(!x), function (x') {
+          Cons(x', !xs)
         })
       in
-      let tmp = self(xs) in
+      let tmp = self(!xs) in
       let latter =
         for-each(tmp, function (xs') {
-          Cons(x, xs')
+          Cons(!x, xs')
         })
       in
-      let _ = tmp in
       append(former, latter)
     }
   }
@@ -50,19 +49,18 @@ define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
   if gt-int(k, n) {
     []
   } else {
-    let Pair(xs1, xs2) = split(k, xs) in
-    let _ = xs in
-    let b on xs2 = is-empty(xs2) in
+    let Pair(xs1, !xs2) = split(k, xs) in
+    let b on !xs2 = is-empty(!xs2) in
     if b {
       [[]]
     } else {
-      let foo = _removes(k, sub-int(n, k), xs2) in
+      let tmp = _removes(k, sub-int(n, k), !xs2) in
       let rest =
-        for-each(foo, function (xs2') {
+        for-each(tmp, function (xs2') {
           append(xs1, xs2')
         })
       in
-      Cons(xs2, rest)
+      Cons(!xs2, rest)
     }
   }
 }
@@ -76,29 +74,29 @@ define _div-seq(k: int): list(int) {
 }
 
 inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
-  function (xs) {
-    let n on xs = length(xs) in
+  function (!xs) {
+    let n on !xs = length(!xs) in
     let xsss =
       for-each(_div-seq(n), function (k) {
-        _removes(k, n, xs)
+        _removes(k, n, !xs)
       })
     in
-    let yss = _shrink-one(g::shrink)(xs) in
+    let yss = _shrink-one(g::shrink)(!xs) in
     append(concat(xsss), yss)
   }
 }
 
-inline lists<a>(g: gen(a)): gen(list(a)) {
+inline lists<a>(!g: gen(a)): gen(list(a)) {
   Gen of {
     generate = {
       function (size) {
         grow([], size, function (acc, _) {
-          let elem = draw(random(size), g) in
+          let elem = draw(random(size), !g) in
           Cons(elem, acc)
         })
       }
     },
-    shrink = _shrink-list(g),
-    viewer = core.list.show.as-show(g::viewer),
+    shrink = _shrink-list(!g),
+    viewer = core.list.show.as-show(!g::viewer),
   }
 }

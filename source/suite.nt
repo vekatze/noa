@@ -32,37 +32,37 @@ data _result(a) {
   )
 }
 
-define _find-refutation<a>(property: (a) -> bool, cands: list(a), g: gen(a), verbose: bool): ?a {
+define _find-refutation<a>(!property: (a) -> bool, cands: list(a), g: gen(a), verbose: bool): ?a {
   match cands {
   | Nil =>
     when verbose {
       _print-blue-bold("    ✔ Stop\n")
     };
     none()
-  | Cons(cand, rest) =>
-    if property(cand) {
+  | Cons(!cand, rest) =>
+    if !property(!cand) {
       when verbose {
         _print-blue-bold("      ✔ ");
-        printf("{}\n", [g::viewer::show(cand)])
+        printf("{}\n", [g::viewer::show(!cand)])
       };
-      _find-refutation(property, rest, g, verbose)
+      _find-refutation(!property, rest, g, verbose)
     } else {
       when verbose {
         _print-red-bold("      ✘ ");
-        _printf-red-bold("{}\n", [g::viewer::show(cand)])
+        _printf-red-bold("{}\n", [g::viewer::show(!cand)])
       };
-      Right(cand)
+      Right(!cand)
     }
   }
 }
 
-define _repeat-shrink<a>(cand: a, property: (a) -> bool, g: gen(a), verbose: bool): a {
-  let alts = g::shrink(cand) in
-  match _find-refutation(property, alts, g, verbose) {
+define _repeat-shrink<a>(!cand: a, !property: (a) -> bool, !g: gen(a), verbose: bool): a {
+  let alts = !g::shrink(!cand) in
+  match _find-refutation(!property, alts, !g, verbose) {
   | Left(_) =>
-    cand
+    !cand
   | Right(smaller-cand) =>
-    _repeat-shrink(smaller-cand, property, g, verbose)
+    _repeat-shrink(smaller-cand, !property, !g, verbose)
   }
 }
 
@@ -88,29 +88,29 @@ inline _run-tests<a>(num-of-tests: int, f: (int) -> _result(a)): either(pair(int
   helper(0)
 }
 
-inline _check(c: config): <a>(label: &text, g: gen(a), property: (a) -> bool) -> unit {
-  function <a>(label: &text, g: gen(a), property: (a) -> bool): unit {
-    use g {viewer} in
+inline _check(!c: config): <a>(label: &text, !g: gen(a), property: (a) -> bool) -> unit {
+  function <a>(label: &text, !g: gen(a), !property: (a) -> bool): unit {
+    use !g {viewer} in
     let result =
-      when c::verbose {
+      when !c::verbose {
         _print-blue-bold("? Check: ");
         printf("{}\n", [*label])
       };
-      _run-tests(c::num-of-tests, function (i) {
-        let size = _compute-size(c, i) in
-        let value = draw(size, g) in
-        if property(value) {
-          when c::verbose {
+      _run-tests(!c::num-of-tests, function (i) {
+        let size = _compute-size(!c, i) in
+        let !value = draw(size, !g) in
+        if !property(!value) {
+          when !c::verbose {
             _print-blue-bold("  ✔ ");
-            printf("{}\n", [g::viewer::show(value)])
+            printf("{}\n", [!g::viewer::show(!value)])
           };
           _OK
         } else {
-          when c::verbose {
+          when !c::verbose {
             _print-red-bold("  ✘ ");
-            _printf-red-bold("{}\n", [g::viewer::show(value)])
+            _printf-red-bold("{}\n", [!g::viewer::show(!value)])
           };
-          _Failure(i, value, property, g, c::verbose)
+          _Failure(i, !value, !property, !g, !c::verbose)
         }
       })
     in

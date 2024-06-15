@@ -63,9 +63,9 @@ define zen(): unit {
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pairs(lists(runes), lists(runes)),
     function (p) {
-      let Pair(xs, ys) = p in
-      let left = append(reverse(ys), reverse(xs)) in
-      let right = reverse(append(xs, ys)) in
+      let Pair(!xs, !ys) = p in
+      let left = append(reverse(!ys), reverse(!xs)) in
+      let right = reverse(append(!xs, !ys)) in
       let eq = core.list.eq.as-eq(core.rune.eq.as-eq) in
       eq::equal(left, right)
     },
