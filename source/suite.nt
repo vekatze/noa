@@ -123,7 +123,7 @@ inline _check(!c: config): <a>(label: &text, !g: gen(a), property: (a) -> bool) 
       printf("{}\n", [*label]);
       _print-red-bold("  → ");
       let txt = viewer::show(counterexample) in
-      let txt' on txt = replace("\n", *"\n    ", txt) in
+      let txt' on txt = replace(txt, "\n", *"\n    ") in
       let _ = txt in
       _printf-red-bold("{}\n", [txt'])
     }

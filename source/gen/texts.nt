@@ -1,6 +1,5 @@
 import {
   core.control {grow},
-  core.list {map-N},
   core.random {random},
   core.text {join, pack, unpack},
   core.text.show,
@@ -27,7 +26,7 @@ constant texts: gen(text) {
         pin t = t in
         let rune-seq = unpack(t) in
         pin rune-lists = _shrink-list(runes)(rune-seq) in
-        let result = map-N(pack, rune-lists) in
+        let result = for-each-N(rune-lists, pack) in
         result
       }
     },

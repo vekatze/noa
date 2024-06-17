@@ -20,9 +20,9 @@ inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
       function (error-or-value) {
         match error-or-value {
         | Left(e) =>
-          map(exact Left, g1::shrink(e))
+          for-each(g1::shrink(e), exact Left)
         | Right(v) =>
-          map(exact Right, g2::shrink(v))
+          for-each(g2::shrink(v), exact Right)
         }
       }
     },

@@ -29,7 +29,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
       function (_) {
         let len = length(xs) in
         let index = random-in-range(0, sub-int(len, 1)) in
-        let elem-or-none = nth(index, xs) in
+        let elem-or-none = nth(xs, index) in
         match elem-or-none {
         | Left(_) =>
           panic("one-of can't be used against the empty list")

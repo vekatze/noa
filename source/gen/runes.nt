@@ -98,12 +98,12 @@ constant _simple-runes: list(rune) {
 
 define _extract-candidates(c: rune): list(rune) {
   let cs = _simple-runes in
-  let is-elem on c, cs = _list-rune-ops::elem(c, cs) in
+  let is-elem on c, cs = _list-rune-ops::elem(cs, c) in
   let _ = cs in
   if is-elem {
     let pred =
       function (c') {
-        match as-ord::compare(c, c') {
+        match as-ord::compare(c, *c') {
         | GT =>
           True
         | _ =>
@@ -111,7 +111,7 @@ define _extract-candidates(c: rune): list(rune) {
         }
       }
     in
-    filter(pred, _simple-runes)
+    filter(_simple-runes, pred)
   } else {
     [`A`]
   }
