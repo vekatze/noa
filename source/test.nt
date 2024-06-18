@@ -7,7 +7,7 @@ import {
   this.gen.lists {lists},
   this.gen.pairs {pairs},
   this.gen.runes {runes},
-  this.gen.texts {texts},
+  this.gen.texts {ascii-texts, texts},
   this.suite {noa, noa-verbose},
 }
 
@@ -106,6 +106,13 @@ define zen(): unit {
     lists(floats),
     function (xs) {
       not(_find-float(15, xs))
+    },
+  );
+  noa-verbose::check(
+    "ascii",
+    ascii-texts,
+    function (_) {
+      True
     },
   );
 }

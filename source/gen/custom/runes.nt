@@ -4,6 +4,7 @@ import {
   core.list {filter},
   core.list.eq,
   core.random {random, random-in-range},
+  core.rune {_Rune},
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
   core.rune.show,
@@ -11,17 +12,15 @@ import {
 }
 
 // [U+0000, U+007F]
-define _random-1-byte-rune(): rune {
-  let r = trunc-int-int8(random(0x80)) in
-  magic cast(int8, rune, r)
+define _random-1-byte-rune(value: int8): rune {
+  magic cast(int8, rune, value)
 }
 
 // [U+0080, U+07FF]
-define _random-2-byte-rune(): rune {
+define _random-2-byte-rune(value: int16): rune {
   let mask-X = 0b_1100_0000_1000_0000 in
   let mask-0 = 0b_0000_0111_1100_0000 in
   let mask-1 = 0b_0000_0000_0011_1111 in
-  let value = trunc-int-int16(random-in-range(0x0080, 0x07ff)) in
   let value-0 = and-int16(mask-0, value) in
   let value-1 = and-int16(mask-1, value) in
   let value-0' = shl-int16(value-0, 2) in
@@ -29,12 +28,11 @@ define _random-2-byte-rune(): rune {
 }
 
 // [U+0800, U+FFFF]
-define _random-3-byte-rune(): rune {
+define _random-3-byte-rune(value: int24): rune {
   let mask-X = 0b_1110_0000_1000_0000_1000_0000 in
   let mask-0 = 0b_0000_0000_1111_0000_0000_0000 in
   let mask-1 = 0b_0000_0000_0000_1111_1100_0000 in
   let mask-2 = 0b_0000_0000_0000_0000_0011_1111 in
-  let value = trunc-int-int24(random-in-range(0x0800, 0xffff)) in
   let value-0 = and-int24(mask-0, value) in
   let value-1 = and-int24(mask-1, value) in
   let value-2 = and-int24(mask-2, value) in
@@ -44,13 +42,12 @@ define _random-3-byte-rune(): rune {
 }
 
 // [U+10000, U+10FFFF]
-define _random-4-byte-rune(): rune {
+define _random-4-byte-rune(value: int32): rune {
   let mask-X: int32 = 0b_1111_0000_1000_0000_1000_0000_1000_0000 in
   let mask-0: int32 = 0b_0000_0000_0001_1100_0000_0000_0000_0000 in
   let mask-1: int32 = 0b_0000_0000_0000_0011_1111_0000_0000_0000 in
   let mask-2: int32 = 0b_0000_0000_0000_0000_0000_1111_1100_0000 in
   let mask-3: int32 = 0b_0000_0000_0000_0000_0000_0000_0011_1111 in
-  let value = trunc-int-int32(random-in-range(0x10000, 0x10FFFF)) in
   let value-0 = and-int32(mask-0, value) in
   let value-1 = and-int32(mask-1, value) in
   let value-2 = and-int32(mask-2, value) in
@@ -64,13 +61,28 @@ define _random-4-byte-rune(): rune {
 define _gen-rune(_: int): rune {
   let rune-kind = random(4) in
   if eq-int(rune-kind, 0) {
-    _random-1-byte-rune()
+    let value = trunc-int-int8(random(0x80)) in
+    _random-1-byte-rune(value)
   } else-if eq-int(rune-kind, 1) {
-    _random-2-byte-rune()
+    let value = trunc-int-int16(random-in-range(0x0080, 0x07ff)) in
+    _random-2-byte-rune(value)
   } else-if eq-int(rune-kind, 2) {
-    _random-3-byte-rune()
+    let value = trunc-int-int24(random-in-range(0x0800, 0xffff)) in
+    _random-3-byte-rune(value)
   } else {
-    _random-4-byte-rune()
+    let value = trunc-int-int32(random-in-range(0x10000, 0x10ffff)) in
+    _random-4-byte-rune(value)
+  }
+}
+
+define gen-rune-in-range(lower: int, upper: int): rune {
+  // (inclusive range)
+  let value = random-in-range(lower, upper) in
+  match core.rune.from-int(value) {
+  | Right(r) =>
+    r
+  | Left(_) =>
+    _Rune(0xefbfbe)
   }
 }
 
@@ -120,6 +132,7 @@ define _extract-candidates(c: rune): list(rune) {
 
 data config {
 | Config(
+    rune-generator: ?() -> rune,
     rune-acceptor: (rune) -> bool,
   )
 }
@@ -132,7 +145,14 @@ inline runes(!c: config): gen(rune) {
   Gen of {
     generate = {
       define loop(size) {
-        let cand = _gen-rune(size) in
+        let cand =
+          match !c::rune-generator {
+          | Right(g) =>
+            g()
+          | Left(_) =>
+            _gen-rune(size)
+          }
+        in
         if !c::rune-acceptor(cand) {
           cand
         } else {

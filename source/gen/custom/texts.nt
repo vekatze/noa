@@ -1,8 +1,9 @@
 import {
   core.control {grow},
+  core.either {from-option},
   core.int {max-int},
   core.list {filter},
-  core.random {random},
+  core.random {random-in-range},
   core.text {join, pack, unpack},
   core.text.show,
   this.gen {Gen, gen},
@@ -12,18 +13,26 @@ import {
 
 data config {
 | Config(
-    rune-acceptor: (rune) -> bool,
     min-length: int,
+    max-length: ?int,
+    rune-generator: ?() -> rune,
+    rune-acceptor: (rune) -> bool,
   )
 }
 
 inline texts(!c: config): gen(text) {
-  let rune-config = this.gen.custom.runes.Config of {rune-acceptor = !c::rune-acceptor} in
+  let rune-config =
+    this.gen.custom.runes.Config of {
+      rune-generator = !c::rune-generator,
+      rune-acceptor = !c::rune-acceptor,
+    }
+  in
   let !rune-gen = this.gen.custom.runes.runes(rune-config) in
   Gen of {
     generate = {
       function (size) {
-        let text-len = max-int(random(size), !c::min-length) in
+        let size = from-option(!c::max-length, size) in
+        let text-len = max-int(random-in-range(0, size), !c::min-length) in
         let tmp =
           grow([], text-len, function (acc, _) {
             let r = !rune-gen::generate(size) in

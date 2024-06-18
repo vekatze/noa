@@ -1,10 +1,26 @@
 import {
   this.gen {gen},
-  this.gen.custom.runes,
+  this.gen.custom.runes {gen-rune-in-range},
 }
 
 constant runes: gen(rune) {
   this.gen.custom.runes.runes(this.gen.custom.runes.Config of {
+    rune-generator = none(),
+    rune-acceptor = {
+      function (_) {
+        True
+      }
+    },
+  })
+}
+
+constant ascii-runes: gen(rune) {
+  this.gen.custom.runes.runes(this.gen.custom.runes.Config of {
+    rune-generator = {
+      Right(function () {
+        gen-rune-in-range(0x20, 0x7e)
+      })
+    },
     rune-acceptor = {
       function (_) {
         True
