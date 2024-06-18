@@ -1,0 +1,50 @@
+import {
+  core.control {grow},
+  core.int {max-int},
+  core.list {filter},
+  core.random {random},
+  core.text {join, pack, unpack},
+  core.text.show,
+  this.gen {Gen, gen},
+  this.gen.custom.runes,
+  this.gen.lists {_shrink-list},
+}
+
+data config {
+| Config(
+    rune-acceptor: (rune) -> bool,
+    min-length: int,
+  )
+}
+
+inline texts(!c: config): gen(text) {
+  let rune-config = this.gen.custom.runes.Config of {rune-acceptor = !c::rune-acceptor} in
+  let !rune-gen = this.gen.custom.runes.runes(rune-config) in
+  Gen of {
+    generate = {
+      function (size) {
+        let text-len = max-int(random(size), !c::min-length) in
+        let tmp =
+          grow([], text-len, function (acc, _) {
+            let r = !rune-gen::generate(size) in
+            Cons(core.text.singleton(r), acc)
+          })
+        in
+        join(tmp)
+      }
+    },
+    shrink = {
+      function (t: text) {
+        pin t = t in
+        let rune-seq = unpack(t) in
+        pin rune-lists = _shrink-list(!rune-gen)(rune-seq) in
+        let result = for-each-N(rune-lists, pack) in
+        filter(result, function (t) {
+          let len = core.text.length(t) in
+          ge-int(len, !c::min-length)
+        })
+      }
+    },
+    viewer = core.text.show.as-show,
+  }
+}

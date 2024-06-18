@@ -1,35 +1,15 @@
 import {
-  core.control {grow},
-  core.random {random},
-  core.text {join, pack, unpack},
-  core.text.show,
-  this.gen {Gen, gen},
-  this.gen.lists {_shrink-list},
-  this.gen.runes {_gen-rune, runes},
+  this.gen {gen},
+  this.gen.custom.texts,
 }
 
 constant texts: gen(text) {
-  Gen of {
-    generate = {
-      function (size) {
-        let text-len = random(size) in
-        let tmp =
-          grow([], text-len, function (acc, _) {
-            Cons(core.text.singleton(_gen-rune(size)), acc)
-          })
-        in
-        join(tmp)
+  this.gen.custom.texts.texts(this.gen.custom.texts.Config of {
+    rune-acceptor = {
+      function (_) {
+        True
       }
     },
-    shrink = {
-      function (t: text) {
-        pin t = t in
-        let rune-seq = unpack(t) in
-        pin rune-lists = _shrink-list(runes)(rune-seq) in
-        let result = for-each-N(rune-lists, pack) in
-        result
-      }
-    },
-    viewer = core.text.show.as-show,
-  }
+    min-length = 0,
+  })
 }
