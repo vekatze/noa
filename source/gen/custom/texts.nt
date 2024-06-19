@@ -1,7 +1,8 @@
 import {
   core.control {grow},
   core.either {from-option},
-  core.int {max-int},
+  core.foreign {UINT32_MAX},
+  core.int {max-int, min-int},
   core.list {filter},
   core.random {random-in-range},
   core.text {join, pack, unpack},
@@ -31,8 +32,8 @@ inline texts(!c: config): gen(text) {
   Gen of {
     generate = {
       function (size) {
-        let size = from-option(!c::max-length, size) in
-        let text-len = max-int(random-in-range(0, size), !c::min-length) in
+        let max-length = from-option(!c::max-length, UINT32_MAX) in
+        let text-len = max-int(random-in-range(0, min-int(size, max-length)), !c::min-length) in
         let tmp =
           grow([], text-len, function (acc, _) {
             let r = !rune-gen::generate(size) in
