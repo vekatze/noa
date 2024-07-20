@@ -114,7 +114,7 @@ define zen(): unit {
     function (_) {
       True
     },
-  );
+  )
 }
 
 define main(): unit {
