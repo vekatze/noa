@@ -32,7 +32,7 @@ data _result(a) {
   )
 }
 
-define _find-refutation<a>(!property: (a) -> bool, cands: list(a), g: gen(a), verbose: bool): ?a {
+define _find-refutation<a>(!property: (a) -> bool, cands: list(a), !g: gen(a), verbose: bool): ?a {
   match cands {
   | Nil =>
     when verbose {
@@ -43,13 +43,13 @@ define _find-refutation<a>(!property: (a) -> bool, cands: list(a), g: gen(a), ve
     if !property(!cand) {
       when verbose {
         _print-blue-bold("      ✔ ");
-        printf("{}\n", [g::viewer::show(!cand)])
+        printf("{}\n", [!g::viewer::show(!cand)])
       };
-      _find-refutation(!property, rest, g, verbose)
+      _find-refutation(!property, rest, !g, verbose)
     } else {
       when verbose {
         _print-red-bold("      ✘ ");
-        _printf-red-bold("{}\n", [g::viewer::show(!cand)])
+        _printf-red-bold("{}\n", [!g::viewer::show(!cand)])
       };
       Right(!cand)
     }

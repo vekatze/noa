@@ -5,14 +5,16 @@ import {
 }
 
 inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
+  let Gen(generate1, shrink1, viewer1) = g1 in
+  let Gen(generate2, shrink2, viewer2) = g2 in
   Gen of {
     generate = {
       function (size) {
         let dice = random-in-range(0, 1) in
         if eq-int(dice, 0) {
-          Left(g1::generate(size))
+          Left(generate1(size))
         } else {
-          Right(g2::generate(size))
+          Right(generate2(size))
         }
       }
     },
@@ -20,12 +22,12 @@ inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
       function (error-or-value) {
         match error-or-value {
         | Left(e) =>
-          for-each(g1::shrink(e), exact Left)
+          for-each(shrink1(e), exact Left)
         | Right(v) =>
-          for-each(g2::shrink(v), exact Right)
+          for-each(shrink2(v), exact Right)
         }
       }
     },
-    viewer = core.either.show.as-show(g1::viewer, g2::viewer),
+    viewer = core.either.show.as-show(viewer1, viewer2),
   }
 }

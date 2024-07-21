@@ -47,7 +47,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
   }
 }
 
-define optional<a>(g: gen(a)): gen(?a) {
+define optional<a>(!g: gen(a)): gen(?a) {
   Gen of {
     generate = {
       function (size) {
@@ -55,7 +55,10 @@ define optional<a>(g: gen(a)): gen(?a) {
         if eq-int(dice, 0) {
           none()
         } else {
-          Right(g::generate(size))
+          Right({
+            let Gen of {generate} = !g in
+            generate
+          }(size))
         }
       }
     },
@@ -64,6 +67,9 @@ define optional<a>(g: gen(a)): gen(?a) {
         []
       }
     },
-    viewer = as-show(core.unit.show.as-show, g::viewer),
+    viewer = {
+      as-show(core.unit.show.as-show, let Gen of {viewer} = !g in
+      viewer)
+    },
   }
 }
