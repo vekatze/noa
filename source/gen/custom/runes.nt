@@ -4,7 +4,7 @@ import {
   core.list {filter},
   core.list.eq,
   core.random {random, random-in-range},
-  core.rune {_Rune},
+  core.rune,
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
   core.rune.show,
@@ -82,7 +82,7 @@ define gen-rune-in-range(lower: int, upper: int): rune {
   | Right(r) =>
     r
   | Left(_) =>
-    _Rune(0xefbfbe)
+    magic cast(int, rune, 0xefbfbe)
   }
 }
 
