@@ -66,13 +66,13 @@ define _repeat-shrink<a>(!cand: a, !property: (a) -> bool, !g: gen(a), verbose: 
   }
 }
 
-inline _run-tests<a>(num-of-tests: int, f: (int) -> _result(a)): either(pair(int, a), unit) {
+inline _run-tests<a>(num-of-tests: int, !f: (int) -> _result(a)): either(pair(int, a), unit) {
   let helper =
     define self(iteration: int): either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
         Right(Unit)
       } else {
-        match f(iteration) {
+        match !f(iteration) {
         | _OK =>
           self(add-int(iteration, 1))
         | _Failure of {iteration, value, property, g, verbose} =>

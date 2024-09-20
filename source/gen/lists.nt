@@ -6,14 +6,14 @@ import {
   this.gen {Gen, draw, gen},
 }
 
-inline _shrink-one<a>(shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
+inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
   define self(xs: list(a)) {
     match xs {
     | Nil =>
       []
     | Cons(!x, !xs) =>
       let former =
-        for-each(shrink(!x), function (x') {
+        for-each(!shrink(!x), function (x') {
           Cons(x', !xs)
         })
       in
