@@ -1,5 +1,6 @@
 import {
   core.either.show,
+  core.list {for-each},
   core.random {random-in-range},
   this.gen {Gen, gen},
 }

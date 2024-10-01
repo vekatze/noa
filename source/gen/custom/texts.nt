@@ -3,7 +3,7 @@ import {
   core.either {from-option},
   core.foreign {UINT32_MAX},
   core.int {max-int, min-int},
-  core.list {filter},
+  core.list {filter, for-each-N},
   core.random {random-in-range},
   core.text {join, pack, unpack},
   core.text.show,

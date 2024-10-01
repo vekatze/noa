@@ -1,4 +1,5 @@
 import {
+  core.bool.show,
   core.random {random},
   this.gen {Gen, gen},
 }

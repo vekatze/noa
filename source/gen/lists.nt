@@ -1,6 +1,6 @@
 import {
   core.control {grow},
-  core.list {is-empty},
+  core.list {append, concat, for-each, is-empty, length, reverse},
   core.list.show,
   core.random {random},
   this.gen {Gen, draw, gen},

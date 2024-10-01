@@ -1,4 +1,5 @@
 import {
+  core.list {append, length, reverse},
   core.list.eq,
   core.text {pack, unpack},
   this.gen {one-of},

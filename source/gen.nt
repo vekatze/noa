@@ -1,8 +1,9 @@
 import {
   core.either.show {as-show},
-  core.list {nth},
+  core.list {length, nth},
   core.random {random-in-range},
   core.show {show},
+  core.system {panic},
   core.unit.show,
 }
 

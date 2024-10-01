@@ -1,5 +1,5 @@
 import {
-  core.list {product},
+  core.list {append, product},
   core.pair.show,
   core.random {random},
   this.gen {Gen, draw, gen},

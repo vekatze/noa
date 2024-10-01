@@ -1,5 +1,6 @@
 import {
   core.float {fabs},
+  core.float.show,
   core.list {for-each},
   core.random {random-float},
   this.gen {Gen, gen},
