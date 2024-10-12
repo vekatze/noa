@@ -130,15 +130,27 @@ inline _check(!c: config): <a>(label: &text, !g: gen(a), property: (a) -> bool) 
   }
 }
 
+inline _test(label: &text, property: () -> bool): unit {
+  if property() {
+    _print-green-bold("✔ Pass: ");
+    printf("{}\n", [*label])
+  } else {
+    _print-red-bold("✘ Fail: ");
+    printf("{}\n", [*label])
+  }
+}
+
 data trope {
 | Trope(
     check: <a>(name: &text, g: gen(a), property: (a) -> bool) -> unit,
+    test: (label: &text, property: () -> bool) -> unit,
   )
 }
 
-inline new-suite(c: config): trope {
+inline new-suite(!c: config): trope {
   Trope of {
-    check = _check(c),
+    check = _check(!c),
+    test = _test,
   }
 }
 
