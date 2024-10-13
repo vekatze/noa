@@ -1,6 +1,6 @@
 # noa
 
-`noa` is a property-based testing framework for the [Neut](https://vekatze.github.io/neut/) programming language.
+`noa` is a testing framework for the [Neut](https://vekatze.github.io/neut/) programming language.
 
 ## Installation
 
@@ -8,13 +8,133 @@
 neut get noa https://github.com/vekatze/noa/raw/main/archive/0-3-25.tar.zst
 ```
 
-## Usage
+## Types
 
-See `source/test.nt` (for now).
+### Main Definitions
+
+```neut
+// Represents a set of testing utilities.
+data trope {
+| Trope(
+    // For property-based testing.
+    check: <a>(name: &text, g: gen(a), property: (a) -> bool) -> unit,
+    // For plain testing.
+    test: (label: &text, property: () -> bool) -> unit,
+  )
+}
+
+// Represents a configuration of testing utilities.
+data config {
+| Config(
+    num-of-tests: int, // specifies the number of tests executed by `check`.
+    max-size: int, // specifies the max size of input generated in `check`.
+    verbose: bool, // specifies whether to enable verbose output.
+  )
+}
+
+// Creates a new test utilities.
+inline new-suite(!c: config): trope
+
+// A set of testing utilities.
+constant noa: trope
+
+// A set of testing utilities.
+constant noa-verbose: trope
+
+// Represents a value generator for property-based testing.
+data gen(a) {
+| Gen(
+    generate: (size-upper-bound) -> a, // creates a value of type `a`, no larger than the given size.
+    shrink: (a) -> list(a), // creates a list of values that are "smaller" than the input value.
+    viewer: show(a), // provides a way to convert values of type `a` into texts.
+  )
+}
+```
+
+### Preset Generators
+
+```neut
+constant bools: gen(bool)
+
+constant floats: gen(float)
+
+constant ints: gen(int)
+
+constant positive-ints: gen(int)
+
+constant negative-ints: gen(int)
+
+constant runes: gen(rune)
+
+constant ascii-runes: gen(rune)
+
+constant texts: gen(text)
+
+constant ascii-texts: gen(text)
+
+inline lists<a>(!g: gen(a)): gen(list(a))
+
+inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b))
+
+inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b))
+
+// Chooses a value from `xs` randomly.
+define one-of<a>(g: gen(a), xs: &list(a)): gen(a)
+
+// Generates a value of type `a` or generates `none()`
+define optional<a>(!g: gen(a)): gen(?a)
+```
+
+## Example
+
+In most cases you import `noa` and use it as follows:
+
+```neut
+define zen(): unit {
+  // A property-based test
+  noa::check(
+    "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
+    pairs(lists(ints), lists(ints)),
+    function (p) {
+      let Pair(!xs, !ys) = p in
+      let left = append(reverse(!ys), reverse(!xs)) in
+      let right = reverse(append(!xs, !ys)) in
+      let eq = core.list.eq.as-eq(core.int.eq.as-eq) in
+      eq::equal(left, right)
+    },
+  );
+  // A plain test
+  noa::test(
+    "the list `[1, 2, 3]` contains 2",
+    function () {
+      pin xs = [1, 2, 3] in
+      let result =
+        core.list.find(xs, function (y) {
+          eq-int(*y, 2)
+        })
+      in
+      match result {
+      | Left(_) =>
+        False
+      | Right(_) =>
+        True
+      }
+    },
+  )
+}
+```
 
 ## Example Outputs
 
-The tests in the file should result in something like the following:
+You can quickly try `noa` on your machine as follows:
+
+```sh
+git clone https://github.com/vekatze/noa
+cd noa
+neut build test --execute
+```
+
+This should result in something like the following:
 
 ```text
 ✔ Pass: unpack then pack is identity
@@ -26,6 +146,7 @@ The tests in the file should result in something like the following:
   → "AAAAAAAAAA"
 ✘ Fail: there is no list that contains 15 (should fail and report [15])
   → [15]
+// ...
 ```
 
 Verbose mode is also available:
@@ -60,12 +181,4 @@ Verbose mode is also available:
     ✔ Stop
 ✘ Fail: there is no list that contains 15 (should fail and report [15])
   → [15]
-```
-
-You can try it on your machine:
-
-```sh
-git clone https://github.com/vekatze/noa
-cd noa
-neut build --execute
 ```
