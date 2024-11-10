@@ -1,5 +1,5 @@
 import {
-  core.float {fabs},
+  core.float {abs-float},
   core.float.show,
   core.list {for-each},
   core.random {random-float},
@@ -11,7 +11,7 @@ constant _epsilon: float {
 }
 
 define _div-seq(k: float): list(float) {
-  if lt-float(fabs(k), _epsilon) {
+  if lt-float(abs-float(k), _epsilon) {
     []
   } else {
     Cons(k, _div-seq(div-float(k, 2)))
@@ -34,7 +34,7 @@ constant floats: gen(float) {
           })
         in
         if lt-float(x, 0) {
-          Cons(fabs(x), tmp)
+          Cons(abs-float(x), tmp)
         } else {
           tmp
         }
