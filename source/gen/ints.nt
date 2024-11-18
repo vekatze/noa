@@ -2,7 +2,7 @@ import {
   core.int {abs-int},
   core.int.show,
   core.list {for-each},
-  core.random {random-in-range},
+  core.random {random-in-range-int},
   this.gen {Gen, gen},
 }
 
@@ -18,7 +18,8 @@ constant ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
-        random-in-range(mul-int(-1, size), size)
+        let size = trunc-int-int32(size) in
+        random-in-range-int(mul-int32(-1, size), size)
       }
     },
     shrink = {
@@ -43,7 +44,7 @@ constant positive-ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
-        random-in-range(0, size)
+        random-in-range-int(0, trunc-int-int32(size))
       }
     },
     shrink = {
@@ -61,7 +62,8 @@ constant negative-ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
-        mul-int(-1, random-in-range(0, size))
+        let size = trunc-int-int32(size) in
+        mul-int(-1, random-in-range-int(0, size))
       }
     },
     shrink = {

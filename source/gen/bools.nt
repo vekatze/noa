@@ -1,6 +1,6 @@
 import {
   core.bool.show,
-  core.random {random},
+  core.random {random-int32},
   this.gen {Gen, gen},
 }
 
@@ -8,8 +8,8 @@ constant bools: gen(bool) {
   Gen of {
     generate = {
       function (_) {
-        let i = random(2) in
-        if eq-int(i, 0) {
+        let i = random-int32(2) in
+        if eq-int32(i, 0) {
           False
         } else {
           True

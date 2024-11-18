@@ -3,7 +3,7 @@ import {
   core.eq.list {from-eq, trope},
   core.list {filter},
   core.list.eq,
-  core.random {random, random-in-range},
+  core.random {random-in-range-int, random-int},
   core.rune,
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
@@ -59,25 +59,25 @@ define _random-4-byte-rune(value: int32): rune {
 }
 
 define _gen-rune(_: int): rune {
-  let rune-kind = random(4) in
+  let rune-kind = random-int(4) in
   if eq-int(rune-kind, 0) {
-    let value = trunc-int-int8(random(0x80)) in
+    let value = trunc-int-int8(random-int(0x80)) in
     _random-1-byte-rune(value)
   } else-if eq-int(rune-kind, 1) {
-    let value = trunc-int-int16(random-in-range(0x0080, 0x07ff)) in
+    let value = trunc-int-int16(random-in-range-int(0x0080, 0x07ff)) in
     _random-2-byte-rune(value)
   } else-if eq-int(rune-kind, 2) {
-    let value = trunc-int-int24(random-in-range(0x0800, 0xffff)) in
+    let value = trunc-int-int24(random-in-range-int(0x0800, 0xffff)) in
     _random-3-byte-rune(value)
   } else {
-    let value = trunc-int-int32(random-in-range(0x10000, 0x10ffff)) in
+    let value = trunc-int-int32(random-in-range-int(0x10000, 0x10ffff)) in
     _random-4-byte-rune(value)
   }
 }
 
 define gen-rune-in-range(lower: int, upper: int): rune {
   // (inclusive range)
-  let value = random-in-range(lower, upper) in
+  let value = random-in-range-int(trunc-int-int32(lower), trunc-int-int32(upper)) in
   match core.rune.from-int(value) {
   | Right(r) =>
     r

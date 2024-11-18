@@ -4,7 +4,7 @@ import {
   core.foreign {UINT32_MAX},
   core.int {max-int, min-int},
   core.list {filter, for-each-N},
-  core.random {random-in-range},
+  core.random {random-in-range-int},
   core.text {join, pack, unpack},
   core.text.show,
   this.gen {Gen, gen},
@@ -31,9 +31,10 @@ inline texts(!c: config): gen(text) {
   let !rune-gen = this.gen.custom.runes.runes(rune-config) in
   Gen of {
     generate = {
-      function (size) {
-        let max-length = from-option(!c::max-length, UINT32_MAX) in
-        let text-len = max-int(random-in-range(0, min-int(size, max-length)), !c::min-length) in
+      function (size: int) {
+        let max-length = from-option(!c::max-length, zext-int32-int(UINT32_MAX)) in
+        let text-max-len = trunc-int-int32(min-int(size, max-length)) in
+        let text-len = max-int(random-in-range-int(0, text-max-len), !c::min-length) in
         let tmp =
           grow([], text-len, function (acc, _) {
             let r = !rune-gen::generate(size) in

@@ -2,7 +2,7 @@ import {
   core.control {grow},
   core.list {append, concat, for-each, is-empty, length, reverse},
   core.list.show,
-  core.random {random},
+  core.random {random-int},
   this.gen {Gen, draw, gen},
 }
 
@@ -90,8 +90,9 @@ inline lists<a>(!g: gen(a)): gen(list(a)) {
   Gen of {
     generate = {
       function (size) {
+        let trunc-size = trunc-int-int32(size) in
         grow([], size, function (acc, _) {
-          let elem = draw(random(size), !g) in
+          let elem = draw(random-int(trunc-size), !g) in
           Cons(elem, acc)
         })
       }

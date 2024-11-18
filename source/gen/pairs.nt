@@ -1,15 +1,15 @@
 import {
   core.list {append, product},
   core.pair.show,
-  core.random {random},
+  core.random {random-int},
   this.gen {Gen, draw, gen},
 }
 
 inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
   Gen of {
     generate = {
-      function (size) {
-        let x-size = random(size) in
+      function (size: int) {
+        let x-size = random-int(trunc-int-int32(size)) in
         let y-size = sub-int(size, x-size) in
         let x = draw(x-size, !g1) in
         let y = draw(y-size, !g2) in
