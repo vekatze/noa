@@ -4,7 +4,7 @@ import {
   this.gen {Gen, gen},
 }
 
-constant bools: gen(bool) {
+inline bools: gen(bool) {
   Gen of {
     generate = {
       function (_) {

@@ -4,11 +4,11 @@ import {
   this.gen.custom.texts,
 }
 
-constant texts: gen(text) {
+inline texts: gen(text) {
   this.gen.custom.texts.texts(this.gen.custom.texts.Config of {
     min-length = 0,
-    max-length = none(),
-    rune-generator = none(),
+    max-length = none,
+    rune-generator = none,
     rune-acceptor = {
       function (_) {
         True
@@ -17,10 +17,10 @@ constant texts: gen(text) {
   })
 }
 
-constant ascii-texts: gen(text) {
+inline ascii-texts: gen(text) {
   this.gen.custom.texts.texts(this.gen.custom.texts.Config of {
     min-length = 0,
-    max-length = none(),
+    max-length = none,
     rune-generator = {
       Right(function () {
         gen-rune-in-range(0x20, 0x7e)

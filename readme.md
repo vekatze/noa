@@ -81,7 +81,7 @@ inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b))
 // Chooses a value from `xs` randomly.
 define one-of<a>(g: gen(a), xs: &list(a)): gen(a)
 
-// Generates a value of type `a` or generates `none()`
+// Generates a value of type `a` or generates `none`
 define optional<a>(!g: gen(a)): gen(?a)
 ```
 

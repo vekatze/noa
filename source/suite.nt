@@ -38,7 +38,7 @@ define _find-refutation<a>(!property: (a) -> bool, cands: list(a), !g: gen(a), v
     when verbose {
       _print-blue-bold("    ✔ Stop\n")
     };
-    none()
+    none
   | Cons(!cand, rest) =>
     if !property(!cand) {
       when verbose {
@@ -154,7 +154,7 @@ inline new-suite(!c: config): trope {
   }
 }
 
-constant noa: trope {
+inline noa: trope {
   new-suite(
     Config of {
       num-of-tests = 100,
@@ -164,7 +164,7 @@ constant noa: trope {
   )
 }
 
-constant noa-verbose: trope {
+inline noa-verbose: trope {
   new-suite(
     Config of {
       num-of-tests = 100,

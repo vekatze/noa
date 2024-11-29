@@ -86,7 +86,7 @@ define gen-rune-in-range(lower: int, upper: int): rune {
   }
 }
 
-constant _simple-runes: list(rune) {
+inline _simple-runes: list(rune) {
   [
     `b`,
     `a`,
@@ -95,7 +95,7 @@ constant _simple-runes: list(rune) {
   ]
 }
 
-constant _rune-eq-N: eq(&rune) {
+inline _rune-eq-N: eq(&rune) {
   Eq of {
     equal = {
       function (x, y) {
@@ -105,7 +105,7 @@ constant _rune-eq-N: eq(&rune) {
   }
 }
 
-constant _list-rune-ops: trope(rune) {
+inline _list-rune-ops: trope(rune) {
   from-eq(_rune-eq-N)
 }
 
@@ -137,7 +137,7 @@ data config {
   )
 }
 
-constant _list-rune-eq: core.list.eq.trope(rune) {
+inline _list-rune-eq: core.list.eq.trope(rune) {
   core.list.eq.from-eq(core.rune.eq.as-eq-N)
 }
 

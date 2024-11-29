@@ -7,7 +7,7 @@ import {
   core.unit.show,
 }
 
-constant sample-size: type {
+inline sample-size: type {
   int
 }
 
@@ -54,7 +54,7 @@ define optional<a>(!g: gen(a)): gen(?a) {
       function (size) {
         let dice = random-in-range-int(0, 1) in
         if eq-int(dice, 0) {
-          none()
+          none
         } else {
           Right({
             let Gen of {generate} = !g in

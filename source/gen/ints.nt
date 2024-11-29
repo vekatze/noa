@@ -14,7 +14,7 @@ define _div-seq(k: int): list(int) {
   }
 }
 
-constant ints: gen(int) {
+inline ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
@@ -40,7 +40,7 @@ constant ints: gen(int) {
   }
 }
 
-constant positive-ints: gen(int) {
+inline positive-ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
@@ -58,7 +58,7 @@ constant positive-ints: gen(int) {
   }
 }
 
-constant negative-ints: gen(int) {
+inline negative-ints: gen(int) {
   Gen of {
     generate = {
       function (size) {
