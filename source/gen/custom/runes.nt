@@ -79,9 +79,9 @@ define gen-rune-in-range(lower: int, upper: int): rune {
   // (inclusive range)
   let value = random-in-range-int(trunc-int-int32(lower), trunc-int-int32(upper)) in
   match core.rune.from-int(value) {
-  | Right(r) =>
+  | OK(r) =>
     r
-  | Left(_) =>
+  | Error(_) =>
     magic cast(int, rune, 0xefbfbe)
   }
 }
@@ -147,9 +147,9 @@ inline runes(!c: config): gen(rune) {
       define loop(size) {
         let cand =
           match !c::rune-generator {
-          | Right(g) =>
+          | OK(g) =>
             g()
-          | Left(_) =>
+          | Error(_) =>
             _gen-rune(size)
           }
         in

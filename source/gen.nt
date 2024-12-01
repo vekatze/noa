@@ -1,5 +1,5 @@
 import {
-  core.either.show {as-show},
+  core.except.show {as-show},
   core.list {length, nth},
   core.random {random-in-range-int},
   core.show {show},
@@ -32,9 +32,9 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
         let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1))) in
         let elem-or-none = nth(xs, index) in
         match elem-or-none {
-        | Left(_) =>
+        | Error(_) =>
           panic("one-of can't be used against the empty list")
-        | Right(elem) =>
+        | OK(elem) =>
           elem
         }
       }
@@ -56,7 +56,7 @@ define optional<a>(!g: gen(a)): gen(?a) {
         if eq-int(dice, 0) {
           none
         } else {
-          Right({
+          OK({
             let Gen of {generate} = !g in
             generate
           }(size))
