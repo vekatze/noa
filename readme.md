@@ -36,10 +36,10 @@ data config {
 inline new-suite(!c: config): trope
 
 // A set of testing utilities.
-constant noa: trope
+inline noa: trope
 
 // A set of testing utilities.
-constant noa-verbose: trope
+inline noa-verbose: trope
 
 // Represents a value generator for property-based testing.
 data gen(a) {
@@ -54,23 +54,23 @@ data gen(a) {
 ### Preset Generators
 
 ```neut
-constant bools: gen(bool)
+inline bools: gen(bool)
 
-constant floats: gen(float)
+inline floats: gen(float)
 
-constant ints: gen(int)
+inline ints: gen(int)
 
-constant positive-ints: gen(int)
+inline positive-ints: gen(int)
 
-constant negative-ints: gen(int)
+inline negative-ints: gen(int)
 
-constant runes: gen(rune)
+inline runes: gen(rune)
 
-constant ascii-runes: gen(rune)
+inline ascii-runes: gen(rune)
 
-constant texts: gen(text)
+inline texts: gen(text)
 
-constant ascii-texts: gen(text)
+inline ascii-texts: gen(text)
 
 inline lists<a>(!g: gen(a)): gen(list(a))
 
