@@ -22,7 +22,7 @@ inline ascii-texts: gen(text) {
     min-length = 0,
     max-length = none,
     rune-generator = {
-      OK(function () {
+      Right(function () {
         gen-rune-in-range(0x20, 0x7e)
       })
     },

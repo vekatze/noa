@@ -1,6 +1,6 @@
 import {
   core.control {grow},
-  core.except {from-option},
+  core.either {from-right},
   core.foreign {UINT32_MAX},
   core.int {max-int, min-int},
   core.list {filter, for-each-N},
@@ -32,7 +32,7 @@ inline texts(!c: config): gen(text) {
   Gen of {
     generate = {
       function (size: int) {
-        let max-length = from-option(!c::max-length, zext-int32-int(UINT32_MAX)) in
+        let max-length = from-right(!c::max-length, zext-int32-int(UINT32_MAX)) in
         let text-max-len = trunc-int-int32(min-int(size, max-length)) in
         let text-len = max-int(random-in-range-int(0, text-max-len), !c::min-length) in
         let tmp =
