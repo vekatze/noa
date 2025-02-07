@@ -3,7 +3,7 @@ import {
   core.list {length, nth},
   core.random {random-in-range-int},
   core.show {show},
-  core.system {panic},
+  core.trick {unsafe-panic},
   core.unit.show,
 }
 
@@ -33,7 +33,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
         let elem-or-none = nth(xs, index) in
         match elem-or-none {
         | Left(_) =>
-          panic("one-of can't be used against the empty list")
+          unsafe-panic("one-of can't be used against the empty list")
         | Right(elem) =>
           elem
         }
