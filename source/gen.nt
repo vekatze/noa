@@ -56,10 +56,8 @@ define optional<a>(!g: gen(a)): gen(?a) {
         if eq-int(dice, 0) {
           none
         } else {
-          Right({
-            let Gen of {generate} = !g in
-            generate
-          }(size))
+          let Gen of {generate} = !g in
+          Right(generate(size))
         }
       }
     },
