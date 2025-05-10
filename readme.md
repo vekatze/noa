@@ -91,20 +91,21 @@ In most cases you import `noa` and use it as follows:
 
 ```neut
 define zen(): unit {
+  let Trope of {check, test} = noa in
   // A property-based test
-  noa::check(
+  check(
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pairs(lists(ints), lists(ints)),
     function (p) {
       let Pair(!xs, !ys) = p in
       let left = append(reverse(!ys), reverse(!xs)) in
       let right = reverse(append(!xs, !ys)) in
-      let eq = core.list.eq.as-eq(core.int.eq.as-eq) in
-      eq::equal(left, right)
+      let Eq of {equal} = core.list.eq.as-eq(core.int.eq.as-eq) in
+      equal(left, right)
     },
   );
   // A plain test
-  noa::test(
+  test(
     "the list `[1, 2, 3]` contains 2",
     function () {
       pin xs = [1, 2, 3] in
