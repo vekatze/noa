@@ -9,7 +9,7 @@ import {
   this.gen.pairs {pairs},
   this.gen.runes {runes},
   this.gen.texts {ascii-texts, texts},
-  this.suite {noa, noa-verbose},
+  this.suite {Trope, noa, noa-verbose},
 }
 
 define _find-int(i: int, xs: list(int)): bool {
@@ -39,7 +39,8 @@ define _find-float(i: float, xs: list(float)): bool {
 }
 
 define zen(): unit {
-  noa::check(
+  let Trope of {check = !check} = noa in
+  !check(
     "unpack then pack is identity",
     texts,
     function (t) {
@@ -49,7 +50,7 @@ define zen(): unit {
       eq-text(t, t')
     },
   );
-  noa::check(
+  !check(
     "(length as text) == (length as list of chars)",
     texts,
     function (t) {
@@ -60,20 +61,20 @@ define zen(): unit {
       eq-int(len1, len2)
     },
   );
-  noa::check(
+  !check(
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pairs(lists(runes), lists(runes)),
     function (p) {
       let Pair(!xs, !ys) = p in
       let left = append(reverse(!ys), reverse(!xs)) in
       let right = reverse(append(!xs, !ys)) in
-      let eq = core.list.eq.as-eq(core.rune.eq.as-eq) in
-      eq::equal(left, right)
+      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq) in
+      equal(left, right)
     },
   );
   let xs = [1, 2, 3] in
   let _ on xs =
-    noa::check(
+    !check(
       "one-of (should fail)",
       one-of(ints, xs),
       function (x) {
@@ -85,7 +86,7 @@ define zen(): unit {
     )
   in
   let _ = xs in
-  noa::check(
+  !check(
     "shrinking texts (should fail)",
     texts,
     function (t) {
@@ -95,21 +96,22 @@ define zen(): unit {
     },
   );
   // use `noa-verbose` instead of `noa` to get more detailed outputs
-  noa-verbose::check(
+  let Trope of {check = !check2} = noa-verbose in
+  !check2(
     "there is no list that contains 15 (should fail and report [15])",
     lists(ints),
     function (xs) {
       not(_find-int(15, xs))
     },
   );
-  noa-verbose::check(
+  !check2(
     "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
     lists(floats),
     function (xs) {
       not(_find-float(15, xs))
     },
   );
-  noa-verbose::check(
+  !check2(
     "ascii",
     ascii-texts,
     function (_) {

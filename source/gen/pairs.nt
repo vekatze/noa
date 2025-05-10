@@ -6,6 +6,8 @@ import {
 }
 
 inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
+  let Gen of {shrink = shrink1, viewer = viewer1} = !g1 in
+  let Gen of {shrink = shrink2, viewer = viewer2} = !g2 in
   Gen of {
     generate = {
       function (size: int) {
@@ -19,13 +21,13 @@ inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
     shrink = {
       function (p) {
         let Pair(!x, !y) = p in
-        let xs = !g1::shrink(!x) in
-        let ys = !g2::shrink(!y) in
+        let xs = shrink1(!x) in
+        let ys = shrink2(!y) in
         let xys1 = product(xs, [!y]) in
         let xys2 = product([!x], ys) in
         append(xys1, xys2)
       }
     },
-    viewer = core.pair.show.as-show(!g1::viewer, !g2::viewer),
+    viewer = core.pair.show.as-show(viewer1, viewer2),
   }
 }

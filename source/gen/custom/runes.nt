@@ -1,6 +1,5 @@
 import {
-  core.eq {Eq, eq},
-  core.eq.list {from-eq, trope},
+  core.eq.list {Trope, from-eq, trope},
   core.list {filter},
   core.list.eq,
   core.random {random-in-range-int, random-int},
@@ -99,7 +98,8 @@ inline _rune-eq-N: eq(&rune) {
   Eq of {
     equal = {
       function (x, y) {
-        as-eq::equal(*x, *y)
+        let Eq of {equal} = as-eq in
+        equal(*x, *y)
       }
     },
   }
@@ -111,12 +111,16 @@ inline _list-rune-ops: trope(rune) {
 
 define _extract-candidates(c: rune): list(rune) {
   let cs = _simple-runes in
-  let is-elem on c, cs = _list-rune-ops::elem(cs, c) in
+  let is-elem on c, cs =
+    let Trope of {elem} = _list-rune-ops in
+    elem(cs, c)
+  in
   let _ = cs in
   if is-elem {
     let pred =
       function (c') {
-        match as-ord::compare(c, *c') {
+        let Ord of {compare} = as-ord in
+        match compare(c, *c') {
         | GT =>
           True
         | _ =>
@@ -142,18 +146,19 @@ inline _list-rune-eq: core.list.eq.trope(rune) {
 }
 
 inline runes(!c: config): gen(rune) {
+  let Config of {rune-generator = !generator, rune-acceptor = !acceptor} = !c in
   Gen of {
     generate = {
       define loop(size) {
         let cand =
-          match !c::rune-generator {
+          match !generator {
           | Right(g) =>
             g()
           | Left(_) =>
             _gen-rune(size)
           }
         in
-        if !c::rune-acceptor(cand) {
+        if !acceptor(cand) {
           cand
         } else {
           loop(size)
@@ -164,7 +169,7 @@ inline runes(!c: config): gen(rune) {
       function (v) {
         let cands = _extract-candidates(v) in
         filter(cands, function (cand) {
-          !c::rune-acceptor(*cand)
+          !acceptor(*cand)
         })
       }
     },

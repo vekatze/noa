@@ -81,12 +81,14 @@ inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
         _removes(k, n, !xs)
       })
     in
-    let yss = _shrink-one(g::shrink)(!xs) in
+    let Gen of {shrink} = g in
+    let yss = _shrink-one(shrink)(!xs) in
     append(concat(xsss), yss)
   }
 }
 
 inline lists<a>(!g: gen(a)): gen(list(a)) {
+  let Gen of {viewer} = !g in
   Gen of {
     generate = {
       function (size) {
@@ -98,6 +100,6 @@ inline lists<a>(!g: gen(a)): gen(list(a)) {
       }
     },
     shrink = _shrink-list(!g),
-    viewer = core.list.show.as-show(!g::viewer),
+    viewer = core.list.show.as-show(viewer),
   }
 }

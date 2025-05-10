@@ -22,22 +22,24 @@ data config {
 }
 
 inline texts(!c: config): gen(text) {
+  let Config of {rune-generator, rune-acceptor, max-length, min-length} = !c in
   let rune-config =
     this.gen.custom.runes.Config of {
-      rune-generator = !c::rune-generator,
-      rune-acceptor = !c::rune-acceptor,
+      rune-generator,
+      rune-acceptor,
     }
   in
   let !rune-gen = this.gen.custom.runes.runes(rune-config) in
+  let Gen of {generate} = !rune-gen in
   Gen of {
     generate = {
       function (size: int) {
-        let max-length = from-right(!c::max-length, zext-int32-int(UINT32_MAX)) in
+        let max-length = from-right(max-length, zext-int32-int(UINT32_MAX)) in
         let text-max-len = trunc-int-int32(min-int(size, max-length)) in
-        let text-len = max-int(random-in-range-int(0, text-max-len), !c::min-length) in
+        let text-len = max-int(random-in-range-int(0, text-max-len), min-length) in
         let tmp =
           grow([], text-len, function (acc, _) {
-            let r = !rune-gen::generate(size) in
+            let r = generate(size) in
             Cons(core.text.singleton(r), acc)
           })
         in
@@ -52,7 +54,7 @@ inline texts(!c: config): gen(text) {
         let result = for-each-N(rune-lists, pack) in
         filter(result, function (t) {
           let len = core.text.length(t) in
-          ge-int(len, !c::min-length)
+          ge-int(len, min-length)
         })
       }
     },

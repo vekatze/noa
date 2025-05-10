@@ -20,11 +20,12 @@ data gen(a) {
 }
 
 define draw<a>(s: sample-size, g: gen(a)): a {
-  use g {generate} in
+  let Gen of {generate} = g in
   generate(s)
 }
 
 define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
+  let Gen of {viewer} = g in
   Gen of {
     generate = {
       function (_) {
@@ -44,7 +45,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
         []
       }
     },
-    viewer = g::viewer,
+    viewer,
   }
 }
 

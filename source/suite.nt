@@ -1,6 +1,7 @@
 import {
+  core.show {Show},
   core.text {replace},
-  this.gen {draw, gen},
+  this.gen {Gen, draw, gen},
   this.utils {_print-blue-bold, _print-green-bold, _print-red-bold, _printf-red-bold},
 }
 
@@ -13,7 +14,7 @@ data config {
 }
 
 define _compute-size(c: config, iteration: int): int {
-  use c {num-of-tests, max-size} in
+  let Config of {num-of-tests, max-size} = c in
   let max-size' = sitofp-int-float(max-size) in
   let iteration' = sitofp-int-float(iteration) in
   let num-of-tests' = sitofp-int-float(num-of-tests) in
@@ -33,6 +34,8 @@ data _result(a) {
 }
 
 define _find-refutation<a>(!property: (a) -> bool, cands: list(a), !g: gen(a), verbose: bool): ?a {
+  let Gen of {viewer} = !g in
+  let Show of {show = !show} = viewer in
   match cands {
   | Nil =>
     when verbose {
@@ -43,13 +46,13 @@ define _find-refutation<a>(!property: (a) -> bool, cands: list(a), !g: gen(a), v
     if !property(!cand) {
       when verbose {
         _print-blue-bold("      ✔ ");
-        printf("{}\n", [!g::viewer::show(!cand)])
+        printf("{}\n", [!show(!cand)])
       };
       _find-refutation(!property, rest, !g, verbose)
     } else {
       when verbose {
         _print-red-bold("      ✘ ");
-        _printf-red-bold("{}\n", [!g::viewer::show(!cand)])
+        _printf-red-bold("{}\n", [!show(!cand)])
       };
       Right(!cand)
     }
@@ -57,7 +60,8 @@ define _find-refutation<a>(!property: (a) -> bool, cands: list(a), !g: gen(a), v
 }
 
 define _repeat-shrink<a>(!cand: a, !property: (a) -> bool, !g: gen(a), verbose: bool): a {
-  let alts = !g::shrink(!cand) in
+  let Gen of {shrink} = !g in
+  let alts = shrink(!cand) in
   match _find-refutation(!property, alts, !g, verbose) {
   | Left(_) =>
     !cand
@@ -90,27 +94,29 @@ inline _run-tests<a>(num-of-tests: int, !f: (int) -> _result(a)): either(pair(in
 
 inline _check(!c: config): <a>(label: &text, !g: gen(a), property: (a) -> bool) -> unit {
   function <a>(label: &text, !g: gen(a), !property: (a) -> bool): unit {
-    use !g {viewer} in
+    let Gen of {viewer} = !g in
+    let Show of {show = !show} = viewer in
+    let Config of {verbose, num-of-tests} = !c in
     let result =
-      when !c::verbose {
+      when verbose {
         _print-blue-bold("? Check: ");
         printf("{}\n", [*label])
       };
-      _run-tests(!c::num-of-tests, function (i) {
+      _run-tests(num-of-tests, function (i) {
         let size = _compute-size(!c, i) in
         let !value = draw(size, !g) in
         if !property(!value) {
-          when !c::verbose {
+          when verbose {
             _print-blue-bold("  ✔ ");
-            printf("{}\n", [!g::viewer::show(!value)])
+            printf("{}\n", [!show(!value)])
           };
           _OK
         } else {
-          when !c::verbose {
+          when verbose {
             _print-red-bold("  ✘ ");
-            _printf-red-bold("{}\n", [!g::viewer::show(!value)])
+            _printf-red-bold("{}\n", [!show(!value)])
           };
-          _Failure(i, !value, !property, !g, !c::verbose)
+          _Failure(i, !value, !property, !g, verbose)
         }
       })
     in
@@ -122,7 +128,7 @@ inline _check(!c: config): <a>(label: &text, !g: gen(a), property: (a) -> bool) 
       _print-red-bold("✘ Fail: ");
       printf("{}\n", [*label]);
       _print-red-bold("  → ");
-      let txt = viewer::show(counterexample) in
+      let txt = !show(counterexample) in
       let txt' on txt = replace(txt, "\n", *"\n    ") in
       let _ = txt in
       _printf-red-bold("{}\n", [txt'])
