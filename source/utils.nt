@@ -1,46 +1,53 @@
 import {
-  ansi.color {Blue, Green, Red, set-foreground-color},
-  ansi.style {Bold, Normal, set-style},
+  ansi.rule.color-ansi {Blue, Green, Red},
+  ansi.rule.style {Bold, Normal},
+  this.rule.noa-kit {noa-kit},
 }
 
-define _print-blue-bold(t: &text): unit {
-  set-foreground-color(Blue);
-  set-style(Bold);
-  print(t);
-  set-style(Normal)
+define _print-blue-bold(k: &noa-kit, t: &text): unit {
+  admit
+  // set-foreground-color(Blue);
+  // set-style(Bold);
+  // print(t);
+  // set-style(Normal)
 }
 
-define _printf-blue-bold(t: &text, args: list(text)): unit {
-  set-foreground-color(Blue);
-  set-style(Bold);
-  printf(t, args);
-  set-style(Normal)
+define _printf-blue-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  admit
+  // set-foreground-color(Blue);
+  // set-style(Bold);
+  // printf(t, args);
+  // set-style(Normal)
 }
 
-define _print-red-bold(t: &text): unit {
-  set-foreground-color(Red);
-  set-style(Bold);
-  print(t);
-  set-style(Normal)
+define _print-red-bold(k: &noa-kit, t: &text): unit {
+  admit
+  // set-foreground-color(Red);
+  // set-style(Bold);
+  // print(t);
+  // set-style(Normal)
 }
 
-define _printf-red-bold(t: &text, args: list(text)): unit {
-  set-foreground-color(Red);
-  set-style(Bold);
-  printf(t, args);
-  set-style(Normal)
+define _printf-red-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  admit
+  // set-foreground-color(Red);
+  // set-style(Bold);
+  // printf(t, args);
+  // set-style(Normal)
 }
 
-define _print-green-bold(t: &text): unit {
-  set-foreground-color(Green);
-  set-style(Bold);
-  print(t);
-  set-style(Normal)
+define _print-green-bold(k: &noa-kit, t: &text): unit {
+  admit
+  // set-foreground-color(Green);
+  // set-style(Bold);
+  // print(t);
+  // set-style(Normal)
 }
 
-define _printf-green-bold(t: &text, args: list(text)): unit {
-  set-foreground-color(Green);
-  set-style(Bold);
-  printf(t, args);
-  set-style(Normal)
+define _printf-green-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  admit
+  // set-foreground-color(Green);
+  // set-style(Bold);
+  // printf(t, args);
+  // set-style(Normal)
 }

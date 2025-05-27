@@ -1,0 +1,119 @@
+import {
+  core.show {Show},
+  core.text {replace},
+  this.rule.gen {Gen, draw, gen},
+  this.rule.noa-kit {_Noa-Kit, _compute-size, noa-kit},
+  this.utils {_print-blue-bold, _print-green-bold, _print-red-bold, _printf-red-bold},
+}
+
+data _result(a) {
+| _OK
+| _Failure(
+    iteration: int,
+    value: a,
+    predicate: (a) -> bool,
+    g: gen(a),
+    verbose: bool,
+  )
+}
+
+define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a), !g: gen(a)): ?a {
+  let Gen of {viewer} = !g in
+  let Show of {show = !show} = viewer in
+  tie _Noa-Kit of {verbose} = k in
+  match cands {
+  | Nil =>
+    when *verbose {
+      _print-blue-bold(k, "    ✔ Stop\n")
+    };
+    none
+  | Cons(!cand, rest) =>
+    if !predicate(!cand) {
+      when *verbose {
+        _print-blue-bold(k, "      ✔ ");
+        printf("{}\n", [!show(!cand)])
+      };
+      _find-refutation(k, !predicate, rest, !g)
+    } else {
+      when *verbose {
+        _print-red-bold(k, "      ✘ ");
+        _printf-red-bold(k, "{}\n", [!show(!cand)])
+      };
+      Right(!cand)
+    }
+  }
+}
+
+define _repeat-shrink<a>(k: &noa-kit, !cand: a, !predicate: (a) -> bool, !g: gen(a)): a {
+  let Gen of {shrink} = !g in
+  let alts = shrink(!cand) in
+  match _find-refutation(k, !predicate, alts, !g) {
+  | Left(_) =>
+    !cand
+  | Right(smaller-cand) =>
+    _repeat-shrink(k, smaller-cand, !predicate, !g)
+  }
+}
+
+inline _run-tests<a>(k: &noa-kit, num-of-tests: int, !f: (int) -> _result(a)): either(pair(int, a), unit) {
+  let helper =
+    define self(iteration: int): either(pair(int, a), unit) {
+      if ge-int(iteration, num-of-tests) {
+        Right(Unit)
+      } else {
+        match !f(iteration) {
+        | _OK =>
+          self(add-int(iteration, 1))
+        | _Failure of {iteration, value, predicate, g, verbose} =>
+          when verbose {
+            _print-blue-bold(k, "    ↻ Shrink:\n")
+          };
+          let value' = _repeat-shrink(k, value, predicate, g) in
+          Left(Pair(iteration, value'))
+        }
+      }
+    }
+  in
+  helper(0)
+}
+
+define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit {
+  let Gen of {viewer} = !g in
+  let Show of {show = !show} = viewer in
+  tie _Noa-Kit of {verbose, num-of-tests} = k in
+  let result =
+    when *verbose {
+      _print-blue-bold(k, "? Check: ");
+      printf("{}\n", [*label])
+    };
+    _run-tests(k, *num-of-tests, function (i) {
+      let size = _compute-size(k, i) in
+      let !value = draw(size, !g) in
+      if !predicate(!value) {
+        when *verbose {
+          _print-blue-bold(k, "  ✔ ");
+          printf("{}\n", [!show(!value)])
+        };
+        _OK
+      } else {
+        when *verbose {
+          _print-red-bold(k, "  ✘ ");
+          _printf-red-bold(k, "{}\n", [!show(!value)])
+        };
+        _Failure(i, !value, !predicate, !g, *verbose)
+      }
+    })
+  in
+  match result {
+  | Right(Unit) =>
+    _print-green-bold(k, "✔ Pass: ");
+    printf("{}\n", [*label])
+  | Left(Pair(_, counterexample)) =>
+    _print-red-bold(k, "✘ Fail: ");
+    printf("{}\n", [*label]);
+    _print-red-bold(k, "  → ");
+    pin txt = !show(counterexample) in
+    let txt' = replace(txt, "\n", *"\n    ") in
+    _printf-red-bold(k, "{}\n", [txt'])
+  }
+}

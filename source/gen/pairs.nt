@@ -2,7 +2,7 @@ import {
   core.list {append, product},
   core.pair.show,
   core.random {random-int},
-  this.gen {Gen, draw, gen},
+  this.rule.gen {Gen, draw, gen},
 }
 
 inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {

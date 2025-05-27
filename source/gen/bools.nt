@@ -1,7 +1,7 @@
 import {
   core.bool.show,
   core.random {random-int32},
-  this.gen {Gen, gen},
+  this.rule.gen {Gen, gen},
 }
 
 inline bools: gen(bool) {

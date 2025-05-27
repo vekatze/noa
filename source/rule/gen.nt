@@ -3,7 +3,6 @@ import {
   core.list {length, nth},
   core.random {random-in-range-int},
   core.show {show},
-  core.trick {unsafe-panic},
   core.unit.show,
 }
 
@@ -24,7 +23,7 @@ define draw<a>(s: sample-size, g: gen(a)): a {
   generate(s)
 }
 
-define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
+define one-of<a>(g: gen(a), xs: &list(a), x: &a): gen(a) {
   let Gen of {viewer} = g in
   Gen of {
     generate = {
@@ -34,7 +33,7 @@ define one-of<a>(g: gen(a), xs: &list(a)): gen(a) {
         let elem-or-none = nth(xs, index) in
         match elem-or-none {
         | Left(_) =>
-          unsafe-panic("one-of can't be used against the empty list")
+          *x
         | Right(elem) =>
           elem
         }
@@ -68,8 +67,8 @@ define optional<a>(!g: gen(a)): gen(?a) {
       }
     },
     viewer = {
-      as-show(core.unit.show.as-show, let Gen of {viewer} = !g in
-      viewer)
+      let Gen of {viewer} = !g in
+      as-show(core.unit.show.as-show, viewer)
     },
   }
 }

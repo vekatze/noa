@@ -3,7 +3,7 @@ import {
   core.list {append, concat, for-each, is-empty, length, reverse},
   core.list.show,
   core.random {random-int},
-  this.gen {Gen, draw, gen},
+  this.rule.gen {Gen, draw, gen},
 }
 
 inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {

@@ -1,6 +1,6 @@
 import {
-  this.gen {gen},
   this.gen.custom.runes {gen-rune-in-range},
+  this.rule.gen {gen},
 }
 
 inline runes: gen(rune) {

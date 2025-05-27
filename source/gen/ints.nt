@@ -3,7 +3,7 @@ import {
   core.int.show,
   core.list {for-each},
   core.random {random-in-range-int},
-  this.gen {Gen, gen},
+  this.rule.gen {Gen, gen},
 }
 
 define _div-seq(k: int): list(int) {

@@ -1,0 +1,15 @@
+import {
+  this.rule.noa-kit {noa-kit},
+}
+
+define make-noa-kit(num-of-tests: int, max-size: int, verbose: bool): noa-kit {
+  admit
+}
+
+define make-default-noa-kit(): noa-kit {
+  admit
+}
+
+define make-verbose-noa-kit(): noa-kit {
+  admit
+}

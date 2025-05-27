@@ -7,9 +7,9 @@ import {
   core.random {random-in-range-int},
   core.text {join, pack, unpack},
   core.text.show,
-  this.gen {Gen, gen},
   this.gen.custom.runes,
   this.gen.lists {_shrink-list},
+  this.rule.gen {Gen, gen},
 }
 
 data config {

@@ -3,7 +3,7 @@ import {
   core.float.show,
   core.list {for-each},
   core.random {random-float},
-  this.gen {Gen, gen},
+  this.rule.gen {Gen, gen},
 }
 
 inline _epsilon: float {

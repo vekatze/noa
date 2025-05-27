@@ -1,7 +1,7 @@
 import {
-  this.gen {gen},
   this.gen.custom.runes {gen-rune-in-range},
   this.gen.custom.texts,
+  this.rule.gen {gen},
 }
 
 inline texts: gen(text) {

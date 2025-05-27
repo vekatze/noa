@@ -1,9 +1,8 @@
 import {
-  core.either {Left, Right, either},
   core.either.show,
   core.list {for-each},
   core.random {random-in-range-int},
-  this.gen {Gen, gen},
+  this.rule.gen {Gen, gen},
 }
 
 inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
