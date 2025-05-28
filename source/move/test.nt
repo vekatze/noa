@@ -1,5 +1,5 @@
 import {
-  this.move.private.utils {_print-green-bold, _print-red-bold, _writef},
+  this.move.private.utils {_flush, _print-green-bold, _print-red-bold, _writef},
   this.rule.noa-kit {noa-kit},
 }
 
@@ -10,5 +10,6 @@ define test(k: &noa-kit, label: &text, property: () -> bool): unit {
   } else {
     _print-red-bold(k, "✘ Fail: ");
     _writef(k, "{}\n", [*label])
-  }
+  };
+  _flush(k)
 }

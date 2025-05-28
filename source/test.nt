@@ -11,6 +11,7 @@ import {
   this.move.gen.rune {rune-gen},
   this.move.gen.text {ascii-text-gen, text-gen},
   this.move.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
+  this.move.test {test},
 }
 
 define _find-int(i: int, xs: list(int)): bool {
@@ -124,7 +125,24 @@ define zen(): unit {
       True
     },
   );
-  Unit
+  test(
+    k,
+    "the list `[1, 2, 3]` contains 2",
+    function () {
+      pin xs = [1, 2, 3] in
+      let result =
+        core.list.find(xs, function (y) {
+          eq-int(*y, 2)
+        })
+      in
+      match result {
+      | Left(_) =>
+        False
+      | Right(_) =>
+        True
+      }
+    },
+  )
 }
 
 define main(): unit {
