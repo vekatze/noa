@@ -2,15 +2,15 @@ import {
   core.list {append, length, reverse},
   core.list.eq,
   core.text {pack, unpack},
-  this.move.gen.floats {floats},
-  this.move.gen.ints {ints},
-  this.move.gen.lists {lists},
-  this.move.gen.pairs {pairs},
-  this.move.gen.runes {runes},
-  this.move.gen.texts {ascii-texts, texts},
-  // this.suite {Trope, noa, noa-verbose},
-  this.move.make-noa-kit {make-default-noa-kit, make-noa-kit},
-  this.rule.gen {one-of},
+  this.move.check {check},
+  this.move.gen.float {float-gen},
+  this.move.gen.int {int-gen},
+  this.move.gen.list {list-gen},
+  this.move.gen.one-of {one-of},
+  this.move.gen.pair {pair-gen},
+  this.move.gen.rune {rune-gen},
+  this.move.gen.text {ascii-text-gen, text-gen},
+  this.move.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
 }
 
 define _find-int(i: int, xs: list(int)): bool {
@@ -41,86 +41,90 @@ define _find-float(i: float, xs: list(float)): bool {
 
 define zen(): unit {
   pin k = make-default-noa-kit() in
-  // let Trope of {check = !check} = noa in
+  check(
+    k,
+    "unpack then pack is identity",
+    text-gen,
+    function (t) {
+      pin t = t in
+      pin xs = unpack(t) in
+      pin t' = pack(xs) in
+      eq-text(t, t')
+    },
+  );
+  check(
+    k,
+    "(length as text) == (length as list of chars)",
+    text-gen,
+    function (t) {
+      pin t = t in
+      pin xs = unpack(t) in
+      let len1 = core.text.length(t) in
+      let len2 = length(xs) in
+      eq-int(len1, len2)
+    },
+  );
+  check(
+    k,
+    "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
+    pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
+    function (p) {
+      let Pair(!xs, !ys) = p in
+      let left = append(reverse(!ys), reverse(!xs)) in
+      let right = reverse(append(!xs, !ys)) in
+      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq) in
+      equal(left, right)
+    },
+  );
+  pin xs = [1, 2, 3] in
+  pin x = 4 in
+  check(
+    k,
+    "one-of (should fail)",
+    one-of(int-gen, xs, x),
+    function (x) {
+      let b1 = eq-int(x, 1) in
+      let b2 = eq-int(x, 3) in
+      let b3 = eq-int(x, 3) in
+      or(b1, or(b2, b3))
+    },
+  );
+  check(
+    k,
+    "shrinking texts (should fail)",
+    text-gen,
+    function (t) {
+      let len on t = core.text.length(t) in
+      let _ = t in
+      lt-int(len, 10)
+    },
+  );
+  pin k = make-verbose-noa-kit() in
+  check(
+    k,
+    "there is no list that contains 15 (should fail and report [15])",
+    list-gen(int-gen),
+    function (xs) {
+      not(_find-int(15, xs))
+    },
+  );
+  check(
+    k,
+    "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
+    list-gen(float-gen),
+    function (xs) {
+      not(_find-float(15, xs))
+    },
+  );
+  check(
+    k,
+    "ascii",
+    ascii-text-gen,
+    function (_) {
+      True
+    },
+  );
   Unit
-  // !check(
-  //   "unpack then pack is identity",
-  //   texts,
-  //   function (t) {
-  //     pin t = t in
-  //     pin xs = unpack(t) in
-  //     pin t' = pack(xs) in
-  //     eq-text(t, t')
-  //   },
-  // );
-  // !check(
-  //   "(length as text) == (length as list of chars)",
-  //   texts,
-  //   function (t) {
-  //     pin t = t in
-  //     pin xs = unpack(t) in
-  //     let len1 = core.text.length(t) in
-  //     let len2 = length(xs) in
-  //     eq-int(len1, len2)
-  //   },
-  // );
-  // !check(
-  //   "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
-  //   pairs(lists(runes), lists(runes)),
-  //   function (p) {
-  //     let Pair(!xs, !ys) = p in
-  //     let left = append(reverse(!ys), reverse(!xs)) in
-  //     let right = reverse(append(!xs, !ys)) in
-  //     let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq) in
-  //     equal(left, right)
-  //   },
-  // );
-  // let xs = [1, 2, 3] in
-  // let _ on xs =
-  //   !check(
-  //     "one-of (should fail)",
-  //     one-of(ints, xs),
-  //     function (x) {
-  //       let b1 = eq-int(x, 1) in
-  //       let b2 = eq-int(x, 3) in
-  //       let b3 = eq-int(x, 3) in
-  //       or(b1, or(b2, b3))
-  //     },
-  //   )
-  // in
-  // let _ = xs in
-  // !check(
-  //   "shrinking texts (should fail)",
-  //   texts,
-  //   function (t) {
-  //     let len on t = core.text.length(t) in
-  //     let _ = t in
-  //     lt-int(len, 10)
-  //   },
-  // );
-  // // use `noa-verbose` instead of `noa` to get more detailed outputs
-  // let Trope of {check = !check2} = noa-verbose in
-  // !check2(
-  //   "there is no list that contains 15 (should fail and report [15])",
-  //   lists(ints),
-  //   function (xs) {
-  //     not(_find-int(15, xs))
-  //   },
-  // );
-  // !check2(
-  //   "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
-  //   lists(floats),
-  //   function (xs) {
-  //     not(_find-float(15, xs))
-  //   },
-  // );
-  // !check2(
-  //   "ascii",
-  //   ascii-texts,
-  //   function (_) {
-  //     True
-  //   },
-  // )
 }
 
 define main(): unit {

@@ -7,8 +7,8 @@ import {
   core.random {random-in-range-int},
   core.text {join, pack, unpack},
   core.text.show,
-  this.move.gen.custom.runes,
-  this.move.gen.lists {_shrink-list},
+  this.move.gen.custom.rune,
+  this.move.gen.list {_shrink-list},
   this.rule.gen {Gen, gen},
 }
 
@@ -21,15 +21,15 @@ data config {
   )
 }
 
-inline texts(!c: config): gen(text) {
+inline text-gen(!c: config): gen(text) {
   let Config of {rune-generator, rune-acceptor, max-length, min-length} = !c in
   let rune-config =
-    this.move.gen.custom.runes.Config of {
+    this.move.gen.custom.rune.Config of {
       rune-generator,
       rune-acceptor,
     }
   in
-  let !rune-gen = this.move.gen.custom.runes.runes(rune-config) in
+  let !rune-gen = this.move.gen.custom.rune.rune-gen(rune-config) in
   let Gen of {generate} = !rune-gen in
   Gen of {
     generate = {

@@ -1,15 +1,41 @@
 import {
-  this.rule.noa-kit {noa-kit},
+  ansi.move.make-ansi-kit {make-ansi-kit},
+  core.file.descriptor {descriptor, stdout},
+  this.rule.noa-kit {_Noa-Kit, noa-kit},
 }
 
-define make-noa-kit(num-of-tests: int, max-size: int, verbose: bool): noa-kit {
-  admit
+define make-noa-kit(
+  sink: descriptor,
+  buffer-capacity: int,
+  num-of-tests: int,
+  max-size: int,
+  verbose: bool,
+): noa-kit {
+  let ansi-kit = make-ansi-kit(sink, buffer-capacity) in
+  _Noa-Kit(
+    ansi-kit,
+    num-of-tests,
+    max-size,
+    verbose,
+  )
 }
 
 define make-default-noa-kit(): noa-kit {
-  admit
+  let ansi-kit = make-ansi-kit(stdout, 4096) in
+  _Noa-Kit of {
+    ansi-kit,
+    num-of-tests = 100,
+    max-size = 100,
+    verbose = False,
+  }
 }
 
 define make-verbose-noa-kit(): noa-kit {
-  admit
+  let ansi-kit = make-ansi-kit(stdout, 4096) in
+  _Noa-Kit of {
+    ansi-kit,
+    num-of-tests = 100,
+    max-size = 100,
+    verbose = True,
+  }
 }

@@ -1,0 +1,30 @@
+import {
+  core.list {length, nth},
+  core.random {random-in-range-int},
+  this.rule.gen {Gen, gen},
+}
+
+define one-of<a>(g: gen(a), xs: &list(a), x: &a): gen(a) {
+  let Gen of {viewer} = g in
+  Gen of {
+    generate = {
+      function (_) {
+        let len = length(xs) in
+        let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1))) in
+        let elem-or-none = nth(xs, index) in
+        match elem-or-none {
+        | Left(_) =>
+          *x
+        | Right(elem) =>
+          elem
+        }
+      }
+    },
+    shrink = {
+      function (_) {
+        []
+      }
+    },
+    viewer,
+  }
+}

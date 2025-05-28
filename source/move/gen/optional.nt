@@ -1,0 +1,31 @@
+import {
+  core.either.show {as-show},
+  core.random {random-in-range-int},
+  core.unit.show,
+  this.rule.gen {Gen, gen},
+}
+
+define optional<a>(!g: gen(a)): gen(?a) {
+  Gen of {
+    generate = {
+      function (size) {
+        let dice = random-in-range-int(0, 1) in
+        if eq-int(dice, 0) {
+          none
+        } else {
+          let Gen of {generate} = !g in
+          Right(generate(size))
+        }
+      }
+    },
+    shrink = {
+      function (_) {
+        []
+      }
+    },
+    viewer = {
+      let Gen of {viewer} = !g in
+      as-show(core.unit.show.as-show, viewer)
+    },
+  }
+}

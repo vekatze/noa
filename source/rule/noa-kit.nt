@@ -19,3 +19,7 @@ define _compute-size(k: &noa-kit, iteration: int): int {
   let size = mul-float(max-size', div-float(iteration', num-of-tests')) in
   fptosi-float-int(size)
 }
+
+define do-nothing(_: &text): unit {
+  Unit
+}

@@ -1,11 +1,11 @@
 import {
-  this.move.gen.custom.runes {gen-rune-in-range},
-  this.move.gen.custom.texts,
+  this.move.gen.custom.rune {gen-rune-in-range},
+  this.move.gen.custom.text,
   this.rule.gen {gen},
 }
 
-inline texts: gen(text) {
-  this.move.gen.custom.texts.texts(this.move.gen.custom.texts.Config of {
+inline text-gen: gen(text) {
+  this.move.gen.custom.text.text-gen(this.move.gen.custom.text.Config of {
     min-length = 0,
     max-length = none,
     rune-generator = none,
@@ -17,8 +17,8 @@ inline texts: gen(text) {
   })
 }
 
-inline ascii-texts: gen(text) {
-  this.move.gen.custom.texts.texts(this.move.gen.custom.texts.Config of {
+inline ascii-text-gen: gen(text) {
+  this.move.gen.custom.text.text-gen(this.move.gen.custom.text.Config of {
     min-length = 0,
     max-length = none,
     rune-generator = {

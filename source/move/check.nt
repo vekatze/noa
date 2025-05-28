@@ -1,9 +1,9 @@
 import {
   core.show {Show},
   core.text {replace},
+  this.move.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _printf-red-bold, _writef},
   this.rule.gen {Gen, draw, gen},
   this.rule.noa-kit {_Noa-Kit, _compute-size, noa-kit},
-  this.utils {_print-blue-bold, _print-green-bold, _print-red-bold, _printf-red-bold},
 }
 
 data _result(a) {
@@ -31,7 +31,7 @@ define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a),
     if !predicate(!cand) {
       when *verbose {
         _print-blue-bold(k, "      ✔ ");
-        printf("{}\n", [!show(!cand)])
+        _writef(k, "{}\n", [!show(!cand)])
       };
       _find-refutation(k, !predicate, rest, !g)
     } else {
@@ -84,7 +84,7 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
   let result =
     when *verbose {
       _print-blue-bold(k, "? Check: ");
-      printf("{}\n", [*label])
+      _writef(k, "{}\n", [*label])
     };
     _run-tests(k, *num-of-tests, function (i) {
       let size = _compute-size(k, i) in
@@ -92,7 +92,7 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
       if !predicate(!value) {
         when *verbose {
           _print-blue-bold(k, "  ✔ ");
-          printf("{}\n", [!show(!value)])
+          _writef(k, "{}\n", [!show(!value)])
         };
         _OK
       } else {
@@ -107,13 +107,14 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
   match result {
   | Right(Unit) =>
     _print-green-bold(k, "✔ Pass: ");
-    printf("{}\n", [*label])
+    _writef(k, "{}\n", [*label])
   | Left(Pair(_, counterexample)) =>
     _print-red-bold(k, "✘ Fail: ");
-    printf("{}\n", [*label]);
+    _writef(k, "{}\n", [*label]);
     _print-red-bold(k, "  → ");
     pin txt = !show(counterexample) in
     let txt' = replace(txt, "\n", *"\n    ") in
     _printf-red-bold(k, "{}\n", [txt'])
-  }
+  };
+  _flush(k)
 }

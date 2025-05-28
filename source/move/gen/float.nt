@@ -18,7 +18,7 @@ define _div-seq(k: float): list(float) {
   }
 }
 
-inline floats: gen(float) {
+inline float-gen: gen(float) {
   Gen of {
     generate = {
       function (size) {

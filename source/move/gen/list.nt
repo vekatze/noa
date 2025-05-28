@@ -87,7 +87,7 @@ inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
   }
 }
 
-inline lists<a>(!g: gen(a)): gen(list(a)) {
+inline list-gen<a>(!g: gen(a)): gen(list(a)) {
   let Gen of {viewer} = !g in
   Gen of {
     generate = {

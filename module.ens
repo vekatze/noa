@@ -6,6 +6,9 @@
         "-fsanitize=address",
       ],
     },
+    test2 {
+      main "test.nt",
+    },
   },
   dependency {
     core {

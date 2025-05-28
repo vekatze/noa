@@ -4,7 +4,7 @@ import {
   this.rule.gen {Gen, gen},
 }
 
-inline bools: gen(bool) {
+inline bool-gen: gen(bool) {
   Gen of {
     generate = {
       function (_) {

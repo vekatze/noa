@@ -1,10 +1,10 @@
 import {
-  this.move.gen.custom.runes {gen-rune-in-range},
+  this.move.gen.custom.rune {gen-rune-in-range},
   this.rule.gen {gen},
 }
 
-inline runes: gen(rune) {
-  this.move.gen.custom.runes.runes(this.move.gen.custom.runes.Config of {
+inline rune-gen: gen(rune) {
+  this.move.gen.custom.rune.rune-gen(this.move.gen.custom.rune.Config of {
     rune-generator = none,
     rune-acceptor = {
       function (_) {
@@ -14,8 +14,8 @@ inline runes: gen(rune) {
   })
 }
 
-inline ascii-runes: gen(rune) {
-  this.move.gen.custom.runes.runes(this.move.gen.custom.runes.Config of {
+define ascii-rune-gen: gen(rune) {
+  this.move.gen.custom.rune.rune-gen(this.move.gen.custom.rune.Config of {
     rune-generator = {
       Right(function () {
         gen-rune-in-range(0x20, 0x7e)

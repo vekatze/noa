@@ -1,0 +1,69 @@
+import {
+  ansi.move.flush {flush},
+  ansi.move.write {write, write-code, writef},
+  ansi.rule.color {Color-16},
+  ansi.rule.color-ansi {Blue, Green, Red},
+  ansi.rule.color-intensity {Vivid},
+  ansi.rule.color-layer {Foreground},
+  ansi.rule.command {Set-Style},
+  ansi.rule.style {Bold, Color, Normal},
+  this.rule.noa-kit {_Noa-Kit, noa-kit},
+}
+
+define _print-blue-bold(k: &noa-kit, t: &text): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
+  write-code(ansi-kit, Set-Style(Bold));
+  write(ansi-kit, t);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _printf-blue-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
+  write-code(ansi-kit, Set-Style(Bold));
+  writef(ansi-kit, t, args);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _print-red-bold(k: &noa-kit, t: &text): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
+  write-code(ansi-kit, Set-Style(Bold));
+  write(ansi-kit, t);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _printf-red-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
+  write-code(ansi-kit, Set-Style(Bold));
+  writef(ansi-kit, t, args);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _print-green-bold(k: &noa-kit, t: &text): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
+  write-code(ansi-kit, Set-Style(Bold));
+  write(ansi-kit, t);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _printf-green-bold(k: &noa-kit, t: &text, args: list(text)): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
+  write-code(ansi-kit, Set-Style(Bold));
+  writef(ansi-kit, t, args);
+  write-code(ansi-kit, Set-Style(Normal))
+}
+
+define _writef(k: &noa-kit, t: &text, args: list(text)): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  writef(ansi-kit, t, args)
+}
+
+define _flush(k: &noa-kit): unit {
+  tie _Noa-Kit of {ansi-kit} = k in
+  flush(ansi-kit)
+}

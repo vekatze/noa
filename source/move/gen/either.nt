@@ -5,7 +5,7 @@ import {
   this.rule.gen {Gen, gen},
 }
 
-inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
+inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
   let Gen(generate1, shrink1, viewer1) = g1 in
   let Gen(generate2, shrink2, viewer2) = g2 in
   Gen of {

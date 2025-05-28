@@ -145,7 +145,7 @@ inline _list-rune-eq: core.list.eq.trope(rune) {
   core.list.eq.from-eq(core.rune.eq.as-eq-N)
 }
 
-inline runes(!c: config): gen(rune) {
+inline rune-gen(!c: config): gen(rune) {
   let Config of {rune-generator = !generator, rune-acceptor = !acceptor} = !c in
   Gen of {
     generate = {
