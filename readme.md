@@ -13,33 +13,25 @@ neut get noa https://github.com/vekatze/noa/raw/main/archive/0-3-40.tar.zst
 ### Main Definitions
 
 ```neut
-// Represents a set of testing utilities.
-data trope {
-| Trope(
-    // For property-based testing.
-    check: <a>(name: &text, g: gen(a), property: (a) -> bool) -> unit,
-    // For plain testing.
-    test: (label: &text, property: () -> bool) -> unit,
-  )
-}
+data noa-kit
 
-// Represents a configuration of testing utilities.
-data config {
-| Config(
-    num-of-tests: int, // specifies the number of tests executed by `check`.
-    max-size: int, // specifies the max size of input generated in `check`.
-    verbose: bool, // specifies whether to enable verbose output.
-  )
-}
+define make-default-noa-kit(): noa-kit
 
-// Creates a new test utilities.
-inline new-suite(!c: config): trope
+define make-verbose-noa-kit(): noa-kit
 
-// A set of testing utilities.
-inline noa: trope
+define make-noa-kit(
+  sink: descriptor,
+  buffer-capacity: int,
+  num-of-tests: int, // specifies the number of tests executed by `check`.
+  max-size: int, // specifies the max size of input generated in `check`.
+  verbose: bool // specifies whether to enable verbose output.
+): noa-kit
 
-// A set of testing utilities.
-inline noa-verbose: trope
+// performs property-based testing
+define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit
+
+// performs plain testing
+define test(k: &noa-kit, label: &text, property: () -> bool): unit
 
 // Represents a value generator for property-based testing.
 data gen(a) {
@@ -54,32 +46,32 @@ data gen(a) {
 ### Preset Generators
 
 ```neut
-inline bools: gen(bool)
+inline bool-gen: gen(bool)
 
-inline floats: gen(float)
+inline float-gen: gen(float)
 
-inline ints: gen(int)
+inline int-gen: gen(int)
 
-inline positive-ints: gen(int)
+inline positive-int-gen: gen(int)
 
-inline negative-ints: gen(int)
+inline negative-int-gen: gen(int)
 
-inline runes: gen(rune)
+inline rune-gen: gen(rune)
 
-inline ascii-runes: gen(rune)
+inline ascii-rune-gen: gen(rune)
 
-inline texts: gen(text)
+inline text-gen: gen(text)
 
-inline ascii-texts: gen(text)
+inline ascii-text-gen: gen(text)
 
-inline lists<a>(!g: gen(a)): gen(list(a))
+inline list-gen<a>(!g: gen(a)): gen(list(a))
 
-inline pairs<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b))
+inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b))
 
-inline eithers<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b))
+inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b))
 
-// Chooses a value from `xs` randomly.
-define one-of<a>(g: gen(a), xs: &list(a)): gen(a)
+// Chooses a value from `Cons(x, xs)` randomly.
+define one-of<a>(g: gen(a), xs: &list(a), fallback: &a): gen(a)
 
 // Generates a value of type `a` or generates `none`
 define optional<a>(!g: gen(a)): gen(?a)
@@ -87,25 +79,25 @@ define optional<a>(!g: gen(a)): gen(?a)
 
 ## Example
 
-In most cases you import `noa` and use it as follows:
-
 ```neut
 define zen(): unit {
-  let Trope of {check, test} = noa in
-  // A property-based test
+  pin k = make-default-noa-kit() in
+  // a property-based test
   check(
+    k,
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
-    pairs(lists(ints), lists(ints)),
+    pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
     function (p) {
       let Pair(!xs, !ys) = p in
       let left = append(reverse(!ys), reverse(!xs)) in
       let right = reverse(append(!xs, !ys)) in
-      let Eq of {equal} = core.list.eq.as-eq(core.int.eq.as-eq) in
+      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq) in
       equal(left, right)
     },
   );
-  // A plain test
+  // a plain test
   test(
+    k,
     "the list `[1, 2, 3]` contains 2",
     function () {
       pin xs = [1, 2, 3] in
