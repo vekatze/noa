@@ -6,28 +6,28 @@ import {
 }
 
 inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
-  let Gen of {shrink = shrink1, viewer = viewer1} = !g1 in
-  let Gen of {shrink = shrink2, viewer = viewer2} = !g2 in
+  let Gen of {shrink := shrink1, viewer := viewer1} = !g1;
+  let Gen of {shrink := shrink2, viewer := viewer2} = !g2;
   Gen of {
-    generate = {
+    generate := {
       function (size: int) {
-        let x-size = random-int(trunc-int-int32(size)) in
-        let y-size = sub-int(size, x-size) in
-        let x = draw(x-size, !g1) in
-        let y = draw(y-size, !g2) in
+        let x-size = random-int(trunc-int-int32(size));
+        let y-size = sub-int(size, x-size);
+        let x = draw(x-size, !g1);
+        let y = draw(y-size, !g2);
         Pair(x, y)
       }
     },
-    shrink = {
+    shrink := {
       function (p) {
-        let Pair(!x, !y) = p in
-        let xs = shrink1(!x) in
-        let ys = shrink2(!y) in
-        let xys1 = product(xs, [!y]) in
-        let xys2 = product([!x], ys) in
+        let Pair(!x, !y) = p;
+        let xs = shrink1(!x);
+        let ys = shrink2(!y);
+        let xys1 = product(xs, [!y]);
+        let xys2 = product([!x], ys);
         append(xys1, xys2)
       }
     },
-    viewer = core.pair.show.as-show(viewer1, viewer2),
+    viewer := core.pair.show.as-show(viewer1, viewer2),
   }
 }

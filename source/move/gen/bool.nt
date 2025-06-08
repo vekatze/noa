@@ -6,9 +6,9 @@ import {
 
 inline bool-gen: gen(bool) {
   Gen of {
-    generate = {
+    generate := {
       function (_) {
-        let i = random-int32(2) in
+        let i = random-int32(2);
         if eq-int32(i, 0) {
           False
         } else {
@@ -16,7 +16,7 @@ inline bool-gen: gen(bool) {
         }
       }
     },
-    shrink = {
+    shrink := {
       function (x) {
         if x {
           [False]
@@ -25,6 +25,6 @@ inline bool-gen: gen(bool) {
         }
       }
     },
-    viewer = core.bool.show.as-show,
+    viewer := core.bool.show.as-show,
   }
 }

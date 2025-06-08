@@ -6,10 +6,10 @@ import {
 
 inline text-gen: gen(text) {
   this.move.gen.custom.text.text-gen(this.move.gen.custom.text.Config of {
-    min-length = 0,
-    max-length = none,
-    rune-generator = none,
-    rune-acceptor = {
+    min-length := 0,
+    max-length := none,
+    rune-generator := none,
+    rune-acceptor := {
       function (_) {
         True
       }
@@ -19,14 +19,14 @@ inline text-gen: gen(text) {
 
 inline ascii-text-gen: gen(text) {
   this.move.gen.custom.text.text-gen(this.move.gen.custom.text.Config of {
-    min-length = 0,
-    max-length = none,
-    rune-generator = {
+    min-length := 0,
+    max-length := none,
+    rune-generator := {
       Right(function () {
         gen-rune-in-range(0x20, 0x7e)
       })
     },
-    rune-acceptor = {
+    rune-acceptor := {
       function (_) {
         True
       }

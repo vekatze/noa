@@ -22,42 +22,40 @@ data config {
 }
 
 inline text-gen(!c: config): gen(text) {
-  let Config of {rune-generator, rune-acceptor, max-length, min-length} = !c in
+  let Config of {rune-generator, rune-acceptor, max-length, min-length} = !c;
   let rune-config =
     this.move.gen.custom.rune.Config of {
       rune-generator,
       rune-acceptor,
-    }
-  in
-  let !rune-gen = this.move.gen.custom.rune.rune-gen(rune-config) in
-  let Gen of {generate} = !rune-gen in
+    };
+  let !rune-gen = this.move.gen.custom.rune.rune-gen(rune-config);
+  let Gen of {generate} = !rune-gen;
   Gen of {
-    generate = {
+    generate := {
       function (size: int) {
-        let max-length = from-right(max-length, zext-int32-int(UINT32_MAX)) in
-        let text-max-len = trunc-int-int32(min-int(size, max-length)) in
-        let text-len = max-int(random-in-range-int(0, text-max-len), min-length) in
+        let max-length = from-right(max-length, zext-int32-int(UINT32_MAX));
+        let text-max-len = trunc-int-int32(min-int(size, max-length));
+        let text-len = max-int(random-in-range-int(0, text-max-len), min-length);
         let tmp =
           grow([], text-len, function (acc, _) {
-            let r = generate(size) in
+            let r = generate(size);
             Cons(core.text.singleton(r), acc)
-          })
-        in
+          });
         join(tmp)
       }
     },
-    shrink = {
+    shrink := {
       function (t: text) {
-        pin t = t in
-        let rune-seq = unpack(t) in
-        pin rune-lists = _shrink-list(!rune-gen)(rune-seq) in
-        let result = for-each-N(rune-lists, pack) in
+        pin t = t;
+        let rune-seq = unpack(t);
+        pin rune-lists = _shrink-list(!rune-gen)(rune-seq);
+        let result = for-each-N(rune-lists, pack);
         filter(result, function (t) {
-          let len = core.text.length(t) in
+          let len = core.text.length(t);
           ge-int(len, min-length)
         })
       }
     },
-    viewer = core.text.show.as-show,
+    viewer := core.text.show.as-show,
   }
 }

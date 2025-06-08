@@ -5,13 +5,13 @@ import {
 }
 
 define one-of<a>(g: gen(a), xs: &list(a), x: &a): gen(a) {
-  let Gen of {viewer} = g in
+  let Gen of {viewer} = g;
   Gen of {
-    generate = {
+    generate := {
       function (_) {
-        let len = length(xs) in
-        let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1))) in
-        let elem-or-none = nth(xs, index) in
+        let len = length(xs);
+        let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1)));
+        let elem-or-none = nth(xs, index);
         match elem-or-none {
         | Left(_) =>
           *x
@@ -20,7 +20,7 @@ define one-of<a>(g: gen(a), xs: &list(a), x: &a): gen(a) {
         }
       }
     },
-    shrink = {
+    shrink := {
       function (_) {
         []
       }

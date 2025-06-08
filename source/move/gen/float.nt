@@ -20,19 +20,18 @@ define _div-seq(k: float): list(float) {
 
 inline float-gen: gen(float) {
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let size = uitofp-int-float(size) in
+        let size = uitofp-int-float(size);
         random-float(mul-float(-1, size), size)
       }
     },
-    shrink = {
+    shrink := {
       function (x: float) {
         let tmp =
           for-each(_div-seq(x), function (diff) {
             sub-float(x, diff)
-          })
-        in
+          });
         if lt-float(x, 0) {
           Cons(abs-float(x), tmp)
         } else {
@@ -40,6 +39,6 @@ inline float-gen: gen(float) {
         }
       }
     },
-    viewer = core.float.show.as-show,
+    viewer := core.float.show.as-show,
   }
 }

@@ -6,12 +6,12 @@ import {
 }
 
 inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
-  let Gen(generate1, shrink1, viewer1) = g1 in
-  let Gen(generate2, shrink2, viewer2) = g2 in
+  let Gen(generate1, shrink1, viewer1) = g1;
+  let Gen(generate2, shrink2, viewer2) = g2;
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let dice = random-in-range-int(0, 1) in
+        let dice = random-in-range-int(0, 1);
         if eq-int(dice, 0) {
           Left(generate1(size))
         } else {
@@ -19,7 +19,7 @@ inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
         }
       }
     },
-    shrink = {
+    shrink := {
       function (error-or-value) {
         match error-or-value {
         | Left(e) =>
@@ -29,6 +29,6 @@ inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {
         }
       }
     },
-    viewer = core.either.show.as-show(viewer1, viewer2),
+    viewer := core.either.show.as-show(viewer1, viewer2),
   }
 }

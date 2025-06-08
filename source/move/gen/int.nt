@@ -16,19 +16,18 @@ define _div-seq(k: int): list(int) {
 
 inline int-gen: gen(int) {
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let size = trunc-int-int32(size) in
+        let size = trunc-int-int32(size);
         random-in-range-int(mul-int32(-1, size), size)
       }
     },
-    shrink = {
+    shrink := {
       function (x) {
         let tmp =
           for-each(_div-seq(x), function (diff) {
             sub-int(x, diff)
-          })
-        in
+          });
         if lt-int(x, 0) {
           Cons(abs-int(x), tmp)
         } else {
@@ -36,43 +35,43 @@ inline int-gen: gen(int) {
         }
       }
     },
-    viewer = core.int.show.as-show,
+    viewer := core.int.show.as-show,
   }
 }
 
 inline positive-int-gen: gen(int) {
   Gen of {
-    generate = {
+    generate := {
       function (size) {
         random-in-range-int(0, trunc-int-int32(size))
       }
     },
-    shrink = {
+    shrink := {
       function (x) {
         for-each(_div-seq(x), function (diff) {
           sub-int(x, diff)
         })
       }
     },
-    viewer = core.int.show.as-show,
+    viewer := core.int.show.as-show,
   }
 }
 
 inline negative-int-gen: gen(int) {
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let size = trunc-int-int32(size) in
+        let size = trunc-int-int32(size);
         mul-int(-1, random-in-range-int(0, size))
       }
     },
-    shrink = {
+    shrink := {
       function (x) {
         for-each(_div-seq(x), function (diff) {
           sub-int(x, diff)
         })
       }
     },
-    viewer = core.int.show.as-show,
+    viewer := core.int.show.as-show,
   }
 }

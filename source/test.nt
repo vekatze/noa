@@ -41,15 +41,15 @@ define _find-float(i: float, xs: list(float)): bool {
 }
 
 define zen(): unit {
-  pin k = make-default-noa-kit() in
+  pin k = make-default-noa-kit();
   check(
     k,
     "unpack then pack is identity",
     text-gen,
     function (t) {
-      pin t = t in
-      pin xs = unpack(t) in
-      pin t' = pack(xs) in
+      pin t = t;
+      pin xs = unpack(t);
+      pin t' = pack(xs);
       eq-text(t, t')
     },
   );
@@ -58,10 +58,10 @@ define zen(): unit {
     "(length as text) == (length as list of chars)",
     text-gen,
     function (t) {
-      pin t = t in
-      pin xs = unpack(t) in
-      let len1 = core.text.length(t) in
-      let len2 = length(xs) in
+      pin t = t;
+      pin xs = unpack(t);
+      let len1 = core.text.length(t);
+      let len2 = length(xs);
       eq-int(len1, len2)
     },
   );
@@ -70,23 +70,23 @@ define zen(): unit {
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
     function (p) {
-      let Pair(!xs, !ys) = p in
-      let left = append(reverse(!ys), reverse(!xs)) in
-      let right = reverse(append(!xs, !ys)) in
-      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq) in
+      let Pair(!xs, !ys) = p;
+      pin left = append(reverse(!ys), reverse(!xs));
+      pin right = reverse(append(!xs, !ys));
+      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq);
       equal(left, right)
     },
   );
-  pin xs = [1, 2, 3] in
-  pin x = 4 in
+  pin xs = [1, 2, 3];
+  pin x = 4;
   check(
     k,
     "one-of (should fail)",
     one-of(int-gen, xs, x),
     function (x) {
-      let b1 = eq-int(x, 1) in
-      let b2 = eq-int(x, 3) in
-      let b3 = eq-int(x, 3) in
+      let b1 = eq-int(x, 1);
+      let b2 = eq-int(x, 3);
+      let b3 = eq-int(x, 3);
       or(b1, or(b2, b3))
     },
   );
@@ -95,12 +95,12 @@ define zen(): unit {
     "shrinking texts (should fail)",
     text-gen,
     function (t) {
-      let len on t = core.text.length(t) in
-      let _ = t in
+      let len on t = core.text.length(t);
+      let _ = t;
       lt-int(len, 10)
     },
   );
-  pin k = make-verbose-noa-kit() in
+  pin k = make-verbose-noa-kit();
   check(
     k,
     "there is no list that contains 15 (should fail and report [15])",
@@ -129,12 +129,11 @@ define zen(): unit {
     k,
     "the list `[1, 2, 3]` contains 2",
     function () {
-      pin xs = [1, 2, 3] in
+      pin xs = [1, 2, 3];
       let result =
         core.list.find(xs, function (y) {
           eq-int(*y, 2)
-        })
-      in
+        });
       match result {
       | Left(_) =>
         False

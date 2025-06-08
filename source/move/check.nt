@@ -1,7 +1,7 @@
 import {
   core.show {Show},
   core.text {replace},
-  this.move.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _printf-red-bold, _writef},
+  this.move.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _write, _write-line},
   this.rule.gen {Gen, draw, gen},
   this.rule.noa-kit {_Noa-Kit, _compute-size, noa-kit},
 }
@@ -18,26 +18,29 @@ data _result(a) {
 }
 
 define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a), !g: gen(a)): ?a {
-  let Gen of {viewer} = !g in
-  let Show of {show = !show} = viewer in
-  tie _Noa-Kit of {verbose} = k in
+  let Gen of {viewer} = !g;
+  let Show of {show := !show} = viewer;
+  tie _Noa-Kit of {verbose} = k;
   match cands {
   | Nil =>
     when *verbose {
-      _print-blue-bold(k, "    ✔ Stop\n")
+      _print-blue-bold(k, "    ✓ Stop\n")
     };
     none
   | Cons(!cand, rest) =>
     if !predicate(!cand) {
       when *verbose {
-        _print-blue-bold(k, "      ✔ ");
-        _writef(k, "{}\n", [!show(!cand)])
+        _print-blue-bold(k, "      ✓ ");
+        pin t = !show(!cand);
+        _write-line(k, t);
       };
       _find-refutation(k, !predicate, rest, !g)
     } else {
       when *verbose {
-        _print-red-bold(k, "      ✘ ");
-        _printf-red-bold(k, "{}\n", [!show(!cand)])
+        _print-red-bold(k, "      ✗ ");
+        pin t = !show(!cand);
+        _print-red-bold(k, t);
+        _write(k, "\n");
       };
       Right(!cand)
     }
@@ -45,8 +48,8 @@ define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a),
 }
 
 define _repeat-shrink<a>(k: &noa-kit, !cand: a, !predicate: (a) -> bool, !g: gen(a)): a {
-  let Gen of {shrink} = !g in
-  let alts = shrink(!cand) in
+  let Gen of {shrink} = !g;
+  let alts = shrink(!cand);
   match _find-refutation(k, !predicate, alts, !g) {
   | Left(_) =>
     !cand
@@ -68,53 +71,57 @@ inline _run-tests<a>(k: &noa-kit, num-of-tests: int, !f: (int) -> _result(a)): e
           when verbose {
             _print-blue-bold(k, "    ↻ Shrink:\n")
           };
-          let value' = _repeat-shrink(k, value, predicate, g) in
+          let value' = _repeat-shrink(k, value, predicate, g);
           Left(Pair(iteration, value'))
         }
       }
-    }
-  in
+    };
   helper(0)
 }
 
 define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit {
-  let Gen of {viewer} = !g in
-  let Show of {show = !show} = viewer in
-  tie _Noa-Kit of {verbose, num-of-tests} = k in
-  let result =
+  let Gen of {viewer} = !g;
+  let Show of {show := !show} = viewer;
+  tie _Noa-Kit of {verbose, num-of-tests} = k;
+  let result = {
     when *verbose {
       _print-blue-bold(k, "? Check: ");
-      _writef(k, "{}\n", [*label])
+      _write-line(k, label);
     };
     _run-tests(k, *num-of-tests, function (i) {
-      let size = _compute-size(k, i) in
-      let !value = draw(size, !g) in
+      let size = _compute-size(k, i);
+      let !value = draw(size, !g);
       if !predicate(!value) {
         when *verbose {
-          _print-blue-bold(k, "  ✔ ");
-          _writef(k, "{}\n", [!show(!value)])
+          _print-blue-bold(k, "  ✓ ");
+          pin t = !show(!value);
+          _write-line(k, t);
         };
         _OK
       } else {
         when *verbose {
-          _print-red-bold(k, "  ✘ ");
-          _printf-red-bold(k, "{}\n", [!show(!value)])
+          _print-red-bold(k, "  ✗ ");
+          // _printf-red-bold(k, "{}\n", [!show(!value)])
+          pin t = !show(!value);
+          _print-red-bold(k, t);
+          _write(k, "\n");
         };
         _Failure(i, !value, !predicate, !g, *verbose)
       }
     })
-  in
+  };
   match result {
   | Right(Unit) =>
-    _print-green-bold(k, "✔ Pass: ");
-    _writef(k, "{}\n", [*label])
+    _print-green-bold(k, "✓ Pass: ");
+    _write-line(k, label)
   | Left(Pair(_, counterexample)) =>
-    _print-red-bold(k, "✘ Fail: ");
-    _writef(k, "{}\n", [*label]);
+    _print-red-bold(k, "✗ Fail: ");
+    _write-line(k, label);
     _print-red-bold(k, "  → ");
-    pin txt = !show(counterexample) in
-    let txt' = replace(txt, "\n", *"\n    ") in
-    _printf-red-bold(k, "{}\n", [txt'])
+    pin txt = !show(counterexample);
+    pin txt' = replace(txt, "\n", *"\n    ");
+    _print-red-bold(k, txt');
+    _write(k, "\n");
   };
   _flush(k)
 }

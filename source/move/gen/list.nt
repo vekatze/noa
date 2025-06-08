@@ -15,14 +15,12 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
       let former =
         for-each(!shrink(!x), function (x') {
           Cons(x', !xs)
-        })
-      in
-      let tmp = self(!xs) in
+        });
+      let tmp = self(!xs);
       let latter =
         for-each(tmp, function (xs') {
           Cons(!x, xs')
-        })
-      in
+        });
       append(former, latter)
     }
   }
@@ -49,17 +47,16 @@ define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
   if gt-int(k, n) {
     []
   } else {
-    let Pair(xs1, !xs2) = split(k, xs) in
-    let b on !xs2 = is-empty(!xs2) in
+    let Pair(xs1, !xs2) = split(k, xs);
+    let b on !xs2 = is-empty(!xs2);
     if b {
       [[]]
     } else {
-      let tmp = _removes(k, sub-int(n, k), !xs2) in
+      let tmp = _removes(k, sub-int(n, k), !xs2);
       let rest =
         for-each(tmp, function (xs2') {
           append(xs1, xs2')
-        })
-      in
+        });
       Cons(!xs2, rest)
     }
   }
@@ -75,31 +72,30 @@ define _div-seq(k: int): list(int) {
 
 inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
   function (!xs) {
-    let n on !xs = length(!xs) in
+    let n on !xs = length(!xs);
     let xsss =
       for-each(_div-seq(n), function (k) {
         _removes(k, n, !xs)
-      })
-    in
-    let Gen of {shrink} = g in
-    let yss = _shrink-one(shrink)(!xs) in
+      });
+    let Gen of {shrink} = g;
+    let yss = _shrink-one(shrink)(!xs);
     append(concat(xsss), yss)
   }
 }
 
 inline list-gen<a>(!g: gen(a)): gen(list(a)) {
-  let Gen of {viewer} = !g in
+  let Gen of {viewer} = !g;
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let trunc-size = trunc-int-int32(size) in
+        let trunc-size = trunc-int-int32(size);
         grow([], size, function (acc, _) {
-          let elem = draw(random-int(trunc-size), !g) in
+          let elem = draw(random-int(trunc-size), !g);
           Cons(elem, acc)
         })
       }
     },
-    shrink = _shrink-list(!g),
-    viewer = core.list.show.as-show(viewer),
+    shrink := _shrink-list(!g),
+    viewer := core.list.show.as-show(viewer),
   }
 }

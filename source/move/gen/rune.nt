@@ -5,8 +5,8 @@ import {
 
 inline rune-gen: gen(rune) {
   this.move.gen.custom.rune.rune-gen(this.move.gen.custom.rune.Config of {
-    rune-generator = none,
-    rune-acceptor = {
+    rune-generator := none,
+    rune-acceptor := {
       function (_) {
         True
       }
@@ -16,12 +16,12 @@ inline rune-gen: gen(rune) {
 
 define ascii-rune-gen: gen(rune) {
   this.move.gen.custom.rune.rune-gen(this.move.gen.custom.rune.Config of {
-    rune-generator = {
+    rune-generator := {
       Right(function () {
         gen-rune-in-range(0x20, 0x7e)
       })
     },
-    rune-acceptor = {
+    rune-acceptor := {
       function (_) {
         True
       }

@@ -11,7 +11,7 @@ define make-noa-kit(
   max-size: int,
   verbose: bool,
 ): noa-kit {
-  let ansi-kit = make-ansi-kit(sink, buffer-capacity) in
+  let ansi-kit = make-ansi-kit(sink, buffer-capacity);
   _Noa-Kit(
     ansi-kit,
     num-of-tests,
@@ -22,20 +22,20 @@ define make-noa-kit(
 
 define make-default-noa-kit(): noa-kit {
   make-noa-kit of {
-    sink = stdout,
-    buffer-capacity = 4096,
-    num-of-tests = 100,
-    max-size = 100,
-    verbose = False,
+    sink := stdout,
+    buffer-capacity := 4096,
+    num-of-tests := 100,
+    max-size := 100,
+    verbose := False,
   }
 }
 
 define make-verbose-noa-kit(): noa-kit {
   make-noa-kit of {
-    sink = stdout,
-    buffer-capacity = 4096,
-    num-of-tests = 100,
-    max-size = 100,
-    verbose = True,
+    sink := stdout,
+    buffer-capacity := 4096,
+    num-of-tests := 100,
+    max-size := 100,
+    verbose := True,
   }
 }

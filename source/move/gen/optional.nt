@@ -7,24 +7,24 @@ import {
 
 define optional<a>(!g: gen(a)): gen(?a) {
   Gen of {
-    generate = {
+    generate := {
       function (size) {
-        let dice = random-in-range-int(0, 1) in
+        let dice = random-in-range-int(0, 1);
         if eq-int(dice, 0) {
           none
         } else {
-          let Gen of {generate} = !g in
+          let Gen of {generate} = !g;
           Right(generate(size))
         }
       }
     },
-    shrink = {
+    shrink := {
       function (_) {
         []
       }
     },
-    viewer = {
-      let Gen of {viewer} = !g in
+    viewer := {
+      let Gen of {viewer} = !g;
       as-show(core.unit.show.as-show, viewer)
     },
   }
