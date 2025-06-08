@@ -101,7 +101,6 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
       } else {
         when *verbose {
           _print-red-bold(k, "  ✗ ");
-          // _printf-red-bold(k, "{}\n", [!show(!value)])
           pin t = !show(!value);
           _print-red-bold(k, t);
           _write(k, "\n");
