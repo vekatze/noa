@@ -130,10 +130,11 @@ define zen(): unit {
     "the list `[1, 2, 3]` contains 2",
     function () {
       pin xs = [1, 2, 3];
-      let result =
-        core.list.find(xs, function (y) {
+      pin f =
+        function (y) {
           eq-int(*y, 2)
-        });
+        };
+      let result = core.list.find(xs, f);
       match result {
       | Left(_) =>
         False

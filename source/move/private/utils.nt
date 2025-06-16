@@ -12,41 +12,56 @@ import {
 
 define _print-blue-bold(k: &noa-kit, t: &text): unit {
   tie _Noa-Kit of {ansi-kit} = k;
-  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
-  write-code(ansi-kit, Set-Style(Bold));
-  write(ansi-kit, t);
-  write-code(ansi-kit, Set-Style(Normal))
+  let _ = {
+    try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
+    try _ = write-code(ansi-kit, Set-Style(Bold));
+    try _ = write(ansi-kit, t);
+    write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
 }
 
 define _print-red-bold(k: &noa-kit, t: &text): unit {
   tie _Noa-Kit of {ansi-kit} = k;
-  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
-  write-code(ansi-kit, Set-Style(Bold));
-  write(ansi-kit, t);
-  write-code(ansi-kit, Set-Style(Normal))
+  let _ = {
+    try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
+    try _ = write-code(ansi-kit, Set-Style(Bold));
+    try _ = write(ansi-kit, t);
+    write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
 }
 
 define _print-green-bold(k: &noa-kit, t: &text): unit {
   tie _Noa-Kit of {ansi-kit} = k;
-  write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
-  write-code(ansi-kit, Set-Style(Bold));
-  write(ansi-kit, t);
-  write-code(ansi-kit, Set-Style(Normal))
+  let _ = {
+    try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
+    try _ = write-code(ansi-kit, Set-Style(Bold));
+    try _ = write(ansi-kit, t);
+    write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
 }
 
-// define _write(k: &noa-kit, t: &text, args: list(text)): unit
 define _write(k: &noa-kit, t: &text): unit {
-  tie _Noa-Kit of {ansi-kit} = k;
-  write(ansi-kit, t)
+  let _ = {
+    tie _Noa-Kit of {ansi-kit} = k;
+    write(ansi-kit, t)
+  };
+  Unit
 }
 
 define _write-line(k: &noa-kit, t: &text): unit {
   tie _Noa-Kit of {ansi-kit} = k;
-  write(ansi-kit, t);
-  write(ansi-kit, "\n");
+  let _ = {
+    try _ = write(ansi-kit, t);
+    write(ansi-kit, "\n")
+  };
+  Unit
 }
 
 define _flush(k: &noa-kit): unit {
   tie _Noa-Kit of {ansi-kit} = k;
-  flush(ansi-kit)
+  let _ = flush(ansi-kit);
+  Unit
 }
