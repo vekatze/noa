@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-4.tar.zst
+neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-5.tar.zst
 ```
 
 ## Types
