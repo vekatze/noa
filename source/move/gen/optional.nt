@@ -20,7 +20,7 @@ define optional<a>(!g: gen(a)): gen(?a) {
     },
     shrink := {
       function (_) {
-        []
+        Nil
       }
     },
     viewer := {

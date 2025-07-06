@@ -85,7 +85,7 @@ define gen-rune-in-range(lower: int, upper: int): rune {
 }
 
 inline _simple-runes: list(rune) {
-  [
+  List[
     `b`,
     `a`,
     `B`,
@@ -130,7 +130,7 @@ define _extract-candidates(c: rune): list(rune) {
       };
     filter(_simple-runes, pred)
   } else {
-    [`A`]
+    List[`A`]
   }
 }
 

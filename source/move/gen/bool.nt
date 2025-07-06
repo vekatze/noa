@@ -19,9 +19,9 @@ inline bool-gen: gen(bool) {
     shrink := {
       function (x) {
         if x {
-          [False]
+          List[False]
         } else {
-          []
+          List[]
         }
       }
     },

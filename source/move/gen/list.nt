@@ -10,7 +10,7 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
   define self(xs: list(a)) {
     match xs {
     | Nil =>
-      []
+      Nil
     | Cons(!x, !xs) =>
       let former =
         for-each(!shrink(!x), function (x') {
@@ -40,17 +40,17 @@ define _split<a>(n: int, xs: list(a), head-acc: list(a)): pair(list(a), list(a))
 }
 
 define split<a>(n: int, xs: list(a)): pair(list(a), list(a)) {
-  _split(n, xs, [])
+  _split(n, xs, Nil)
 }
 
 define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
   if gt-int(k, n) {
-    []
+    Nil
   } else {
     let Pair(xs1, !xs2) = split(k, xs);
     let b on !xs2 = is-empty(!xs2);
     if b {
-      [[]]
+      List[List[]]
     } else {
       let tmp = _removes(k, sub-int(n, k), !xs2);
       let rest =
@@ -64,7 +64,7 @@ define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
 
 define _div-seq(k: int): list(int) {
   if eq-int(k, 0) {
-    []
+    Nil
   } else {
     Cons(k, _div-seq(div-int(k, 2)))
   }
@@ -89,7 +89,7 @@ inline list-gen<a>(!g: gen(a)): gen(list(a)) {
     generate := {
       function (size) {
         let trunc-size = trunc-int-int32(size);
-        grow([], size, function (acc, _) {
+        grow(Nil, size, function (acc, _) {
           let elem = draw(random-int(trunc-size), !g);
           Cons(elem, acc)
         })

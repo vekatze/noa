@@ -77,7 +77,7 @@ define zen(): unit {
       equal(left, right)
     },
   );
-  pin xs = [1, 2, 3];
+  pin xs = List[1, 2, 3];
   pin x = 4;
   check(
     k,
@@ -127,9 +127,9 @@ define zen(): unit {
   );
   test(
     k,
-    "the list `[1, 2, 3]` contains 2",
+    "the list `List[1, 2, 3]` contains 2",
     function () {
-      pin xs = [1, 2, 3];
+      pin xs = List[1, 2, 3];
       pin f =
         function (y) {
           eq-int(*y, 2)

@@ -22,7 +22,7 @@ define one-of<a>(g: gen(a), xs: &list(a), x: &a): gen(a) {
     },
     shrink := {
       function (_) {
-        []
+        Nil
       }
     },
     viewer,

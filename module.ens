@@ -12,16 +12,16 @@
   },
   dependency {
     core {
-      digest "Qx1ZoeFTMffF79h7_e25xBqBQyW0zqelGyqZhYZ13lw",
+      digest "NV9vKfEBwxCbNW381wEGXsqYkJqFpxBceqhwyaw4oog",
       mirror [
-        "https://github.com/vekatze/neut-core/raw/main/archive/0-51-7.tar.zst",
+        "https://github.com/vekatze/neut-core/raw/main/archive/0-51-10.tar.zst",
       ],
       enable-preset true,
     },
     ansi {
-      digest "iJEri5fjltfSKntzUEiTlDKS4rOqW2grpucDOTcF5_o",
+      digest "bPsNayQlyKoGqRiEeNnwwp0Y7N3NLnsiXM9spCjWWjk",
       mirror [
-        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-5-6.tar.zst",
+        "https://github.com/vekatze/ansi-terminal/raw/main/archive/0-5-7.tar.zst",
       ],
     },
   },

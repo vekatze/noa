@@ -12,7 +12,7 @@ inline _epsilon: float {
 
 define _div-seq(k: float): list(float) {
   if lt-float(abs-float(k), _epsilon) {
-    []
+    Nil
   } else {
     Cons(k, _div-seq(div-float(k, 2)))
   }

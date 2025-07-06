@@ -23,8 +23,8 @@ inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
         let Pair(!x, !y) = p;
         let xs = shrink1(!x);
         let ys = shrink2(!y);
-        let xys1 = product(xs, [!y]);
-        let xys2 = product([!x], ys);
+        let xys1 = product(xs, List[!y]);
+        let xys2 = product(List[!x], ys);
         append(xys1, xys2)
       }
     },

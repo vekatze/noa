@@ -8,7 +8,7 @@ import {
 
 define _div-seq(k: int): list(int) {
   if eq-int(k, 0) {
-    []
+    Nil
   } else {
     Cons(k, _div-seq(div-int(k, 2)))
   }
