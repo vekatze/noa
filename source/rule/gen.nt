@@ -1,7 +1,3 @@
-import {
-  core.show {show},
-}
-
 inline sample-size: type {
   int
 }
@@ -10,7 +6,6 @@ data gen(a) {
 | Gen(
     generate: (sample-size) -> a,
     shrink: (a) -> list(a),
-    viewer: show(a),
   )
 }
 

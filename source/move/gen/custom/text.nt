@@ -6,7 +6,6 @@ import {
   core.list {filter, for-each-N},
   core.random {random-in-range-int},
   core.text {join, pack, unpack},
-  core.text.show,
   this.move.gen.custom.rune,
   this.move.gen.list {_shrink-list},
   this.rule.gen {Gen, gen},
@@ -56,6 +55,5 @@ inline text-gen(!c: config): gen(text) {
         })
       }
     },
-    viewer := core.text.show.as-show,
   }
 }

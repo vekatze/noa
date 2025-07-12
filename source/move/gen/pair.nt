@@ -1,13 +1,12 @@
 import {
   core.list {append, product},
-  core.pair.show,
   core.random {random-int},
   this.rule.gen {Gen, draw, gen},
 }
 
 inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
-  let Gen of {shrink := shrink1, viewer := viewer1} = !g1;
-  let Gen of {shrink := shrink2, viewer := viewer2} = !g2;
+  let Gen of {shrink := shrink1} = !g1;
+  let Gen of {shrink := shrink2} = !g2;
   Gen of {
     generate := {
       function (size: int) {
@@ -28,6 +27,5 @@ inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
         append(xys1, xys2)
       }
     },
-    viewer := core.pair.show.as-show(viewer1, viewer2),
   }
 }

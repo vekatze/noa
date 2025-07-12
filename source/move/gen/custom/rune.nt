@@ -5,7 +5,6 @@ import {
   core.rune,
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
-  core.rune.show,
   this.rule.gen {Gen, gen},
 }
 
@@ -168,6 +167,5 @@ inline rune-gen(!c: config): gen(rune) {
         })
       }
     },
-    viewer := core.rune.show.as-show,
   }
 }

@@ -1,5 +1,4 @@
 import {
-  core.bool.show,
   core.random {random-int32},
   this.rule.gen {Gen, gen},
 }
@@ -25,6 +24,5 @@ inline bool-gen: gen(bool) {
         }
       }
     },
-    viewer := core.bool.show.as-show,
   }
 }

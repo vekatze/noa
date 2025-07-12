@@ -82,7 +82,7 @@ define zen(): unit {
   check(
     k,
     "one-of (should fail)",
-    one-of(int-gen, xs, x),
+    one-of(xs, x),
     function (x) {
       let b1 = eq-int(x, 1);
       let b2 = eq-int(x, 3);
@@ -142,7 +142,7 @@ define zen(): unit {
         True
       }
     },
-  )
+  );
 }
 
 define main(): unit {

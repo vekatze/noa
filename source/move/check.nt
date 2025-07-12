@@ -1,5 +1,8 @@
 import {
-  core.show {Show},
+  core.debug {vet-doc},
+  core.doc {Chunk, Group, Nest, Seq, doc},
+  core.doc.chunk {Chunk-Choose, Chunk-Empty, Chunk-Join, Chunk-Line, Chunk-Style, Chunk-Style-N, chunk},
+  core.doc.show {show-doc},
   core.text {replace},
   this.move.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _write, _write-line},
   this.rule.gen {Gen, draw, gen},
@@ -17,9 +20,41 @@ data _result(a) {
   )
 }
 
+define _simplify-chunk(x: chunk): chunk {
+  match x {
+  | Chunk-Line =>
+    Chunk-Empty
+  | Chunk-Join(left, right) =>
+    Chunk-Join(_simplify-chunk(left), _simplify-chunk(right))
+  | Chunk-Choose(horizontal, _) =>
+    horizontal
+  | Chunk-Style(_) =>
+    Chunk-Empty
+  | Chunk-Style-N(_) =>
+    Chunk-Empty
+  | x =>
+    x
+  }
+}
+
+define _simplify-doc(d: doc): doc {
+  match d {
+  | Chunk(c) =>
+    Chunk(_simplify-chunk(c))
+  | Seq(d1, d2) =>
+    Seq(_simplify-doc(d1), _simplify-doc(d2))
+  | Nest(i, d) =>
+    Nest(i, _simplify-doc(d))
+  | Group(d) =>
+    Group(_simplify-doc(d))
+  }
+}
+
+define _max-ribbon-length: int {
+  32
+}
+
 define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a), !g: gen(a)): ?a {
-  let Gen of {viewer} = !g;
-  let Show of {show := !show} = viewer;
   tie _Noa-Kit of {verbose} = k;
   match cands {
   | Nil =>
@@ -31,14 +66,18 @@ define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a),
     if !predicate(!cand) {
       when *verbose {
         _print-blue-bold(k, "      ✓ ");
-        pin t = !show(!cand);
+        pin !cand = !cand;
+        pin d = _simplify-doc(vet-doc(!cand));
+        pin t = show-doc(d, _max-ribbon-length);
         _write-line(k, t);
       };
       _find-refutation(k, !predicate, rest, !g)
     } else {
       when *verbose {
         _print-red-bold(k, "      ✗ ");
-        pin t = !show(!cand);
+        pin !cand = !cand;
+        pin d = _simplify-doc(vet-doc(!cand));
+        pin t = show-doc(d, _max-ribbon-length);
         _print-red-bold(k, t);
         _write(k, "\n");
       };
@@ -80,8 +119,6 @@ inline _run-tests<a>(k: &noa-kit, num-of-tests: int, !f: (int) -> _result(a)): e
 }
 
 define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit {
-  let Gen of {viewer} = !g;
-  let Show of {show := !show} = viewer;
   tie _Noa-Kit of {verbose, num-of-tests} = k;
   let result = {
     when *verbose {
@@ -94,14 +131,19 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
       if !predicate(!value) {
         when *verbose {
           _print-blue-bold(k, "  ✓ ");
-          pin t = !show(!value);
+          pin !cand = !value;
+          pin d = _simplify-doc(vet-doc(!cand));
+          pin t = show-doc(d, _max-ribbon-length);
+          // pin t = !show(!value);
           _write-line(k, t);
         };
         _OK
       } else {
         when *verbose {
           _print-red-bold(k, "  ✗ ");
-          pin t = !show(!value);
+          pin !cand = !value;
+          pin d = _simplify-doc(vet-doc(!cand));
+          pin t = show-doc(d, _max-ribbon-length);
           _print-red-bold(k, t);
           _write(k, "\n");
         };
@@ -117,7 +159,9 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
     _print-red-bold(k, "✗ Fail: ");
     _write-line(k, label);
     _print-red-bold(k, "  → ");
-    pin txt = !show(counterexample);
+    pin !cand = counterexample;
+    pin d = _simplify-doc(vet-doc(!cand));
+    pin txt = show-doc(d, _max-ribbon-length);
     pin txt' = replace(txt, "\n", *"\n    ");
     _print-red-bold(k, txt');
     _write(k, "\n");

@@ -1,6 +1,5 @@
 import {
   core.float {abs-float},
-  core.float.show,
   core.list {for-each},
   core.random {random-float},
   this.rule.gen {Gen, gen},
@@ -39,6 +38,5 @@ inline float-gen: gen(float) {
         }
       }
     },
-    viewer := core.float.show.as-show,
   }
 }

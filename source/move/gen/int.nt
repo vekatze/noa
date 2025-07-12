@@ -1,6 +1,5 @@
 import {
   core.int {abs-int},
-  core.int.show,
   core.list {for-each},
   core.random {random-in-range-int},
   this.rule.gen {Gen, gen},
@@ -35,7 +34,6 @@ inline int-gen: gen(int) {
         }
       }
     },
-    viewer := core.int.show.as-show,
   }
 }
 
@@ -53,7 +51,6 @@ inline positive-int-gen: gen(int) {
         })
       }
     },
-    viewer := core.int.show.as-show,
   }
 }
 
@@ -72,6 +69,5 @@ inline negative-int-gen: gen(int) {
         })
       }
     },
-    viewer := core.int.show.as-show,
   }
 }

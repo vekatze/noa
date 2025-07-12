@@ -1,7 +1,6 @@
 import {
   core.control {grow},
   core.list {append, concat, for-each, is-empty, length, reverse},
-  core.list.show,
   core.random {random-int},
   this.rule.gen {Gen, draw, gen},
 }
@@ -84,7 +83,6 @@ inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
 }
 
 inline list-gen<a>(!g: gen(a)): gen(list(a)) {
-  let Gen of {viewer} = !g;
   Gen of {
     generate := {
       function (size) {
@@ -96,6 +94,5 @@ inline list-gen<a>(!g: gen(a)): gen(list(a)) {
       }
     },
     shrink := _shrink-list(!g),
-    viewer := core.list.show.as-show(viewer),
   }
 }

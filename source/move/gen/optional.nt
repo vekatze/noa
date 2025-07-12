@@ -1,7 +1,5 @@
 import {
-  core.either.show {as-show},
   core.random {random-in-range-int},
-  core.unit.show,
   this.rule.gen {Gen, gen},
 }
 
@@ -22,10 +20,6 @@ define optional<a>(!g: gen(a)): gen(?a) {
       function (_) {
         Nil
       }
-    },
-    viewer := {
-      let Gen of {viewer} = !g;
-      as-show(core.unit.show.as-show, viewer)
     },
   }
 }
