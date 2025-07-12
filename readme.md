@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-6.tar.zst
+neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-7.tar.zst
 ```
 
 ## Types
@@ -69,6 +69,8 @@ inline list-gen<a>(!g: gen(a)): gen(list(a))
 inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b))
 
 inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b))
+
+inline vector-gen<a>(!g: gen(a)): gen(vector(a))
 
 // Chooses a value from `Cons(x, xs)` randomly.
 define one-of<a>(g: gen(a), xs: &list(a), fallback: &a): gen(a)
