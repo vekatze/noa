@@ -1,17 +1,17 @@
 import {
   core.list {append, length, reverse},
   core.text {pack, unpack},
-  this.move.check {check},
-  this.move.gen.float {float-gen},
-  this.move.gen.int {int-gen},
-  this.move.gen.list {list-gen},
-  this.move.gen.one-of {one-of},
-  this.move.gen.pair {pair-gen},
-  this.move.gen.rune {rune-gen},
-  this.move.gen.text {ascii-text-gen, text-gen},
-  this.move.gen.vector {vector-gen},
-  this.move.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
-  this.move.test {test},
+  this.check {check},
+  this.gen.float {float-gen},
+  this.gen.int {int-gen},
+  this.gen.list {list-gen},
+  this.gen.one-of {one-of},
+  this.gen.pair {pair-gen},
+  this.gen.rune {rune-gen},
+  this.gen.text {ascii-text-gen, text-gen},
+  this.gen.vector {vector-gen},
+  this.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
+  this.test {test},
 }
 
 define _find-int(i: int, xs: list(int)): bool {

@@ -14,7 +14,7 @@ import {
     write,
     write-code,
   },
-  this.rule.noa-kit {_Noa-Kit, noa-kit},
+  this.noa-kit {_Noa-Kit, noa-kit},
 }
 
 define _print-blue-bold(k: &noa-kit, t: &text): unit {

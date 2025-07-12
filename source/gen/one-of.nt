@@ -1,7 +1,7 @@
 import {
   core.list {length, nth},
   core.random {random-in-range-int},
-  this.rule.gen {Gen, gen},
+  this.gen {Gen, gen},
 }
 
 define one-of<a>(xs: &list(a), x: &a): gen(a) {

@@ -1,6 +1,6 @@
 import {
-  this.move.private.utils {_flush, _print-green-bold, _print-red-bold, _write-line},
-  this.rule.noa-kit {noa-kit},
+  this.noa-kit {noa-kit},
+  this.private.utils {_flush, _print-green-bold, _print-red-bold, _write-line},
 }
 
 define test(k: &noa-kit, label: &text, property: () -> bool): unit {

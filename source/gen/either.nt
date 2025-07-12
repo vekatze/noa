@@ -1,7 +1,7 @@
 import {
   core.list {for-each},
   core.random {random-in-range-int},
-  this.rule.gen {Gen, gen},
+  this.gen {Gen, gen},
 }
 
 inline either-gen<a, b>(g1: gen(a), g2: gen(b)): gen(either(a, b)) {

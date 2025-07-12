@@ -1,6 +1,6 @@
 import {
   core.random {random-in-range-int},
-  this.rule.gen {Gen, gen},
+  this.gen {Gen, gen},
 }
 
 define optional<a>(!g: gen(a)): gen(?a) {

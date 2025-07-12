@@ -4,9 +4,9 @@ import {
   core.doc.chunk {Chunk-Choose, Chunk-Empty, Chunk-Join, Chunk-Line, Chunk-Style, Chunk-Style-N, chunk},
   core.doc.show {show-doc},
   core.text {replace},
-  this.move.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _write, _write-line},
-  this.rule.gen {Gen, draw, gen},
-  this.rule.noa-kit {_Noa-Kit, _compute-size, noa-kit},
+  this.gen {Gen, draw, gen},
+  this.noa-kit {_Noa-Kit, _compute-size, noa-kit},
+  this.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _write, _write-line},
 }
 
 data _result(a) {

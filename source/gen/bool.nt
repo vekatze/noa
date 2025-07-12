@@ -1,6 +1,6 @@
 import {
   core.random {random-int32},
-  this.rule.gen {Gen, gen},
+  this.gen {Gen, gen},
 }
 
 inline bool-gen: gen(bool) {

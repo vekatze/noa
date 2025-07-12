@@ -5,7 +5,7 @@ import {
   core.rune,
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
-  this.rule.gen {Gen, gen},
+  this.gen {Gen, gen},
 }
 
 // [U+0000, U+007F]

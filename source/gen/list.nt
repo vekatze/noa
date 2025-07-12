@@ -2,7 +2,7 @@ import {
   core.control {grow},
   core.list {append, concat, for-each, is-empty, length, reverse},
   core.random {random-int},
-  this.rule.gen {Gen, draw, gen},
+  this.gen {Gen, draw, gen},
 }
 
 inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {

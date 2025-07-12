@@ -2,7 +2,7 @@ import {
   core.control {grow},
   core.random {random-int},
   core.vector {append, length, make, push-back, push-front},
-  this.rule.gen {Gen, draw, gen},
+  this.gen {Gen, draw, gen},
 }
 
 define _is-empty<a>(xs: &vector(a)): bool {

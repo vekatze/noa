@@ -1,7 +1,7 @@
 import {
   core.ansi {make-ansi-kit},
   core.file.descriptor {descriptor, stdout},
-  this.rule.noa-kit {_Noa-Kit, noa-kit},
+  this.noa-kit {_Noa-Kit, noa-kit},
 }
 
 define make-noa-kit(

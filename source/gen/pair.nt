@@ -1,7 +1,7 @@
 import {
   core.list {append, product},
   core.random {random-int},
-  this.rule.gen {Gen, draw, gen},
+  this.gen {Gen, draw, gen},
 }
 
 inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)): gen(pair(a, b)) {
