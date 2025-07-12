@@ -112,7 +112,6 @@ define zen(): unit {
       lt-int(len, 10)
     },
   );
-  pin k = make-verbose-noa-kit();
   check(
     k,
     "there is no list that contains 15 (should fail and report [15])",
@@ -129,9 +128,9 @@ define zen(): unit {
       not(_find-float(15, xs))
     },
   );
-  pin k = make-verbose-noa-kit();
+  pin kv = make-verbose-noa-kit();
   check(
-    k,
+    kv,
     "there is no list that contains 15 (should fail and report [15])",
     vector-gen(int-gen),
     function (xs) {

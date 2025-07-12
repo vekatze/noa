@@ -1,13 +1,10 @@
 {
   target {
     test {
-      main "test.nt",
+      main "test-library.nt",
       build-option [
         "-fsanitize=address",
       ],
-    },
-    test2 {
-      main "test.nt",
     },
   },
   dependency {
