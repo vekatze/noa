@@ -1,5 +1,5 @@
 import {
-  ansi.move.make-ansi-kit {make-ansi-kit},
+  core.ansi {make-ansi-kit},
   core.file.descriptor {descriptor, stdout},
   this.rule.noa-kit {_Noa-Kit, noa-kit},
 }

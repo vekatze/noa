@@ -1,12 +1,19 @@
 import {
-  ansi.move.flush {flush},
-  ansi.move.write {write, write-code},
-  ansi.rule.color {Color-16},
-  ansi.rule.color-ansi {Blue, Green, Red},
-  ansi.rule.color-intensity {Vivid},
-  ansi.rule.color-layer {Foreground},
-  ansi.rule.command {Set-Style},
-  ansi.rule.style {Bold, Color, Normal},
+  core.ansi {
+    Blue,
+    Bold,
+    Color,
+    Color-16,
+    Foreground,
+    Green,
+    Normal,
+    Red,
+    Set-Style,
+    Vivid,
+    flush,
+    write,
+    write-code,
+  },
   this.rule.noa-kit {_Noa-Kit, noa-kit},
 }
 
