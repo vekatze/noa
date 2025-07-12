@@ -134,7 +134,6 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
           pin !cand = !value;
           pin d = _simplify-doc(vet-doc(!cand));
           pin t = show-doc(d, _max-ribbon-length);
-          // pin t = !show(!value);
           _write-line(k, t);
         };
         _OK

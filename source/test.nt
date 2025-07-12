@@ -1,6 +1,5 @@
 import {
   core.list {append, length, reverse},
-  core.list.eq,
   core.text {pack, unpack},
   this.move.check {check},
   this.move.gen.float {float-gen},
@@ -10,6 +9,7 @@ import {
   this.move.gen.pair {pair-gen},
   this.move.gen.rune {rune-gen},
   this.move.gen.text {ascii-text-gen, text-gen},
+  this.move.gen.vector {vector-gen},
   this.move.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
   this.move.test {test},
 }
@@ -23,6 +23,19 @@ define _find-int(i: int, xs: list(int)): bool {
       True
     } else {
       _find-int(i, xs)
+    }
+  }
+}
+
+define _find-int-vec(i: int, xs: vector(int)): bool {
+  match core.vector.pop-front(xs) {
+  | Left(_) =>
+    False
+  | Right(Pair(x, xs)) =>
+    if eq-int(x, i) {
+      True
+    } else {
+      _find-int-vec(i, xs)
     }
   }
 }
@@ -73,8 +86,7 @@ define zen(): unit {
       let Pair(!xs, !ys) = p;
       pin left = append(reverse(!ys), reverse(!xs));
       pin right = reverse(append(!xs, !ys));
-      let Eq of {equal} = core.list.eq.as-eq(core.rune.eq.as-eq);
-      equal(left, right)
+      eq-data(left, right)
     },
   );
   pin xs = List[1, 2, 3];
@@ -115,6 +127,15 @@ define zen(): unit {
     list-gen(float-gen),
     function (xs) {
       not(_find-float(15, xs))
+    },
+  );
+  pin k = make-verbose-noa-kit();
+  check(
+    k,
+    "there is no list that contains 15 (should fail and report [15])",
+    vector-gen(int-gen),
+    function (xs) {
+      not(_find-int-vec(15, xs))
     },
   );
   check(
