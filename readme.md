@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-9.tar.zst
+neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-10.tar.zst
 ```
 
 ## Types
@@ -28,7 +28,7 @@ define make-noa-kit(
 ): noa-kit
 
 // performs property-based testing
-define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit
+define-meta check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit
 
 // performs plain testing
 define test(k: &noa-kit, label: &text, property: () -> bool): unit
@@ -85,7 +85,7 @@ define optional<a>(!g: gen(a)): gen(?a)
 define zen(): unit {
   pin k = make-default-noa-kit();
   // a property-based test
-  check(
+  check::(
     k,
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
