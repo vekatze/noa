@@ -13,10 +13,10 @@ data noa-kit {
 
 define _compute-size(k: &noa-kit, iteration: int): int {
   tie _Noa-Kit of {num-of-tests, max-size} = k;
-  let max-size' = sitofp-int-float(*max-size);
-  let iteration' = sitofp-int-float(iteration);
-  let num-of-tests' = sitofp-int-float(*num-of-tests);
-  let size = mul-float(max-size', div-float(iteration', num-of-tests'));
+  let max-size-float = sitofp-int-float(*max-size);
+  let iteration-float = sitofp-int-float(iteration);
+  let num-of-tests-float = sitofp-int-float(*num-of-tests);
+  let size = mul-float(max-size-float, div-float(iteration-float, num-of-tests-float));
   fptosi-float-int(size)
 }
 

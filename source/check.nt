@@ -54,7 +54,13 @@ define _max-ribbon-length: int {
   32
 }
 
-define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a), !g: gen(a)): ?a {
+define _find-refutation<a>(
+  k: &noa-kit,
+  !predicate: (a) -> bool,
+  !vd: (&a) -> doc,
+  cands: list(a),
+  !g: gen(a),
+): ?a {
   tie _Noa-Kit of {verbose} = k;
   match cands {
   | Nil =>
@@ -67,16 +73,16 @@ define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a),
       when *verbose {
         _print-blue-bold(k, "      ✓ ");
         pin !cand = !cand;
-        pin d = _simplify-doc(vet-doc(!cand));
+        pin d = _simplify-doc(!vd(!cand));
         pin t = show-doc(d, _max-ribbon-length);
         _write-line(k, t);
       };
-      _find-refutation(k, !predicate, rest, !g)
+      _find-refutation(k, !predicate, !vd, rest, !g)
     } else {
       when *verbose {
         _print-red-bold(k, "      ✗ ");
         pin !cand = !cand;
-        pin d = _simplify-doc(vet-doc(!cand));
+        pin d = _simplify-doc(!vd(!cand));
         pin t = show-doc(d, _max-ribbon-length);
         _print-red-bold(k, t);
         _write(k, "\n");
@@ -86,18 +92,29 @@ define _find-refutation<a>(k: &noa-kit, !predicate: (a) -> bool, cands: list(a),
   }
 }
 
-define _repeat-shrink<a>(k: &noa-kit, !cand: a, !predicate: (a) -> bool, !g: gen(a)): a {
+define _repeat-shrink<a>(
+  k: &noa-kit,
+  !cand: a,
+  !predicate: (a) -> bool,
+  !vd: (&a) -> doc,
+  !g: gen(a),
+): a {
   let Gen of {shrink} = !g;
   let alts = shrink(!cand);
-  match _find-refutation(k, !predicate, alts, !g) {
+  match _find-refutation(k, !predicate, !vd, alts, !g) {
   | Left(_) =>
     !cand
   | Right(smaller-cand) =>
-    _repeat-shrink(k, smaller-cand, !predicate, !g)
+    _repeat-shrink(k, smaller-cand, !predicate, !vd, !g)
   }
 }
 
-inline _run-tests<a>(k: &noa-kit, num-of-tests: int, !f: (int) -> _result(a)): either(pair(int, a), unit) {
+inline _run-tests<a>(
+  k: &noa-kit,
+  num-of-tests: int,
+  !f: (int) -> _result(a),
+  !vd: (&a) -> doc,
+): either(pair(int, a), unit) {
   let helper =
     define self(iteration: int): either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
@@ -110,45 +127,50 @@ inline _run-tests<a>(k: &noa-kit, num-of-tests: int, !f: (int) -> _result(a)): e
           when verbose {
             _print-blue-bold(k, "    ↻ Shrink:\n")
           };
-          let value' = _repeat-shrink(k, value, predicate, g);
-          Left(Pair(iteration, value'))
+          let next-value = _repeat-shrink(k, value, predicate, !vd, g);
+          Left(Pair(iteration, next-value))
         }
       }
     };
   helper(0)
 }
 
-define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool): unit {
+define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: (&a) -> doc): unit {
   tie _Noa-Kit of {verbose, num-of-tests} = k;
   let result = {
     when *verbose {
       _print-blue-bold(k, "? Check: ");
       _write-line(k, label);
     };
-    _run-tests(k, *num-of-tests, function (i) {
-      let size = _compute-size(k, i);
-      let !value = draw(size, !g);
-      if !predicate(!value) {
-        when *verbose {
-          _print-blue-bold(k, "  ✓ ");
-          pin !cand = !value;
-          pin d = _simplify-doc(vet-doc(!cand));
-          pin t = show-doc(d, _max-ribbon-length);
-          _write-line(k, t);
-        };
-        _OK
-      } else {
-        when *verbose {
-          _print-red-bold(k, "  ✗ ");
-          pin !cand = !value;
-          pin d = _simplify-doc(vet-doc(!cand));
-          pin t = show-doc(d, _max-ribbon-length);
-          _print-red-bold(k, t);
-          _write(k, "\n");
-        };
-        _Failure(i, !value, !predicate, !g, *verbose)
-      }
-    })
+    _run-tests(
+      k,
+      *num-of-tests,
+      function (i) {
+        let size = _compute-size(k, i);
+        let !value = draw(size, !g);
+        if !predicate(!value) {
+          when *verbose {
+            _print-blue-bold(k, "  ✓ ");
+            pin !cand = !value;
+            pin d = _simplify-doc(!vd(!cand));
+            pin t = show-doc(d, _max-ribbon-length);
+            _write-line(k, t);
+          };
+          _OK
+        } else {
+          when *verbose {
+            _print-red-bold(k, "  ✗ ");
+            pin !cand = !value;
+            pin d = _simplify-doc(!vd(!cand));
+            pin t = show-doc(d, _max-ribbon-length);
+            _print-red-bold(k, t);
+            _write(k, "\n");
+          };
+          _Failure(i, !value, !predicate, !g, *verbose)
+        }
+      },
+      !vd,
+    )
   };
   match result {
   | Right(Unit) =>
@@ -159,11 +181,25 @@ define check<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool):
     _write-line(k, label);
     _print-red-bold(k, "  → ");
     pin !cand = counterexample;
-    pin d = _simplify-doc(vet-doc(!cand));
+    pin d = _simplify-doc(!vd(!cand));
     pin txt = show-doc(d, _max-ribbon-length);
-    pin txt' = replace(txt, "\n", *"\n    ");
-    _print-red-bold(k, txt');
+    pin txt = replace(txt, "\n", *"\n    ");
+    _print-red-bold(k, txt);
     _write(k, "\n");
   };
   _flush(k)
+}
+
+define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) -> bool): 'unit {
+  quote {
+    let k = unquote {k};
+    let label = unquote {label};
+    let !g = unquote {!g};
+    let !predicate = unquote {!predicate};
+    let f =
+      function (v) {
+        vet-doc::(v)
+      };
+    _check-inner(k, label, !g, !predicate, f)
+  }
 }

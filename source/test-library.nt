@@ -55,18 +55,18 @@ define _find-float(i: float, xs: list(float)): bool {
 
 define zen(): unit {
   pin k = make-default-noa-kit();
-  check(
+  check::(
     k,
     "unpack then pack is identity",
     text-gen,
     function (t) {
       pin t = t;
       pin xs = unpack(t);
-      pin t' = pack(xs);
-      eq-text(t, t')
+      pin t-new = pack(xs);
+      eq-text(t, t-new)
     },
   );
-  check(
+  check::(
     k,
     "(length as text) == (length as list of chars)",
     text-gen,
@@ -78,7 +78,7 @@ define zen(): unit {
       eq-int(len1, len2)
     },
   );
-  check(
+  check::(
     k,
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
@@ -86,12 +86,12 @@ define zen(): unit {
       let Pair(!xs, !ys) = p;
       pin left = append(reverse(!ys), reverse(!xs));
       pin right = reverse(append(!xs, !ys));
-      eq-data(left, right)
+      eq-data::(left, right)
     },
   );
   pin xs = List[1, 2, 3];
   pin x = 4;
-  check(
+  check::(
     k,
     "one-of (should fail)",
     one-of(xs, x),
@@ -102,7 +102,7 @@ define zen(): unit {
       or(b1, or(b2, b3))
     },
   );
-  check(
+  check::(
     k,
     "shrinking texts (should fail)",
     text-gen,
@@ -112,7 +112,7 @@ define zen(): unit {
       lt-int(len, 10)
     },
   );
-  check(
+  check::(
     k,
     "there is no list that contains 15 (should fail and report [15])",
     list-gen(int-gen),
@@ -120,7 +120,7 @@ define zen(): unit {
       not(_find-int(15, xs))
     },
   );
-  check(
+  check::(
     k,
     "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
     list-gen(float-gen),
@@ -129,7 +129,7 @@ define zen(): unit {
     },
   );
   pin kv = make-verbose-noa-kit();
-  check(
+  check::(
     kv,
     "there is no list that contains 15 (should fail and report [15])",
     vector-gen(int-gen),
@@ -137,7 +137,7 @@ define zen(): unit {
       not(_find-int-vec(15, xs))
     },
   );
-  check(
+  check::(
     k,
     "ascii",
     ascii-text-gen,

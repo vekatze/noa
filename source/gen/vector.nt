@@ -16,13 +16,13 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (vector(a)) -> list(vector(a)) {
       Nil
     | Right(Pair(!x, !xs)) =>
       let former =
-        core.list.for-each(!shrink(!x), function (x') {
-          push-front(!xs, x')
+        core.list.for-each(!shrink(!x), function (y) {
+          push-front(!xs, y)
         });
       let tmp = self(!xs);
       let latter =
-        core.list.for-each(tmp, function (xs') {
-          push-front(xs', !x)
+        core.list.for-each(tmp, function (ys) {
+          push-front(ys, !x)
         });
       core.list.append(former, latter)
     }
@@ -40,8 +40,8 @@ define _removes<a>(k: int, n: int, xs: vector(a)): list(vector(a)) {
     } else {
       let tmp = _removes(k, sub-int(n, k), !xs2);
       let rest =
-        core.list.for-each(tmp, function (xs2') {
-          append(xs1, xs2')
+        core.list.for-each(tmp, function (ys) {
+          append(xs1, ys)
         });
       Cons(!xs2, rest)
     }

@@ -20,8 +20,8 @@ define _random-2-byte-rune(value: int): rune {
   let mask-1 = 0b_0000_0000_0011_1111;
   let value-0 = and-int(mask-0, value);
   let value-1 = and-int(mask-1, value);
-  let value-0' = shl-int(value-0, 2);
-  magic cast(int, rune, or-int(or-int(mask-X, value-0'), value-1))
+  let value-0 = shl-int(value-0, 2);
+  magic cast(int, rune, or-int(or-int(mask-X, value-0), value-1))
 }
 
 // [U+0800, U+FFFF]
@@ -33,9 +33,9 @@ define _random-3-byte-rune(value: int): rune {
   let value-0 = and-int(mask-0, value);
   let value-1 = and-int(mask-1, value);
   let value-2 = and-int(mask-2, value);
-  let value-0' = shl-int(value-0, 4);
-  let value-1' = shl-int(value-1, 2);
-  magic cast(int, rune, or-int(or-int(or-int(mask-X, value-0'), value-1'), value-2))
+  let value-0 = shl-int(value-0, 4);
+  let value-1 = shl-int(value-1, 2);
+  magic cast(int, rune, or-int(or-int(or-int(mask-X, value-0), value-1), value-2))
 }
 
 // [U+10000, U+10FFFF]
@@ -49,10 +49,10 @@ define _random-4-byte-rune(value: int): rune {
   let value-1 = and-int(mask-1, value);
   let value-2 = and-int(mask-2, value);
   let value-3 = and-int(mask-3, value);
-  let value-0' = shl-int(value-0, 6);
-  let value-1' = shl-int(value-1, 4);
-  let value-2' = shl-int(value-2, 2);
-  magic cast(int, rune, or-int(or-int(or-int(or-int(mask-X, value-0'), value-1'), value-2'), value-3))
+  let value-0 = shl-int(value-0, 6);
+  let value-1 = shl-int(value-1, 4);
+  let value-2 = shl-int(value-2, 2);
+  magic cast(int, rune, or-int(or-int(or-int(or-int(mask-X, value-0), value-1), value-2), value-3))
 }
 
 define _gen-rune(_: int): rune {
@@ -103,22 +103,18 @@ inline _rune-eq-N: eq(&rune) {
   }
 }
 
-// inline _list-rune-ops: trope(rune) {
-//   from-eq(_rune-eq-N)
-// }
 define _extract-candidates(c: rune): list(rune) {
   let cs = _simple-runes;
   let is-elem on c, cs = {
-    // let Trope of {elem} = _list-rune-ops;
     pin k = core.rune.eq.as-eq;
     elem(k, cs, c)
   };
   let _ = cs;
   if is-elem {
     let pred =
-      function (c') {
+      function (cand) {
         let Ord of {compare} = as-ord;
-        let b on c = compare(c, c');
+        let b on c = compare(c, cand);
         let _ = c;
         match b {
         | GT =>

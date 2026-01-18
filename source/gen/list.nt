@@ -12,13 +12,13 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
       Nil
     | Cons(!x, !xs) =>
       let former =
-        for-each(!shrink(!x), function (x') {
-          Cons(x', !xs)
+        for-each(!shrink(!x), function (y) {
+          Cons(y, !xs)
         });
       let tmp = self(!xs);
       let latter =
-        for-each(tmp, function (xs') {
-          Cons(!x, xs')
+        for-each(tmp, function (ys) {
+          Cons(!x, ys)
         });
       append(former, latter)
     }
@@ -53,8 +53,8 @@ define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
     } else {
       let tmp = _removes(k, sub-int(n, k), !xs2);
       let rest =
-        for-each(tmp, function (xs2') {
-          append(xs1, xs2')
+        for-each(tmp, function (ys2) {
+          append(xs1, ys2)
         });
       Cons(!xs2, rest)
     }
