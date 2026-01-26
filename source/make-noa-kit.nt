@@ -21,7 +21,7 @@ define make-noa-kit(
 }
 
 define make-default-noa-kit(): noa-kit {
-  make-noa-kit of {
+  make-noa-kit{
     sink := stdout,
     buffer-capacity := 4096,
     num-of-tests := 100,
@@ -31,7 +31,7 @@ define make-default-noa-kit(): noa-kit {
 }
 
 define make-verbose-noa-kit(): noa-kit {
-  make-noa-kit of {
+  make-noa-kit{
     sink := stdout,
     buffer-capacity := 4096,
     num-of-tests := 100,

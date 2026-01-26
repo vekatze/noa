@@ -57,11 +57,11 @@ define _max-ribbon-length: int {
 define _find-refutation<a>(
   k: &noa-kit,
   !predicate: (a) -> bool,
-  !vd: (&a) -> doc,
+  !vd: &(&a) -> doc,
   cands: list(a),
   !g: gen(a),
 ): ?a {
-  tie _Noa-Kit of {verbose} = k;
+  tie _Noa-Kit{verbose} = k;
   match cands {
   | Nil =>
     when *verbose {
@@ -69,25 +69,25 @@ define _find-refutation<a>(
     };
     none
   | Cons(!cand, rest) =>
-    if !predicate(!cand) {
+    if predicate(cand) {
       when *verbose {
         _print-blue-bold(k, "      ✓ ");
-        pin !cand = !cand;
-        pin d = _simplify-doc(!vd(!cand));
+        pin cand = cand;
+        pin d = _simplify-doc(vd(cand));
         pin t = show-doc(d, _max-ribbon-length);
         _write-line(k, t);
       };
-      _find-refutation(k, !predicate, !vd, rest, !g)
+      _find-refutation(k, predicate, vd, rest, g)
     } else {
       when *verbose {
         _print-red-bold(k, "      ✗ ");
-        pin !cand = !cand;
-        pin d = _simplify-doc(!vd(!cand));
+        pin cand = cand;
+        pin d = _simplify-doc(vd(cand));
         pin t = show-doc(d, _max-ribbon-length);
         _print-red-bold(k, t);
         _write(k, "\n");
       };
-      Right(!cand)
+      Right(cand)
     }
   }
 }
@@ -96,16 +96,16 @@ define _repeat-shrink<a>(
   k: &noa-kit,
   !cand: a,
   !predicate: (a) -> bool,
-  !vd: (&a) -> doc,
+  !vd: &(&a) -> doc,
   !g: gen(a),
 ): a {
-  let Gen of {shrink} = !g;
-  let alts = shrink(!cand);
-  match _find-refutation(k, !predicate, !vd, alts, !g) {
+  let Gen{shrink} = g;
+  let alts = shrink(cand);
+  match _find-refutation(k, predicate, vd, alts, g) {
   | Left(_) =>
-    !cand
+    cand
   | Right(smaller-cand) =>
-    _repeat-shrink(k, smaller-cand, !predicate, !vd, !g)
+    _repeat-shrink(k, smaller-cand, predicate, vd, g)
   }
 }
 
@@ -113,21 +113,21 @@ inline _run-tests<a>(
   k: &noa-kit,
   num-of-tests: int,
   !f: (int) -> _result(a),
-  !vd: (&a) -> doc,
+  !vd: &(&a) -> doc,
 ): either(pair(int, a), unit) {
   let helper =
     define self(iteration: int): either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
         Right(Unit)
       } else {
-        match !f(iteration) {
+        match f(iteration) {
         | _OK =>
           self(add-int(iteration, 1))
-        | _Failure of {iteration, value, predicate, g, verbose} =>
+        | _Failure{iteration, value, predicate, g, verbose} =>
           when verbose {
             _print-blue-bold(k, "    ↻ Shrink:\n")
           };
-          let next-value = _repeat-shrink(k, value, predicate, !vd, g);
+          let next-value = _repeat-shrink(k, value, predicate, vd, g);
           Left(Pair(iteration, next-value))
         }
       }
@@ -135,8 +135,8 @@ inline _run-tests<a>(
   helper(0)
 }
 
-define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: (&a) -> doc): unit {
-  tie _Noa-Kit of {verbose, num-of-tests} = k;
+define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc): unit {
+  tie _Noa-Kit{verbose, num-of-tests} = k;
   let result = {
     when *verbose {
       _print-blue-bold(k, "? Check: ");
@@ -147,12 +147,12 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
       *num-of-tests,
       function (i) {
         let size = _compute-size(k, i);
-        let !value = draw(size, !g);
-        if !predicate(!value) {
+        let !value = draw(size, g);
+        if predicate(value) {
           when *verbose {
             _print-blue-bold(k, "  ✓ ");
-            pin !cand = !value;
-            pin d = _simplify-doc(!vd(!cand));
+            pin cand = value;
+            pin d = _simplify-doc(vd(cand));
             pin t = show-doc(d, _max-ribbon-length);
             _write-line(k, t);
           };
@@ -160,16 +160,16 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
         } else {
           when *verbose {
             _print-red-bold(k, "  ✗ ");
-            pin !cand = !value;
-            pin d = _simplify-doc(!vd(!cand));
+            pin cand = value;
+            pin d = _simplify-doc(vd(cand));
             pin t = show-doc(d, _max-ribbon-length);
             _print-red-bold(k, t);
             _write(k, "\n");
           };
-          _Failure(i, !value, !predicate, !g, *verbose)
+          _Failure(i, value, predicate, g, *verbose)
         }
       },
-      !vd,
+      vd,
     )
   };
   match result {
@@ -181,7 +181,7 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
     _write-line(k, label);
     _print-red-bold(k, "  → ");
     pin !cand = counterexample;
-    pin d = _simplify-doc(!vd(!cand));
+    pin d = _simplify-doc(vd(cand));
     pin txt = show-doc(d, _max-ribbon-length);
     pin txt = replace(txt, "\n", *"\n    ");
     _print-red-bold(k, txt);
@@ -194,12 +194,12 @@ define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) 
   quote {
     let k = unquote {k};
     let label = unquote {label};
-    let !g = unquote {!g};
-    let !predicate = unquote {!predicate};
-    let f =
-      function (v) {
+    let !g = unquote {g};
+    let !predicate = unquote {predicate};
+    pin f =
+      function show-value(v) {
         vet-doc::(v)
       };
-    _check-inner(k, label, !g, !predicate, f)
+    _check-inner(k, label, g, predicate, f)
   }
 }

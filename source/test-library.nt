@@ -68,7 +68,7 @@ define zen(): unit {
   );
   check::(
     k,
-    "(length as text) == (length as list of chars)",
+    "(length as text) == (length as listchars)",
     text-gen,
     function (t) {
       pin t = t;
@@ -84,8 +84,8 @@ define zen(): unit {
     pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
     function (p) {
       let Pair(!xs, !ys) = p;
-      pin left = append(reverse(!ys), reverse(!xs));
-      pin right = reverse(append(!xs, !ys));
+      pin left = append(reverse(ys), reverse(xs));
+      pin right = reverse(append(xs, ys));
       eq-data::(left, right)
     },
   );

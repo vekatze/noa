@@ -4,7 +4,7 @@ import {
 }
 
 inline bool-gen: gen(bool) {
-  Gen of {
+  Gen{
     generate := {
       function (_) {
         let i = random-int32(2);

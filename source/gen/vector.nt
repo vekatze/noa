@@ -16,13 +16,13 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (vector(a)) -> list(vector(a)) {
       Nil
     | Right(Pair(!x, !xs)) =>
       let former =
-        core.list.for-each(!shrink(!x), function (y) {
-          push-front(!xs, y)
+        core.list.for-each(shrink(x), function (y) {
+          push-front(xs, y)
         });
-      let tmp = self(!xs);
+      let tmp = self(xs);
       let latter =
         core.list.for-each(tmp, function (ys) {
-          push-front(ys, !x)
+          push-front(ys, x)
         });
       core.list.append(former, latter)
     }
@@ -34,16 +34,16 @@ define _removes<a>(k: int, n: int, xs: vector(a)): list(vector(a)) {
     List[]
   } else {
     let Pair(xs1, !xs2) = core.vector.split(xs, k);
-    let b on !xs2 = _is-empty(!xs2);
+    let b on !xs2 = _is-empty(xs2);
     if b {
       List[Vector[]]
     } else {
-      let tmp = _removes(k, sub-int(n, k), !xs2);
+      let tmp = _removes(k, sub-int(n, k), xs2);
       let rest =
         core.list.for-each(tmp, function (ys) {
           append(xs1, ys)
         });
-      Cons(!xs2, rest)
+      Cons(xs2, rest)
     }
   }
 }
@@ -58,28 +58,28 @@ define _div-seq(k: int): list(int) {
 
 inline _shrink-vector<a>(g: gen(a)): (vector(a)) -> list(vector(a)) {
   function (!xs) {
-    let n on !xs = length(!xs);
+    let n on !xs = length(xs);
     let xsss =
       core.list.for-each(_div-seq(n), function (k) {
-        _removes(k, n, !xs)
+        _removes(k, n, xs)
       });
-    let Gen of {shrink} = g;
-    let yss = _shrink-one(shrink)(!xs);
+    let Gen{shrink} = g;
+    let yss = _shrink-one(shrink)(xs);
     core.list.append(core.list.concat(xsss), yss)
   }
 }
 
 inline vector-gen<a>(!g: gen(a)): gen(vector(a)) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         let trunc-size = trunc-int-int32(size);
         grow(make(8), size, function (acc, _) {
-          let elem = draw(random-int(trunc-size), !g);
+          let elem = draw(random-int(trunc-size), g);
           push-back(acc, elem)
         })
       }
     },
-    shrink := _shrink-vector(!g),
+    shrink := _shrink-vector(g),
   }
 }

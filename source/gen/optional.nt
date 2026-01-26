@@ -4,14 +4,14 @@ import {
 }
 
 define optional<a>(!g: gen(a)): gen(?a) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         let dice = random-in-range-int(0, 1);
         if eq-int(dice, 0) {
           none
         } else {
-          let Gen of {generate} = !g;
+          let Gen{generate} = g;
           Right(generate(size))
         }
       }

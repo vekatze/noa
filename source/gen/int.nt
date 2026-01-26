@@ -14,7 +14,7 @@ define _div-seq(k: int): list(int) {
 }
 
 inline int-gen: gen(int) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         let size = trunc-int-int32(size);
@@ -38,7 +38,7 @@ inline int-gen: gen(int) {
 }
 
 inline positive-int-gen: gen(int) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         random-in-range-int(0, trunc-int-int32(size))
@@ -55,7 +55,7 @@ inline positive-int-gen: gen(int) {
 }
 
 inline negative-int-gen: gen(int) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         let size = trunc-int-int32(size);

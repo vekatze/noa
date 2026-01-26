@@ -21,15 +21,15 @@ data config {
 }
 
 inline text-gen(!c: config): gen(text) {
-  let Config of {rune-generator, rune-acceptor, max-length, min-length} = !c;
+  let Config{rune-generator, rune-acceptor, max-length, min-length} = c;
   let rune-config =
-    this.gen.custom.rune.Config of {
+    this.gen.custom.rune.Config{
       rune-generator,
       rune-acceptor,
     };
   let !rune-gen = this.gen.custom.rune.rune-gen(rune-config);
-  let Gen of {generate} = !rune-gen;
-  Gen of {
+  let Gen{generate} = rune-gen;
+  Gen{
     generate := {
       function (size: int) {
         let max-length = from-right(max-length, zext-int32-int(UINT32_MAX));
@@ -47,7 +47,7 @@ inline text-gen(!c: config): gen(text) {
       function (t: text) {
         pin t = t;
         let rune-seq = unpack(t);
-        pin rune-lists = _shrink-list(!rune-gen)(rune-seq);
+        pin rune-lists = _shrink-list(rune-gen)(rune-seq);
         let result = for-each-N(rune-lists, pack);
         filter(result, function (t) {
           let len = core.text.length(t);

@@ -18,7 +18,7 @@ define _div-seq(k: float): list(float) {
 }
 
 inline float-gen: gen(float) {
-  Gen of {
+  Gen{
     generate := {
       function (size) {
         let size = uitofp-int-float(size);
