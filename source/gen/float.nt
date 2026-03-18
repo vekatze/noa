@@ -5,11 +5,11 @@ import {
   this.gen {Gen, gen},
 }
 
-inline _epsilon: float {
+constant _epsilon: float {
   1
 }
 
-define _div-seq(k: float): list(float) {
+define _div-seq(k: float) -> list(float) {
   if lt-float(abs-float(k), _epsilon) {
     Nil
   } else {
@@ -17,7 +17,7 @@ define _div-seq(k: float): list(float) {
   }
 }
 
-inline float-gen: gen(float) {
+constant float-gen: gen(float) {
   Gen{
     generate := {
       function (size) {

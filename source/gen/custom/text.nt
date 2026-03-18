@@ -20,7 +20,7 @@ data config {
   )
 }
 
-inline text-gen(!c: config): gen(text) {
+inline text-gen(!c: config) -> gen(text) {
   let Config{rune-generator, rune-acceptor, max-length, min-length} = c;
   let rune-config =
     this.gen.custom.rune.Config{

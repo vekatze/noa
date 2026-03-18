@@ -5,7 +5,7 @@ import {
   this.gen {Gen, gen},
 }
 
-define _div-seq(k: int): list(int) {
+define _div-seq(k: int) -> list(int) {
   if eq-int(k, 0) {
     Nil
   } else {
@@ -13,7 +13,7 @@ define _div-seq(k: int): list(int) {
   }
 }
 
-inline int-gen: gen(int) {
+constant int-gen: gen(int) {
   Gen{
     generate := {
       function (size) {
@@ -37,7 +37,7 @@ inline int-gen: gen(int) {
   }
 }
 
-inline positive-int-gen: gen(int) {
+constant positive-int-gen: gen(int) {
   Gen{
     generate := {
       function (size) {
@@ -54,7 +54,7 @@ inline positive-int-gen: gen(int) {
   }
 }
 
-inline negative-int-gen: gen(int) {
+constant negative-int-gen: gen(int) {
   Gen{
     generate := {
       function (size) {

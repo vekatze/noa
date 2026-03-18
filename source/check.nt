@@ -20,7 +20,7 @@ data _result(a) {
   )
 }
 
-define _simplify-chunk(x: chunk): chunk {
+define _simplify-chunk(x: chunk) -> chunk {
   match x {
   | Chunk-Line =>
     Chunk-Empty
@@ -37,7 +37,7 @@ define _simplify-chunk(x: chunk): chunk {
   }
 }
 
-define _simplify-doc(d: doc): doc {
+define _simplify-doc(d: doc) -> doc {
   match d {
   | Chunk(c) =>
     Chunk(_simplify-chunk(c))
@@ -50,7 +50,7 @@ define _simplify-doc(d: doc): doc {
   }
 }
 
-define _max-ribbon-length: int {
+constant _max-ribbon-length: int {
   32
 }
 
@@ -60,7 +60,8 @@ define _find-refutation<a>(
   !vd: &(&a) -> doc,
   cands: list(a),
   !g: gen(a),
-): ?a {
+)->
+?a {
   tie _Noa-Kit{verbose} = k;
   match cands {
   | Nil =>
@@ -98,7 +99,8 @@ define _repeat-shrink<a>(
   !predicate: (a) -> bool,
   !vd: &(&a) -> doc,
   !g: gen(a),
-): a {
+)->
+a {
   let Gen{shrink} = g;
   let alts = shrink(cand);
   match _find-refutation(k, predicate, vd, alts, g) {
@@ -114,9 +116,10 @@ inline _run-tests<a>(
   num-of-tests: int,
   !f: (int) -> _result(a),
   !vd: &(&a) -> doc,
-): either(pair(int, a), unit) {
+)->
+either(pair(int, a), unit) {
   let helper =
-    define self(iteration: int): either(pair(int, a), unit) {
+    define self(iteration: int) -> either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
         Right(Unit)
       } else {
@@ -135,7 +138,7 @@ inline _run-tests<a>(
   helper(0)
 }
 
-define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc): unit {
+define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc) -> unit {
   tie _Noa-Kit{verbose, num-of-tests} = k;
   let result = {
     when *verbose {
@@ -190,7 +193,7 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
   _flush(k)
 }
 
-define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) -> bool): 'unit {
+define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) -> bool) -> 'unit {
   quote {
     let k = unquote {k};
     let label = unquote {label};

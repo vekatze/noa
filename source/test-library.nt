@@ -14,7 +14,7 @@ import {
   this.test {test},
 }
 
-define _find-int(i: int, xs: list(int)): bool {
+define _find-int(i: int, xs: list(int)) -> bool {
   match xs {
   | Nil =>
     False
@@ -27,7 +27,7 @@ define _find-int(i: int, xs: list(int)): bool {
   }
 }
 
-define _find-int-vec(i: int, xs: vector(int)): bool {
+define _find-int-vec(i: int, xs: vector(int)) -> bool {
   match core.vector.pop-front(xs) {
   | Left(_) =>
     False
@@ -40,7 +40,7 @@ define _find-int-vec(i: int, xs: vector(int)): bool {
   }
 }
 
-define _find-float(i: float, xs: list(float)): bool {
+define _find-float(i: float, xs: list(float)) -> bool {
   match xs {
   | Nil =>
     False
@@ -53,7 +53,7 @@ define _find-float(i: float, xs: list(float)): bool {
   }
 }
 
-define zen(): unit {
+define zen() -> unit {
   pin k = make-default-noa-kit();
   check::(
     k,
@@ -165,6 +165,6 @@ define zen(): unit {
   );
 }
 
-define main(): unit {
+define main() -> unit {
   zen()
 }

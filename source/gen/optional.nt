@@ -3,7 +3,7 @@ import {
   this.gen {Gen, gen},
 }
 
-define optional<a>(!g: gen(a)): gen(?a) {
+define optional<a>(!g: gen(a)) -> gen(?a) {
   Gen{
     generate := {
       function (size) {

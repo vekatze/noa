@@ -4,7 +4,7 @@ import {
   this.gen {Gen, gen},
 }
 
-define one-of<a>(xs: &list(a), x: &a): gen(a) {
+define one-of<a>(xs: &list(a), x: &a) -> gen(a) {
   Gen{
     generate := {
       function (_) {

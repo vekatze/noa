@@ -3,7 +3,7 @@ import {
   this.private.utils {_flush, _print-green-bold, _print-red-bold, _write-line},
 }
 
-define test(k: &noa-kit, label: &text, property: () -> bool): unit {
+define test(k: &noa-kit, label: &text, property: () -> bool) -> unit {
   if property() {
     _print-green-bold(k, "✓ Pass: ");
     _write-line(k, label);

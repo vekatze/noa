@@ -5,8 +5,8 @@ import {
   this.gen {Gen, draw, gen},
 }
 
-inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
-  define self(xs: list(a)) {
+inline _shrink-one<a>(!shrink: (a) -> list(a)) -> (list(a)) -> list(list(a)) {
+  define self(xs: list(a)) -> list(list(a)) {
     match xs {
     | Nil =>
       Nil
@@ -25,7 +25,7 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (list(a)) -> list(list(a)) {
   }
 }
 
-define _split<a>(n: int, xs: list(a), head-acc: list(a)): pair(list(a), list(a)) {
+define _split<a>(n: int, xs: list(a), head-acc: list(a)) -> pair(list(a), list(a)) {
   if le-int(n, 0) {
     Pair(reverse(head-acc), xs)
   } else {
@@ -38,11 +38,11 @@ define _split<a>(n: int, xs: list(a), head-acc: list(a)): pair(list(a), list(a))
   }
 }
 
-define split<a>(n: int, xs: list(a)): pair(list(a), list(a)) {
+define split<a>(n: int, xs: list(a)) -> pair(list(a), list(a)) {
   _split(n, xs, Nil)
 }
 
-define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
+define _removes<a>(k: int, n: int, xs: list(a)) -> list(list(a)) {
   if gt-int(k, n) {
     Nil
   } else {
@@ -61,7 +61,7 @@ define _removes<a>(k: int, n: int, xs: list(a)): list(list(a)) {
   }
 }
 
-define _div-seq(k: int): list(int) {
+define _div-seq(k: int) -> list(int) {
   if eq-int(k, 0) {
     Nil
   } else {
@@ -69,7 +69,7 @@ define _div-seq(k: int): list(int) {
   }
 }
 
-inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
+inline _shrink-list<a>(g: gen(a)) -> (list(a)) -> list(list(a)) {
   function (!xs) {
     let n on !xs = length(xs);
     let xsss =
@@ -82,7 +82,7 @@ inline _shrink-list<a>(g: gen(a)): (list(a)) -> list(list(a)) {
   }
 }
 
-inline list-gen<a>(!g: gen(a)): gen(list(a)) {
+inline list-gen<a>(!g: gen(a)) -> gen(list(a)) {
   Gen{
     generate := {
       function (size) {

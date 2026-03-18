@@ -5,12 +5,12 @@ import {
   this.gen {Gen, draw, gen},
 }
 
-define _is-empty<a>(xs: &vector(a)): bool {
+define _is-empty<a>(xs: &vector(a)) -> bool {
   eq-int(length(xs), 0)
 }
 
-inline _shrink-one<a>(!shrink: (a) -> list(a)): (vector(a)) -> list(vector(a)) {
-  define self(xs: vector(a)): list(vector(a)) {
+inline _shrink-one<a>(!shrink: (a) -> list(a)) -> (vector(a)) -> list(vector(a)) {
+  define self(xs: vector(a)) -> list(vector(a)) {
     match core.vector.pop-front(xs) {
     | Left(_) =>
       Nil
@@ -29,7 +29,7 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)): (vector(a)) -> list(vector(a)) {
   }
 }
 
-define _removes<a>(k: int, n: int, xs: vector(a)): list(vector(a)) {
+define _removes<a>(k: int, n: int, xs: vector(a)) -> list(vector(a)) {
   if gt-int(k, n) {
     List[]
   } else {
@@ -48,7 +48,7 @@ define _removes<a>(k: int, n: int, xs: vector(a)): list(vector(a)) {
   }
 }
 
-define _div-seq(k: int): list(int) {
+define _div-seq(k: int) -> list(int) {
   if eq-int(k, 0) {
     Nil
   } else {
@@ -56,7 +56,7 @@ define _div-seq(k: int): list(int) {
   }
 }
 
-inline _shrink-vector<a>(g: gen(a)): (vector(a)) -> list(vector(a)) {
+inline _shrink-vector<a>(g: gen(a)) -> (vector(a)) -> list(vector(a)) {
   function (!xs) {
     let n on !xs = length(xs);
     let xsss =
@@ -69,7 +69,7 @@ inline _shrink-vector<a>(g: gen(a)): (vector(a)) -> list(vector(a)) {
   }
 }
 
-inline vector-gen<a>(!g: gen(a)): gen(vector(a)) {
+inline vector-gen<a>(!g: gen(a)) -> gen(vector(a)) {
   Gen{
     generate := {
       function (size) {

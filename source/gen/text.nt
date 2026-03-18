@@ -4,7 +4,7 @@ import {
   this.gen.custom.text,
 }
 
-inline text-gen: gen(text) {
+constant text-gen: gen(text) {
   this.gen.custom.text.text-gen(this.gen.custom.text.Config{
     min-length := 0,
     max-length := none,
@@ -17,7 +17,7 @@ inline text-gen: gen(text) {
   })
 }
 
-inline ascii-text-gen: gen(text) {
+constant ascii-text-gen: gen(text) {
   this.gen.custom.text.text-gen(this.gen.custom.text.Config{
     min-length := 0,
     max-length := none,

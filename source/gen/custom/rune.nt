@@ -9,12 +9,12 @@ import {
 }
 
 // [U+0000, U+007F]
-define _random-1-byte-rune(value: int8): rune {
+define _random-1-byte-rune(value: int8) -> rune {
   magic cast(int8, rune, value)
 }
 
 // [U+0080, U+07FF]
-define _random-2-byte-rune(value: int): rune {
+define _random-2-byte-rune(value: int) -> rune {
   let mask-X = 0b_1100_0000_1000_0000;
   let mask-0 = 0b_0000_0111_1100_0000;
   let mask-1 = 0b_0000_0000_0011_1111;
@@ -25,7 +25,7 @@ define _random-2-byte-rune(value: int): rune {
 }
 
 // [U+0800, U+FFFF]
-define _random-3-byte-rune(value: int): rune {
+define _random-3-byte-rune(value: int) -> rune {
   let mask-X = 0b_1110_0000_1000_0000_1000_0000;
   let mask-0 = 0b_0000_0000_1111_0000_0000_0000;
   let mask-1 = 0b_0000_0000_0000_1111_1100_0000;
@@ -39,7 +39,7 @@ define _random-3-byte-rune(value: int): rune {
 }
 
 // [U+10000, U+10FFFF]
-define _random-4-byte-rune(value: int): rune {
+define _random-4-byte-rune(value: int) -> rune {
   let mask-X: int = 0b_1111_0000_1000_0000_1000_0000_1000_0000;
   let mask-0: int = 0b_0000_0000_0001_1100_0000_0000_0000_0000;
   let mask-1: int = 0b_0000_0000_0000_0011_1111_0000_0000_0000;
@@ -55,7 +55,7 @@ define _random-4-byte-rune(value: int): rune {
   magic cast(int, rune, or-int(or-int(or-int(or-int(mask-X, value-0), value-1), value-2), value-3))
 }
 
-define _gen-rune(_: int): rune {
+define _gen-rune(_: int) -> rune {
   let rune-kind = random-int(4);
   if eq-int(rune-kind, 0) {
     let value = trunc-int-int8(random-int(0x80));
@@ -72,7 +72,7 @@ define _gen-rune(_: int): rune {
   }
 }
 
-define gen-rune-in-range(lower: int, upper: int): rune {
+define gen-rune-in-range(lower: int, upper: int) -> rune {
   // (inclusive range)
   let value = random-in-range-int(trunc-int-int32(lower), trunc-int-int32(upper));
   match core.rune.from-int(value) {
@@ -83,7 +83,7 @@ define gen-rune-in-range(lower: int, upper: int): rune {
   }
 }
 
-inline _simple-runes: list(rune) {
+constant _simple-runes: list(rune) {
   List[
     `b`,
     `a`,
@@ -92,7 +92,7 @@ inline _simple-runes: list(rune) {
   ]
 }
 
-inline _rune-eq-N: eq(&rune) {
+constant _rune-eq-N: eq(&rune) {
   Eq{
     equal := {
       function (x, y) {
@@ -103,7 +103,7 @@ inline _rune-eq-N: eq(&rune) {
   }
 }
 
-define _extract-candidates(c: rune): list(rune) {
+define _extract-candidates(c: rune) -> list(rune) {
   let cs = _simple-runes;
   let is-elem on c, cs = {
     pin k = core.rune.eq.as-eq;
@@ -136,11 +136,11 @@ data config {
   )
 }
 
-inline rune-gen(!c: config): gen(rune) {
+inline rune-gen(!c: config) -> gen(rune) {
   let Config{rune-generator := !generator, rune-acceptor := !acceptor} = c;
   Gen{
     generate := {
-      define loop(size) {
+      define loop(size) -> rune {
         let cand =
           match generator {
           | Right(g) =>

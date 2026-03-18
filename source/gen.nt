@@ -9,7 +9,7 @@ data gen(a) {
   )
 }
 
-define draw<a>(s: sample-size, g: gen(a)): a {
+define draw<a>(s: sample-size, g: gen(a)) -> a {
   let Gen{generate} = g;
   generate(s)
 }
