@@ -14,17 +14,17 @@ define _div-seq(k: int) -> list(int) {
 }
 
 constant int-gen: gen(int) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         let size = trunc-int-int32(size);
         random-in-range-int(mul-int32(-1, size), size)
       }
     },
     shrink := {
-      function (x) {
+      (x) => {
         let tmp =
-          for-each(_div-seq(x), function (diff) {
+          for-each(_div-seq(x), (diff) => {
             sub-int(x, diff)
           });
         if lt-int(x, 0) {
@@ -38,15 +38,15 @@ constant int-gen: gen(int) {
 }
 
 constant positive-int-gen: gen(int) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         random-in-range-int(0, trunc-int-int32(size))
       }
     },
     shrink := {
-      function (x) {
-        for-each(_div-seq(x), function (diff) {
+      (x) => {
+        for-each(_div-seq(x), (diff) => {
           sub-int(x, diff)
         })
       }
@@ -55,16 +55,16 @@ constant positive-int-gen: gen(int) {
 }
 
 constant negative-int-gen: gen(int) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         let size = trunc-int-int32(size);
         mul-int(-1, random-in-range-int(0, size))
       }
     },
     shrink := {
-      function (x) {
-        for-each(_div-seq(x), function (diff) {
+      (x) => {
+        for-each(_div-seq(x), (diff) => {
           sub-int(x, diff)
         })
       }

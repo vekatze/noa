@@ -60,9 +60,8 @@ define _find-refutation<a>(
   !vd: &(&a) -> doc,
   cands: list(a),
   !g: gen(a),
-)->
-?a {
-  tie _Noa-Kit{verbose} = k;
+) -> ?a {
+  tie _Noa-Kit {verbose} = k;
   match cands {
   | Nil =>
     when *verbose {
@@ -99,9 +98,8 @@ define _repeat-shrink<a>(
   !predicate: (a) -> bool,
   !vd: &(&a) -> doc,
   !g: gen(a),
-)->
-a {
-  let Gen{shrink} = g;
+) -> a {
+  let Gen {shrink} = g;
   let alts = shrink(cand);
   match _find-refutation(k, predicate, vd, alts, g) {
   | Left(_) =>
@@ -116,8 +114,7 @@ inline _run-tests<a>(
   num-of-tests: int,
   !f: (int) -> _result(a),
   !vd: &(&a) -> doc,
-)->
-either(pair(int, a), unit) {
+) -> either(pair(int, a), unit) {
   let helper =
     define self(iteration: int) -> either(pair(int, a), unit) {
       if ge-int(iteration, num-of-tests) {
@@ -126,7 +123,7 @@ either(pair(int, a), unit) {
         match f(iteration) {
         | _OK =>
           self(add-int(iteration, 1))
-        | _Failure{iteration, value, predicate, g, verbose} =>
+        | _Failure {iteration, value, predicate, g, verbose} =>
           when verbose {
             _print-blue-bold(k, "    ↻ Shrink:\n")
           };
@@ -139,7 +136,7 @@ either(pair(int, a), unit) {
 }
 
 define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc) -> unit {
-  tie _Noa-Kit{verbose, num-of-tests} = k;
+  tie _Noa-Kit {verbose, num-of-tests} = k;
   let result = {
     when *verbose {
       _print-blue-bold(k, "? Check: ");
@@ -148,7 +145,7 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
     _run-tests(
       k,
       *num-of-tests,
-      function (i) {
+      (i) => {
         let size = _compute-size(k, i);
         let !value = draw(size, g);
         if predicate(value) {
@@ -200,7 +197,7 @@ define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) 
     let !g = unquote {g};
     let !predicate = unquote {predicate};
     pin f =
-      function show-value(v) {
+      (v: &a) => {
         vet-doc::(v)
       };
     _check-inner(k, label, g, predicate, f)

@@ -5,11 +5,11 @@ import {
 }
 
 inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)) -> gen(pair(a, b)) {
-  let Gen{shrink := shrink1} = g1;
-  let Gen{shrink := shrink2} = g2;
-  Gen{
+  let Gen {shrink := shrink1} = g1;
+  let Gen {shrink := shrink2} = g2;
+  Gen {
     generate := {
-      function (size: int) {
+      (size: int) => {
         let x-size = random-int(trunc-int-int32(size));
         let y-size = sub-int(size, x-size);
         let x = draw(x-size, g1);
@@ -18,7 +18,7 @@ inline pair-gen<a, b>(!g1: gen(a), !g2: gen(b)) -> gen(pair(a, b)) {
       }
     },
     shrink := {
-      function (p) {
+      (p) => {
         let Pair(!x, !y) = p;
         let xs = shrink1(x);
         let ys = shrink2(y);

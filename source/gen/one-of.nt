@@ -5,9 +5,9 @@ import {
 }
 
 define one-of<a>(xs: &list(a), x: &a) -> gen(a) {
-  Gen{
+  Gen {
     generate := {
-      function (_) {
+      (_) => {
         let len = length(xs);
         let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1)));
         let elem-or-none = nth(xs, index);
@@ -20,7 +20,7 @@ define one-of<a>(xs: &list(a), x: &a) -> gen(a) {
       }
     },
     shrink := {
-      function (_) {
+      (_) => {
         Nil
       }
     },

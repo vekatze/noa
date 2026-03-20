@@ -5,12 +5,12 @@ import {
 }
 
 constant text-gen: gen(text) {
-  this.gen.custom.text.text-gen(this.gen.custom.text.Config{
+  this.gen.custom.text.text-gen(this.gen.custom.text.Config {
     min-length := 0,
     max-length := none,
     rune-generator := none,
     rune-acceptor := {
-      function (_) {
+      (_) => {
         True
       }
     },
@@ -18,16 +18,16 @@ constant text-gen: gen(text) {
 }
 
 constant ascii-text-gen: gen(text) {
-  this.gen.custom.text.text-gen(this.gen.custom.text.Config{
+  this.gen.custom.text.text-gen(this.gen.custom.text.Config {
     min-length := 0,
     max-length := none,
     rune-generator := {
-      Right(function () {
+      Right(() => {
         gen-rune-in-range(0x20, 0x7e)
       })
     },
     rune-acceptor := {
-      function (_) {
+      (_) => {
         True
       }
     },

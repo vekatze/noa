@@ -16,12 +16,12 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)) -> (vector(a)) -> list(vector(a))
       Nil
     | Right(Pair(!x, !xs)) =>
       let former =
-        core.list.for-each(shrink(x), function (y) {
+        core.list.for-each(shrink(x), (y) => {
           push-front(xs, y)
         });
       let tmp = self(xs);
       let latter =
-        core.list.for-each(tmp, function (ys) {
+        core.list.for-each(tmp, (ys) => {
           push-front(ys, x)
         });
       core.list.append(former, latter)
@@ -40,7 +40,7 @@ define _removes<a>(k: int, n: int, xs: vector(a)) -> list(vector(a)) {
     } else {
       let tmp = _removes(k, sub-int(n, k), xs2);
       let rest =
-        core.list.for-each(tmp, function (ys) {
+        core.list.for-each(tmp, (ys) => {
           append(xs1, ys)
         });
       Cons(xs2, rest)
@@ -57,24 +57,24 @@ define _div-seq(k: int) -> list(int) {
 }
 
 inline _shrink-vector<a>(g: gen(a)) -> (vector(a)) -> list(vector(a)) {
-  function (!xs) {
+  (!xs) => {
     let n on !xs = length(xs);
     let xsss =
-      core.list.for-each(_div-seq(n), function (k) {
+      core.list.for-each(_div-seq(n), (k) => {
         _removes(k, n, xs)
       });
-    let Gen{shrink} = g;
+    let Gen {shrink} = g;
     let yss = _shrink-one(shrink)(xs);
     core.list.append(core.list.concat(xsss), yss)
   }
 }
 
 inline vector-gen<a>(!g: gen(a)) -> gen(vector(a)) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         let trunc-size = trunc-int-int32(size);
-        grow(make(8), size, function (acc, _) {
+        grow(make(8), size, (acc, _) => {
           let elem = draw(random-int(trunc-size), g);
           push-back(acc, elem)
         })

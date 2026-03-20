@@ -12,12 +12,12 @@ inline _shrink-one<a>(!shrink: (a) -> list(a)) -> (list(a)) -> list(list(a)) {
       Nil
     | Cons(!x, !xs) =>
       let former =
-        for-each(shrink(x), function (y) {
+        for-each(shrink(x), (y) => {
           Cons(y, xs)
         });
       let tmp = self(xs);
       let latter =
-        for-each(tmp, function (ys) {
+        for-each(tmp, (ys) => {
           Cons(x, ys)
         });
       append(former, latter)
@@ -53,7 +53,7 @@ define _removes<a>(k: int, n: int, xs: list(a)) -> list(list(a)) {
     } else {
       let tmp = _removes(k, sub-int(n, k), xs2);
       let rest =
-        for-each(tmp, function (ys2) {
+        for-each(tmp, (ys2) => {
           append(xs1, ys2)
         });
       Cons(xs2, rest)
@@ -70,24 +70,24 @@ define _div-seq(k: int) -> list(int) {
 }
 
 inline _shrink-list<a>(g: gen(a)) -> (list(a)) -> list(list(a)) {
-  function (!xs) {
+  (!xs) => {
     let n on !xs = length(xs);
     let xsss =
-      for-each(_div-seq(n), function (k) {
+      for-each(_div-seq(n), (k) => {
         _removes(k, n, xs)
       });
-    let Gen{shrink} = g;
+    let Gen {shrink} = g;
     let yss = _shrink-one(shrink)(xs);
     append(concat(xsss), yss)
   }
 }
 
 inline list-gen<a>(!g: gen(a)) -> gen(list(a)) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         let trunc-size = trunc-int-int32(size);
-        grow(Nil, size, function (acc, _) {
+        grow(Nil, size, (acc, _) => {
           let elem = draw(random-int(trunc-size), g);
           Cons(elem, acc)
         })

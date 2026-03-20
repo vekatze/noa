@@ -59,7 +59,7 @@ define zen() -> unit {
     k,
     "unpack then pack is identity",
     text-gen,
-    function (t) {
+    (t) => {
       pin t = t;
       pin xs = unpack(t);
       pin t-new = pack(xs);
@@ -70,7 +70,7 @@ define zen() -> unit {
     k,
     "(length as text) == (length as listchars)",
     text-gen,
-    function (t) {
+    (t) => {
       pin t = t;
       pin xs = unpack(t);
       let len1 = core.text.length(t);
@@ -82,7 +82,7 @@ define zen() -> unit {
     k,
     "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
     pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
-    function (p) {
+    (p) => {
       let Pair(!xs, !ys) = p;
       pin left = append(reverse(ys), reverse(xs));
       pin right = reverse(append(xs, ys));
@@ -95,7 +95,7 @@ define zen() -> unit {
     k,
     "one-of (should fail)",
     one-of(xs, x),
-    function (x) {
+    (x) => {
       let b1 = eq-int(x, 1);
       let b2 = eq-int(x, 3);
       let b3 = eq-int(x, 3);
@@ -106,7 +106,7 @@ define zen() -> unit {
     k,
     "shrinking texts (should fail)",
     text-gen,
-    function (t) {
+    (t) => {
       let len on t = core.text.length(t);
       let _ = t;
       lt-int(len, 10)
@@ -116,7 +116,7 @@ define zen() -> unit {
     k,
     "there is no list that contains 15 (should fail and report [15])",
     list-gen(int-gen),
-    function (xs) {
+    (xs) => {
       not(_find-int(15, xs))
     },
   );
@@ -124,7 +124,7 @@ define zen() -> unit {
     k,
     "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
     list-gen(float-gen),
-    function (xs) {
+    (xs) => {
       not(_find-float(15, xs))
     },
   );
@@ -133,7 +133,7 @@ define zen() -> unit {
     kv,
     "there is no list that contains 15 (should fail and report [15])",
     vector-gen(int-gen),
-    function (xs) {
+    (xs) => {
       not(_find-int-vec(15, xs))
     },
   );
@@ -141,17 +141,17 @@ define zen() -> unit {
     k,
     "ascii",
     ascii-text-gen,
-    function (_) {
+    (_) => {
       True
     },
   );
   test(
     k,
     "the list `List[1, 2, 3]` contains 2",
-    function () {
+    () => {
       pin xs = List[1, 2, 3];
       pin f =
-        function (y) {
+        (y) => {
           eq-int(*y, 2)
         };
       let result = core.list.find(xs, f);

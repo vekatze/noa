@@ -4,10 +4,10 @@ import {
 }
 
 constant rune-gen: gen(rune) {
-  this.gen.custom.rune.rune-gen(this.gen.custom.rune.Config{
+  this.gen.custom.rune.rune-gen(this.gen.custom.rune.Config {
     rune-generator := none,
     rune-acceptor := {
-      function (_) {
+      (_) => {
         True
       }
     },
@@ -15,14 +15,14 @@ constant rune-gen: gen(rune) {
 }
 
 constant ascii-rune-gen: gen(rune) {
-  this.gen.custom.rune.rune-gen(this.gen.custom.rune.Config{
+  this.gen.custom.rune.rune-gen(this.gen.custom.rune.Config {
     rune-generator := {
-      Right(function () {
+      Right(() => {
         gen-rune-in-range(0x20, 0x7e)
       })
     },
     rune-acceptor := {
-      function (_) {
+      (_) => {
         True
       }
     },

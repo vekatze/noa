@@ -93,10 +93,10 @@ constant _simple-runes: list(rune) {
 }
 
 constant _rune-eq-N: eq(&rune) {
-  Eq{
+  Eq {
     equal := {
-      function (x, y) {
-        let Eq{equal} = as-eq;
+      (x, y) => {
+        let Eq {equal} = as-eq;
         equal(*x, *y)
       }
     },
@@ -112,8 +112,8 @@ define _extract-candidates(c: rune) -> list(rune) {
   let _ = cs;
   if is-elem {
     let pred =
-      function (cand) {
-        let Ord{compare} = as-ord;
+      (cand) => {
+        let Ord {compare} = as-ord;
         let b on c = compare(c, cand);
         let _ = c;
         match b {
@@ -137,8 +137,8 @@ data config {
 }
 
 inline rune-gen(!c: config) -> gen(rune) {
-  let Config{rune-generator := !generator, rune-acceptor := !acceptor} = c;
-  Gen{
+  let Config {rune-generator := !generator, rune-acceptor := !acceptor} = c;
+  Gen {
     generate := {
       define loop(size) -> rune {
         let cand =
@@ -156,9 +156,9 @@ inline rune-gen(!c: config) -> gen(rune) {
       }
     },
     shrink := {
-      function (v) {
+      (v) => {
         let cands = _extract-candidates(v);
-        filter(cands, function (cand) {
+        filter(cands, (cand) => {
           acceptor(*cand)
         })
       }

@@ -18,17 +18,17 @@ define _div-seq(k: float) -> list(float) {
 }
 
 constant float-gen: gen(float) {
-  Gen{
+  Gen {
     generate := {
-      function (size) {
+      (size) => {
         let size = uitofp-int-float(size);
         random-float(mul-float(-1, size), size)
       }
     },
     shrink := {
-      function (x: float) {
+      (x: float) => {
         let tmp =
-          for-each(_div-seq(x), function (diff) {
+          for-each(_div-seq(x), (diff) => {
             sub-float(x, diff)
           });
         if lt-float(x, 0) {
