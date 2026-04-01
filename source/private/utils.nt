@@ -17,7 +17,7 @@ import {
   this.noa-kit {_Noa-Kit, noa-kit},
 }
 
-define _print-blue-bold(k: &noa-kit, t: &text) -> unit {
+define _print-blue-bold(k: &noa-kit, t: &string) -> unit {
   tie _Noa-Kit {ansi-kit} = k;
   let _ = {
     try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
@@ -28,7 +28,7 @@ define _print-blue-bold(k: &noa-kit, t: &text) -> unit {
   Unit
 }
 
-define _print-red-bold(k: &noa-kit, t: &text) -> unit {
+define _print-red-bold(k: &noa-kit, t: &string) -> unit {
   tie _Noa-Kit {ansi-kit} = k;
   let _ = {
     try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
@@ -39,7 +39,7 @@ define _print-red-bold(k: &noa-kit, t: &text) -> unit {
   Unit
 }
 
-define _print-green-bold(k: &noa-kit, t: &text) -> unit {
+define _print-green-bold(k: &noa-kit, t: &string) -> unit {
   tie _Noa-Kit {ansi-kit} = k;
   let _ = {
     try _ = write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
@@ -50,7 +50,7 @@ define _print-green-bold(k: &noa-kit, t: &text) -> unit {
   Unit
 }
 
-define _write(k: &noa-kit, t: &text) -> unit {
+define _write(k: &noa-kit, t: &string) -> unit {
   let _ = {
     tie _Noa-Kit {ansi-kit} = k;
     write(ansi-kit, t)
@@ -58,7 +58,7 @@ define _write(k: &noa-kit, t: &text) -> unit {
   Unit
 }
 
-define _write-line(k: &noa-kit, t: &text) -> unit {
+define _write-line(k: &noa-kit, t: &string) -> unit {
   tie _Noa-Kit {ansi-kit} = k;
   let _ = {
     try _ = write(ansi-kit, t);

@@ -3,7 +3,7 @@ import {
   core.doc {Chunk, Group, Nest, Seq, doc},
   core.doc.chunk {Chunk-Choose, Chunk-Empty, Chunk-Join, Chunk-Line, Chunk-Style, Chunk-Style-N, chunk},
   core.doc.show {show-doc},
-  core.text {replace},
+  core.string {replace},
   this.gen {Gen, draw, gen},
   this.noa-kit {_Noa-Kit, _compute-size, noa-kit},
   this.private.utils {_flush, _print-blue-bold, _print-green-bold, _print-red-bold, _write, _write-line},
@@ -135,7 +135,7 @@ inline _run-tests<a>(
   helper(0)
 }
 
-define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc) -> unit {
+define _check-inner<a>(k: &noa-kit, label: &string, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc) -> unit {
   tie _Noa-Kit {verbose, num-of-tests} = k;
   let result = {
     when *verbose {
@@ -190,7 +190,7 @@ define _check-inner<a>(k: &noa-kit, label: &text, !g: gen(a), !predicate: (a) ->
   _flush(k)
 }
 
-define-meta check<a>(k: '&noa-kit, label: '&text, !g: 'gen(a), !predicate: '(a) -> bool) -> 'unit {
+define-meta check<a>(k: '&noa-kit, label: '&string, !g: 'gen(a), !predicate: '(a) -> bool) -> 'unit {
   quote {
     let k = unquote {k};
     let label = unquote {label};

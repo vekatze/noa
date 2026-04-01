@@ -1,6 +1,6 @@
 import {
   core.list {append, length, reverse},
-  core.text {pack, unpack},
+  core.string {pack, unpack},
   this.check {check},
   this.gen.float {float-gen},
   this.gen.int {int-gen},
@@ -8,7 +8,7 @@ import {
   this.gen.one-of {one-of},
   this.gen.pair {pair-gen},
   this.gen.rune {rune-gen},
-  this.gen.text {ascii-text-gen, text-gen},
+  this.gen.string {ascii-string-gen, string-gen},
   this.gen.vector {vector-gen},
   this.make-noa-kit {make-default-noa-kit, make-verbose-noa-kit},
   this.test {test},
@@ -58,22 +58,22 @@ define zen() -> unit {
   check::(
     k,
     "unpack then pack is identity",
-    text-gen,
+    string-gen,
     (t) => {
       pin t = t;
       pin xs = unpack(t);
       pin t-new = pack(xs);
-      eq-text(t, t-new)
+      eq-string(t, t-new)
     },
   );
   check::(
     k,
-    "(length as text) == (length as listchars)",
-    text-gen,
+    "(length as string) == (length as listchars)",
+    string-gen,
     (t) => {
       pin t = t;
       pin xs = unpack(t);
-      let len1 = core.text.length(t);
+      let len1 = core.string.length(t);
       let len2 = length(xs);
       eq-int(len1, len2)
     },
@@ -104,10 +104,10 @@ define zen() -> unit {
   );
   check::(
     k,
-    "shrinking texts (should fail)",
-    text-gen,
+    "shrinking strings (should fail)",
+    string-gen,
     (t) => {
-      let len on t = core.text.length(t);
+      let len on t = core.string.length(t);
       let _ = t;
       lt-int(len, 10)
     },
@@ -140,7 +140,7 @@ define zen() -> unit {
   check::(
     k,
     "ascii",
-    ascii-text-gen,
+    ascii-string-gen,
     (_) => {
       True
     },

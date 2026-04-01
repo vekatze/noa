@@ -20,6 +20,6 @@ define _compute-size(k: &noa-kit, iteration: int) -> int {
   fptosi-float-int(size)
 }
 
-define do-nothing(_: &text) -> unit {
+define do-nothing(_: &string) -> unit {
   Unit
 }
