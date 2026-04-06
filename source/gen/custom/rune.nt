@@ -140,7 +140,7 @@ inline rune-gen(!c: config) -> gen(rune) {
   let Config {rune-generator := !generator, rune-acceptor := !acceptor} = c;
   Gen {
     generate := {
-      define loop(size) -> rune {
+      define loop(size: int) -> rune {
         let cand =
           match generator {
           | Right(g) =>
