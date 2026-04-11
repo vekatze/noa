@@ -5,7 +5,7 @@ import {
 }
 
 constant string-gen: gen(string) {
-  this.gen.custom.string.string-gen(this.gen.custom.string.Config {
+  this.gen.custom.string.string-gen(this.gen.custom.string.Config{
     min-length := 0,
     max-length := none,
     rune-generator := none,
@@ -18,7 +18,7 @@ constant string-gen: gen(string) {
 }
 
 constant ascii-string-gen: gen(string) {
-  this.gen.custom.string.string-gen(this.gen.custom.string.Config {
+  this.gen.custom.string.string-gen(this.gen.custom.string.Config{
     min-length := 0,
     max-length := none,
     rune-generator := {

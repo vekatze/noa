@@ -76,14 +76,14 @@ inline _shrink-list<a>(g: gen(a)) -> (list(a)) -> list(list(a)) {
       for-each(_div-seq(n), (k) => {
         _removes(k, n, xs)
       });
-    let Gen {shrink} = g;
+    let Gen{shrink} = g;
     let yss = _shrink-one(shrink)(xs);
     append(concat(xsss), yss)
   }
 }
 
 inline list-gen<a>(!g: gen(a)) -> gen(list(a)) {
-  Gen {
+  Gen{
     generate := {
       (size) => {
         let trunc-size = trunc-int-int32(size);

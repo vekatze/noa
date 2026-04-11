@@ -21,15 +21,15 @@ data config {
 }
 
 inline string-gen(!c: config) -> gen(string) {
-  let Config {rune-generator, rune-acceptor, max-length, min-length} = c;
+  let Config{rune-generator, rune-acceptor, max-length, min-length} = c;
   let rune-config =
-    this.gen.custom.rune.Config {
+    this.gen.custom.rune.Config{
       rune-generator,
       rune-acceptor,
     };
   let !rune-gen = this.gen.custom.rune.rune-gen(rune-config);
-  let Gen {generate} = rune-gen;
-  Gen {
+  let Gen{generate} = rune-gen;
+  Gen{
     generate := {
       (size: int) => {
         let max-length = from-right(max-length, zext-int32-int(UINT32_MAX));

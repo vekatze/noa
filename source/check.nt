@@ -61,7 +61,7 @@ define _find-refutation<a>(
   cands: list(a),
   !g: gen(a),
 ) -> ?a {
-  tie _Noa-Kit {verbose} = k;
+  tie _Noa-Kit{verbose} = k;
   match cands {
   | Nil =>
     when *verbose {
@@ -99,7 +99,7 @@ define _repeat-shrink<a>(
   !vd: &(&a) -> doc,
   !g: gen(a),
 ) -> a {
-  let Gen {shrink} = g;
+  let Gen{shrink} = g;
   let alts = shrink(cand);
   match _find-refutation(k, predicate, vd, alts, g) {
   | Left(_) =>
@@ -123,7 +123,7 @@ inline _run-tests<a>(
         match f(iteration) {
         | _OK =>
           self(add-int(iteration, 1))
-        | _Failure {iteration, value, predicate, g, verbose} =>
+        | _Failure{iteration, value, predicate, g, verbose} =>
           when verbose {
             _print-blue-bold(k, "    ↻ Shrink:\n")
           };
@@ -136,7 +136,7 @@ inline _run-tests<a>(
 }
 
 define _check-inner<a>(k: &noa-kit, label: &string, !g: gen(a), !predicate: (a) -> bool, !vd: &(&a) -> doc) -> unit {
-  tie _Noa-Kit {verbose, num-of-tests} = k;
+  tie _Noa-Kit{verbose, num-of-tests} = k;
   let result = {
     when *verbose {
       _print-blue-bold(k, "? Check: ");

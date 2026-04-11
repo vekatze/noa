@@ -63,14 +63,14 @@ inline _shrink-vector<a>(g: gen(a)) -> (vector(a)) -> list(vector(a)) {
       core.list.for-each(_div-seq(n), (k) => {
         _removes(k, n, xs)
       });
-    let Gen {shrink} = g;
+    let Gen{shrink} = g;
     let yss = _shrink-one(shrink)(xs);
     core.list.append(core.list.concat(xsss), yss)
   }
 }
 
 inline vector-gen<a>(!g: gen(a)) -> gen(vector(a)) {
-  Gen {
+  Gen{
     generate := {
       (size) => {
         let trunc-size = trunc-int-int32(size);

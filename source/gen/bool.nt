@@ -4,7 +4,7 @@ import {
 }
 
 constant bool-gen: gen(bool) {
-  Gen {
+  Gen{
     generate := {
       (_) => {
         let i = random-int32(2);

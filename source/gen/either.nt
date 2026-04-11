@@ -7,7 +7,7 @@ import {
 inline either-gen<a, b>(g1: gen(a), g2: gen(b)) -> gen(either(a, b)) {
   let Gen(generate1, shrink1) = g1;
   let Gen(generate2, shrink2) = g2;
-  Gen {
+  Gen{
     generate := {
       (size) => {
         let dice = random-in-range-int(0, 1);
