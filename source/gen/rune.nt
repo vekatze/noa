@@ -18,7 +18,7 @@ constant ascii-rune-gen: gen(rune) {
   this.gen.custom.rune.rune-gen(this.gen.custom.rune.Config{
     rune-generator := {
       Right(() => {
-        gen-rune-in-range(0x20, 0x7e)
+        gen-rune-in-range(0x20, 0x7E)
       })
     },
     rune-acceptor := {

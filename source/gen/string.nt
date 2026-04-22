@@ -23,7 +23,7 @@ constant ascii-string-gen: gen(string) {
     max-length := none,
     rune-generator := {
       Right(() => {
-        gen-rune-in-range(0x20, 0x7e)
+        gen-rune-in-range(0x20, 0x7E)
       })
     },
     rune-acceptor := {

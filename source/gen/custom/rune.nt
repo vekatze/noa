@@ -61,13 +61,13 @@ define _gen-rune(_: int) -> rune {
     let value = trunc-int-int8(random-int(0x80));
     _random-1-byte-rune(value)
   } else-if eq-int(rune-kind, 1) {
-    let value = random-in-range-int(0x0080, 0x07ff);
+    let value = random-in-range-int(0x0080, 0x07FF);
     _random-2-byte-rune(value)
   } else-if eq-int(rune-kind, 2) {
-    let value = random-in-range-int(0x0800, 0xffff);
+    let value = random-in-range-int(0x0800, 0xFFFF);
     _random-3-byte-rune(value)
   } else {
-    let value = random-in-range-int(0x10000, 0x10ffff);
+    let value = random-in-range-int(0x10000, 0x10FFFF);
     _random-4-byte-rune(value)
   }
 }
@@ -79,7 +79,7 @@ define gen-rune-in-range(lower: int, upper: int) -> rune {
   | Right(r) =>
     r
   | Left(_) =>
-    magic cast(int, rune, 0xefbfbe)
+    magic cast(int, rune, 0xEFBFBE)
   }
 }
 
