@@ -1,14 +1,13 @@
 import {
   core.control {grow},
   core.either {from-right},
-  core.foreign {UINT32_MAX},
   core.int {max-int, min-int},
   core.list {filter, for-each-N},
   core.random {random-in-range-int},
   core.string {join, pack, unpack},
   this.gen {Gen, gen},
+  this.gen._list {shrink-list},
   this.gen.custom.rune,
-  this.gen.list {_shrink-list},
 }
 
 data config {
@@ -32,7 +31,7 @@ inline string-gen(!c: config) -> gen(string) {
   Gen{
     generate := {
       (size: int) => {
-        let max-length = from-right(max-length, zext-int32-int(UINT32_MAX));
+        let max-length = from-right(max-length, size);
         let string-max-len = trunc-int-int32(min-int(size, max-length));
         let string-len = max-int(random-in-range-int(0, string-max-len), min-length);
         let tmp =
@@ -47,7 +46,7 @@ inline string-gen(!c: config) -> gen(string) {
       (t: string) => {
         pin t = t;
         let rune-seq = unpack(t);
-        pin rune-lists = _shrink-list(rune-gen)(rune-seq);
+        pin rune-lists = shrink-list(rune-gen)(rune-seq);
         let result = for-each-N(rune-lists, pack);
         filter(result, (t) => {
           let len = core.string.length(t);

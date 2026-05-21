@@ -1,15 +1,8 @@
 import {
   this.noa-kit {noa-kit},
-  this.private.utils {_flush, _print-green-bold, _print-red-bold, _write-line},
+  this.noa-kit.test,
 }
 
 define test(k: &noa-kit, label: &string, property: () -> bool) -> unit {
-  if property() {
-    _print-green-bold(k, "✓ Pass: ");
-    _write-line(k, label);
-  } else {
-    _print-red-bold(k, "✗ Fail: ");
-    _write-line(k, label);
-  };
-  _flush(k)
+  this.noa-kit.test.test(k, label, property)
 }

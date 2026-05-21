@@ -1,75 +1,11 @@
 import {
-  core.eq.list {elem},
   core.list {filter},
+  core.list.eq {member},
   core.random {random-in-range-int, random-int},
   core.rune,
   core.rune.eq {as-eq},
   core.rune.ord {as-ord},
   this.gen {Gen, gen},
-}
-
-// [U+0000, U+007F]
-define _random-1-byte-rune(value: int8) -> rune {
-  magic cast(int8, rune, value)
-}
-
-// [U+0080, U+07FF]
-define _random-2-byte-rune(value: int) -> rune {
-  let mask-X = 0b_1100_0000_1000_0000;
-  let mask-0 = 0b_0000_0111_1100_0000;
-  let mask-1 = 0b_0000_0000_0011_1111;
-  let value-0 = and-int(mask-0, value);
-  let value-1 = and-int(mask-1, value);
-  let value-0 = shl-int(value-0, 2);
-  magic cast(int, rune, or-int(or-int(mask-X, value-0), value-1))
-}
-
-// [U+0800, U+FFFF]
-define _random-3-byte-rune(value: int) -> rune {
-  let mask-X = 0b_1110_0000_1000_0000_1000_0000;
-  let mask-0 = 0b_0000_0000_1111_0000_0000_0000;
-  let mask-1 = 0b_0000_0000_0000_1111_1100_0000;
-  let mask-2 = 0b_0000_0000_0000_0000_0011_1111;
-  let value-0 = and-int(mask-0, value);
-  let value-1 = and-int(mask-1, value);
-  let value-2 = and-int(mask-2, value);
-  let value-0 = shl-int(value-0, 4);
-  let value-1 = shl-int(value-1, 2);
-  magic cast(int, rune, or-int(or-int(or-int(mask-X, value-0), value-1), value-2))
-}
-
-// [U+10000, U+10FFFF]
-define _random-4-byte-rune(value: int) -> rune {
-  let mask-X: int = 0b_1111_0000_1000_0000_1000_0000_1000_0000;
-  let mask-0: int = 0b_0000_0000_0001_1100_0000_0000_0000_0000;
-  let mask-1: int = 0b_0000_0000_0000_0011_1111_0000_0000_0000;
-  let mask-2: int = 0b_0000_0000_0000_0000_0000_1111_1100_0000;
-  let mask-3: int = 0b_0000_0000_0000_0000_0000_0000_0011_1111;
-  let value-0 = and-int(mask-0, value);
-  let value-1 = and-int(mask-1, value);
-  let value-2 = and-int(mask-2, value);
-  let value-3 = and-int(mask-3, value);
-  let value-0 = shl-int(value-0, 6);
-  let value-1 = shl-int(value-1, 4);
-  let value-2 = shl-int(value-2, 2);
-  magic cast(int, rune, or-int(or-int(or-int(or-int(mask-X, value-0), value-1), value-2), value-3))
-}
-
-define _gen-rune(_: int) -> rune {
-  let rune-kind = random-int(4);
-  if eq-int(rune-kind, 0) {
-    let value = trunc-int-int8(random-int(0x80));
-    _random-1-byte-rune(value)
-  } else-if eq-int(rune-kind, 1) {
-    let value = random-in-range-int(0x0080, 0x07FF);
-    _random-2-byte-rune(value)
-  } else-if eq-int(rune-kind, 2) {
-    let value = random-in-range-int(0x0800, 0xFFFF);
-    _random-3-byte-rune(value)
-  } else {
-    let value = random-in-range-int(0x10000, 0x10FFFF);
-    _random-4-byte-rune(value)
-  }
 }
 
 define gen-rune-in-range(lower: int, upper: int) -> rune {
@@ -79,7 +15,20 @@ define gen-rune-in-range(lower: int, upper: int) -> rune {
   | Right(r) =>
     r
   | Left(_) =>
-    magic cast(int, rune, 0xEFBFBE)
+    gen-rune-in-range(lower, upper)
+  }
+}
+
+define _gen-rune(_: int) -> rune {
+  let rune-kind = random-int(4);
+  if eq-int(rune-kind, 0) {
+    gen-rune-in-range(0, 0x7F)
+  } else-if eq-int(rune-kind, 1) {
+    gen-rune-in-range(0x0080, 0x07FF)
+  } else-if eq-int(rune-kind, 2) {
+    gen-rune-in-range(0x0800, 0xFFFF)
+  } else {
+    gen-rune-in-range(0x10000, 0x10FFFF)
   }
 }
 
@@ -107,7 +56,7 @@ define _extract-candidates(c: rune) -> list(rune) {
   let cs = _simple-runes;
   let is-elem on c, cs = {
     pin k = core.rune.eq.as-eq;
-    elem(k, cs, c)
+    member(k, cs, c)
   };
   let _ = cs;
   if is-elem {

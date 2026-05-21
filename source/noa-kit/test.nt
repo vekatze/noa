@@ -1,0 +1,15 @@
+import {
+  this.noa-kit {noa-kit},
+  this.noa-kit._report {flush, print-green-bold, print-red-bold, write-line},
+}
+
+define test(k: &noa-kit, label: &string, property: () -> bool) -> unit {
+  if property() {
+    print-green-bold(k, "✓ Pass: ");
+    write-line(k, label);
+  } else {
+    print-red-bold(k, "✗ Fail: ");
+    write-line(k, label);
+  };
+  flush(k)
+}

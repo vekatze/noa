@@ -1,5 +1,6 @@
 import {
-  core.ansi {ansi-kit},
+  core.ansi.io {ansi-kit, make-ansi-kit},
+  core.file.descriptor {descriptor, stdout},
 }
 
 data noa-kit {
@@ -20,6 +21,48 @@ define _compute-size(k: &noa-kit, iteration: int) -> int {
   fptosi-float-int(size)
 }
 
-define do-nothing(_: &string) -> unit {
-  Unit
+define _get-num-of-tests(k: &noa-kit) -> int {
+  tie _Noa-Kit{num-of-tests} = k;
+  *num-of-tests
+}
+
+define _get-verbose(k: &noa-kit) -> bool {
+  tie _Noa-Kit{verbose} = k;
+  *verbose
+}
+
+define make-noa-kit(
+  sink: descriptor,
+  buffer-capacity: int,
+  num-of-tests: int,
+  max-size: int,
+  verbose: bool,
+) -> noa-kit {
+  let ansi-kit = make-ansi-kit(sink, buffer-capacity);
+  _Noa-Kit(
+    ansi-kit,
+    num-of-tests,
+    max-size,
+    verbose,
+  )
+}
+
+define make-default-noa-kit() -> noa-kit {
+  make-noa-kit{
+    sink := stdout,
+    buffer-capacity := 4096,
+    num-of-tests := 100,
+    max-size := 100,
+    verbose := False,
+  }
+}
+
+define make-verbose-noa-kit() -> noa-kit {
+  make-noa-kit{
+    sink := stdout,
+    buffer-capacity := 4096,
+    num-of-tests := 100,
+    max-size := 100,
+    verbose := True,
+  }
 }

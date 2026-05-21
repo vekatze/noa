@@ -1,0 +1,72 @@
+import {
+  core.ansi {
+    Blue,
+    Bold,
+    Color,
+    Color-16,
+    Foreground,
+    Green,
+    Normal,
+    Red,
+    Set-Style,
+    Vivid,
+  },
+  core.ansi.io,
+  this.noa-kit {_Noa-Kit, noa-kit},
+}
+
+define print-blue-bold(k: &noa-kit, t: &string) -> unit {
+  tie _Noa-Kit{ansi-kit} = k;
+  let _ = {
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Blue))));
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Bold));
+    try _ = core.ansi.io.write(ansi-kit, t);
+    core.ansi.io.write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
+}
+
+define print-red-bold(k: &noa-kit, t: &string) -> unit {
+  tie _Noa-Kit{ansi-kit} = k;
+  let _ = {
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Red))));
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Bold));
+    try _ = core.ansi.io.write(ansi-kit, t);
+    core.ansi.io.write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
+}
+
+define print-green-bold(k: &noa-kit, t: &string) -> unit {
+  tie _Noa-Kit{ansi-kit} = k;
+  let _ = {
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Color(Foreground, Color-16(Vivid, Green))));
+    try _ = core.ansi.io.write-code(ansi-kit, Set-Style(Bold));
+    try _ = core.ansi.io.write(ansi-kit, t);
+    core.ansi.io.write-code(ansi-kit, Set-Style(Normal))
+  };
+  Unit
+}
+
+define write(k: &noa-kit, t: &string) -> unit {
+  let _ = {
+    tie _Noa-Kit{ansi-kit} = k;
+    core.ansi.io.write(ansi-kit, t)
+  };
+  Unit
+}
+
+define write-line(k: &noa-kit, t: &string) -> unit {
+  tie _Noa-Kit{ansi-kit} = k;
+  let _ = {
+    try _ = core.ansi.io.write(ansi-kit, t);
+    core.ansi.io.write(ansi-kit, "\n")
+  };
+  Unit
+}
+
+define flush(k: &noa-kit) -> unit {
+  tie _Noa-Kit{ansi-kit} = k;
+  let _ = core.ansi.io.flush(ansi-kit);
+  Unit
+}
