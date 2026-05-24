@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-22.tar.zst
+neut get noa https://github.com/vekatze/noa/raw/main/archive/0-4-23.tar.zst
 ```
 
 ## Types
@@ -85,12 +85,13 @@ define optional<a>(!g: gen(a)) -> gen(?a)
 
 ```neut
 import {
+  core.eq.generic {eq-data},
   core.list {append, reverse},
   this.check {check},
   this.gen.list {list-gen},
   this.gen.pair {pair-gen},
   this.gen.rune {rune-gen},
-  this.make-noa-kit {make-default-noa-kit},
+  this.noa-kit {make-default-noa-kit},
   this.test {test},
 }
 
@@ -148,7 +149,9 @@ This should result in something like the following:
 ✗ Fail: shrinking strings (should fail)
   → "AAAAAAAAAA"
 ✗ Fail: there is no list that contains 15 (should fail and report [15])
-  → Vector[15]
+  → Cons(15, Nil)
+✗ Fail: there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])
+  → Cons(15.123456, Nil)
 ```
 
 Verbose mode is also available:
