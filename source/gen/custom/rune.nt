@@ -3,7 +3,6 @@ import {
   core.list.eq {member},
   core.random {random-in-range-int, random-int},
   core.rune,
-  core.rune.eq {as-eq},
   core.rune.ord {as-ord},
   this.gen {Gen, gen},
 }
@@ -39,17 +38,6 @@ constant _simple-runes: list(rune) {
     `B`,
     `A`,
   ]
-}
-
-constant _rune-eq-N: eq(&rune) {
-  Eq{
-    equal := {
-      (x, y) => {
-        let Eq{equal} = as-eq;
-        equal(*x, *y)
-      }
-    },
-  }
 }
 
 define _extract-candidates(c: rune) -> list(rune) {
