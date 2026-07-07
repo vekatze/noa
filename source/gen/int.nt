@@ -1,73 +1,21 @@
 import {
-  core.int {abs-int},
-  core.list {for-each},
-  core.random {random-in-range-int},
-  this.gen {Gen, gen},
+  gen {Gen, gen},
+  suite {gen-kit},
+  suite.combinator {choose, draw-int},
 }
 
-define _div-seq(k: int) -> list(int) {
-  if eq-int(k, 0) {
-    Nil
-  } else {
-    Cons(k, _div-seq(div-int(k, 2)))
-  }
+inline gen-int(lo: int, hi: int, pivot: int) -> gen(int) {
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      draw-int<r>(k, lo, hi, pivot)
+    },
+  )
 }
 
-constant int-gen: gen(int) {
-  Gen{
-    generate := {
-      (size) => {
-        let size = trunc-int-int32(size);
-        random-in-range-int(mul-int32(-1, size), size)
-      }
+inline gen-choose(n: int) -> gen(int) {
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      choose<r>(k, n)
     },
-    shrink := {
-      (x) => {
-        let tmp =
-          for-each(_div-seq(x), (diff) => {
-            sub-int(x, diff)
-          });
-        if lt-int(x, 0) {
-          Cons(abs-int(x), tmp)
-        } else {
-          tmp
-        }
-      }
-    },
-  }
-}
-
-constant positive-int-gen: gen(int) {
-  Gen{
-    generate := {
-      (size) => {
-        random-in-range-int(0, trunc-int-int32(size))
-      }
-    },
-    shrink := {
-      (x) => {
-        for-each(_div-seq(x), (diff) => {
-          sub-int(x, diff)
-        })
-      }
-    },
-  }
-}
-
-constant negative-int-gen: gen(int) {
-  Gen{
-    generate := {
-      (size) => {
-        let size = trunc-int-int32(size);
-        mul-int(-1, random-in-range-int(0, size))
-      }
-    },
-    shrink := {
-      (x) => {
-        for-each(_div-seq(x), (diff) => {
-          sub-int(x, diff)
-        })
-      }
-    },
-  }
+  )
 }

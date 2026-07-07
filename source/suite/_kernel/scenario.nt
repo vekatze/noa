@@ -1,0 +1,83 @@
+import {
+  core::array {length, push-back},
+  core::array.unsafe {access-unchecked, put-unchecked},
+  core::box {axiom-T},
+  core::cell {borrow, cell, mutate},
+  control.event-tag {Tag-Choose, Tag-Draw-Float, Tag-Draw-Int, Tag-Reset, Tag-Shift, event-tag},
+}
+
+data shift-mode {
+| Active
+| Inactive
+}
+
+data event {
+| Choose(index: int)
+| Draw-Int(
+    lo: int,
+    hi: int,
+    pivot: int,
+    value: int,
+  )
+| Draw-Float(
+    lo: float,
+    hi: float,
+    pivot: float,
+    value: float,
+  )
+| Reset(end: int)
+| Shift(
+    mode: shift-mode,
+    end: int,
+  )
+}
+
+alias scenario {
+  array(event)
+}
+
+define event-tag-of(e: &event) -> event-tag {
+  case e {
+  | Choose(_) =>
+    Tag-Choose
+  | Draw-Int(_, _, _, _) =>
+    Tag-Draw-Int
+  | Draw-Float(_, _, _, _) =>
+    Tag-Draw-Float
+  | Reset(_) =>
+    Tag-Reset
+  | Shift(_, _) =>
+    Tag-Shift
+  }
+}
+
+define read-event-at(xs: &scenario, i: int) -> &event {
+  access-unchecked(xs, i)
+}
+
+inline-meta replace-event-at(xs: 'scenario, i: 'int, e: 'event) -> 'scenario {
+  put-unchecked(xs, i, e)
+}
+
+define scenario-length(r: &cell(scenario)) -> int {
+  borrow(r, (xs) => {
+    lift {length(xs)}
+  })
+}
+
+inline append-event-simple(r: &cell(scenario), e: event) -> unit {
+  mutate(r, (xs0) => {
+    lift {push-back(axiom-T(xs0), e)}
+  });
+}
+
+inline append-event(r: &cell(scenario), e: event) -> int {
+  append-event-simple(r, e);
+  sub-int(scenario-length(r), 1)
+}
+
+inline replace-event(r: &cell(scenario), index: int, e: event) -> unit {
+  mutate(r, (xs0) => {
+    lift {replace-event-at::(axiom-T(xs0), index, e)}
+  })
+}

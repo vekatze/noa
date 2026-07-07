@@ -1,28 +1,35 @@
 import {
-  core.list {length, nth},
-  core.random {random-in-range-int},
-  this.gen {Gen, gen},
+  core::debug {panic},
+  core::list {length},
+  control {Control-Success, control-bind},
+  gen {Gen, gen},
+  suite {gen-kit},
+  suite.combinator {choose},
 }
 
-define one-of<a>(xs: &list(a), x: &a) -> gen(a) {
-  Gen{
-    generate := {
-      (_) => {
-        let len = length(xs);
-        let index = random-in-range-int(0, trunc-int-int32(sub-int(len, 1)));
-        let elem-or-none = nth(xs, index);
-        match elem-or-none {
-        | Left(_) =>
-          *x
-        | Right(elem) =>
-          elem
-        }
-      }
-    },
-    shrink := {
-      (_) => {
-        Nil
-      }
-    },
+define _list-nth<a>(xs: list(a), i: int) -> a {
+  match xs {
+  | Nil =>
+    panic("one-of: index out of range")
+  | Cons(x, rest) =>
+    if eq-int(i, 0) {
+      let _ = rest;
+      x
+    } else {
+      let _ = x;
+      _list-nth(rest, sub-int(i, 1))
+    }
   }
+}
+
+define one-of<a>(values: list(a)) -> gen(a) {
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      let n on values = length(values);
+      with control-bind {
+        bind i = choose<r>(k, n);
+        Control-Success(_list-nth(values, i))
+      }
+    },
+  )
 }

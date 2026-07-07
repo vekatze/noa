@@ -1,0 +1,118 @@
+import {
+  core::ansi {
+    Bold,
+    Color,
+    Color-16,
+    Faint,
+    Foreground,
+    Green,
+    Normal,
+    Red,
+    Set-Style,
+    Vivid,
+  },
+  core::ansi.io {ansi-kit, make-ansi-kit},
+  core::file.descriptor {descriptor},
+  core::string {from-text, replace, strip-prefix},
+  suite._report {Report, report},
+}
+
+alias writer {
+  ansi-kit
+}
+
+define make-writer(sink: descriptor, capacity: int) -> writer {
+  make-ansi-kit(sink, capacity)
+}
+
+define _write(w: &writer, t: &string) -> unit {
+  let _ = core::ansi.io.write(w, t);
+  Unit
+}
+
+define _write-line(w: &writer, t: &string) -> unit {
+  let _ = {
+    try _ = core::ansi.io.write(w, t);
+    core::ansi.io.write(w, "\n")
+  };
+  Unit
+}
+
+define flush(w: &writer) -> unit {
+  let _ = core::ansi.io.flush(w);
+  Unit
+}
+
+define _styled(w: &writer, style: core::ansi.style, t: &string) -> unit {
+  let _ = {
+    try _ = core::ansi.io.write-code(w, Set-Style(style));
+    try _ = core::ansi.io.write-code(w, Set-Style(Bold));
+    try _ = core::ansi.io.write(w, t);
+    core::ansi.io.write-code(w, Set-Style(Normal))
+  };
+  Unit
+}
+
+define _write-red-bold(w: &writer, t: &string) -> unit {
+  _styled(w, Color(Foreground, Color-16(Vivid, Red)), t)
+}
+
+define _write-green-bold(w: &writer, t: &string) -> unit {
+  _styled(w, Color(Foreground, Color-16(Vivid, Green)), t)
+}
+
+define _begin-dim(w: &writer) -> unit {
+  let _ = core::ansi.io.write-code(w, Set-Style(Faint));
+  Unit
+}
+
+define _end-dim(w: &writer) -> unit {
+  let _ = core::ansi.io.write-code(w, Set-Style(Normal));
+  Unit
+}
+
+define _write-int(w: &writer, x: int) -> unit {
+  let _ = core::ansi.io.write-int(w, x);
+  Unit
+}
+
+define _print-origin(w: &writer, root: &string, file: text, line: int, column: int) -> unit {
+  pin path = strip-prefix(root, *from-text(file));
+  _begin-dim(w);
+  _write(w, "  [");
+  _write(w, path);
+  _write(w, ":");
+  _write-int(w, line);
+  _write(w, ":");
+  _write-int(w, column);
+  _write(w, "]\n");
+  _end-dim(w)
+}
+
+define print-report(w: &writer, verbose: bool, root: &string, r: &report) -> unit {
+  tie Report{label, passed, detail, trace, origin-file, origin-line, origin-column} = r;
+  if *passed {
+    _write-green-bold(w, "✓ Pass: ");
+    _write-line(w, label);
+    _write(w, trace);
+    if verbose {
+      _print-origin(w, root, *origin-file, *origin-line, *origin-column)
+    } else {
+      Unit
+    };
+  } else {
+    _write-red-bold(w, "✗ Fail: ");
+    _write-line(w, label);
+    _write(w, trace);
+    case detail {
+    | Right(d) =>
+      _write-red-bold(w, "  → ");
+      pin txt = replace(d, "\n", *"\n    ");
+      _write-red-bold(w, txt);
+      _write(w, "\n")
+    | Left(_) =>
+      Unit
+    };
+    _print-origin(w, root, *origin-file, *origin-line, *origin-column)
+  }
+}

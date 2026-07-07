@@ -1,169 +1,1042 @@
 import {
-  core.eq.generic {eq-data},
-  core.list {append, length, reverse},
-  core.string {pack, unpack},
-  this.check {check},
-  this.gen.float {float-gen},
-  this.gen.int {int-gen},
-  this.gen.list {list-gen},
-  this.gen.one-of {one-of},
-  this.gen.pair {pair-gen},
-  this.gen.rune {rune-gen},
-  this.gen.string {ascii-string-gen, string-gen},
-  this.gen.vector {vector-gen},
-  this.noa-kit {make-default-noa-kit, make-verbose-noa-kit},
-  this.test {test},
+  core::file.descriptor {stdout},
+  core::float {abs-float},
+  core::float.parse {parse-float},
+  core::float.show {show-float},
+  core::int {abs-int},
+  core::list {length},
+  core::vector.unsafe {access-unchecked},
+  gen {gen-map},
+  gen.float {gen-float},
+  gen.generic {
+    Alphanumeric,
+    Category-Representative-Rune-Special-Values,
+    Finite-Float-Special-Values,
+    Full-Ascii,
+    In-Range-Float-Special-Values,
+    No-Int-Special-Values,
+    Pivot-And-Boundary-Int-Special-Values,
+    Printable-Ascii,
+    derive,
+  },
+  gen.int {gen-int},
+  gen.list {gen-list},
+  gen.one-of {one-of},
+  gen.vector {gen-vector},
+  suite {make-default-noa-kit, make-noa-kit},
+  suite.spec {check, example, property, spec},
 }
 
-define _find-int(i: int, xs: list(int)) -> bool {
-  match xs {
+data tree {
+| Leaf
+| Node(tree, int, tree)
+}
+
+data expr {
+| Lit(int)
+| Add(expr, expr)
+| Neg(expr)
+}
+
+data color {
+| Red
+| Green
+| Blue
+}
+
+data rgb {
+| RGB(red: int, green: int, blue: int)
+}
+
+data widths {
+| Widths(a: int8, b: int16, c: int32, d: float32, e: rune)
+}
+
+data inner {
+| Inner(int, int)
+}
+
+data outer {
+| Outer(inner, inner)
+}
+
+data mixed-rec {
+| Mixed-Rec(head: inner mix, tail: int)
+}
+
+data mixed-variant {
+| MV-None
+| MV-Some(payload: inner mix, tag: int)
+}
+
+data tree-bl {
+| Node-BL(tree-bl, int, tree-bl)
+| Leaf-BL
+}
+
+nominal {
+  data grove,
+}
+
+data rose {
+| Rose(int, grove)
+}
+
+data grove {
+| Grove-Nil
+| Grove-Cons(rose, grove)
+}
+
+nominal {
+  data json-list,
+}
+
+data json {
+| J-Null
+| J-Bool(bool)
+| J-Num(int)
+| J-Arr(json-list)
+}
+
+data json-list {
+| JL-Nil
+| JL-Cons(json, json-list)
+}
+
+define _list-in-range(xs: &list(int), lo: int, hi: int) -> bool {
+  case xs {
   | Nil =>
-    False
-  | Cons(x, xs) =>
-    if eq-int(x, i) {
-      True
+    True
+  | Cons(x, ys) =>
+    let v = *x;
+    if ge-int(v, lo) {
+      if le-int(v, hi) {
+        _list-in-range(ys, lo, hi)
+      } else {
+        False
+      }
     } else {
-      _find-int(i, xs)
+      False
     }
   }
 }
 
-define _find-int-vec(i: int, xs: vector(int)) -> bool {
-  match core.vector.pop-front(xs) {
+define _list-sum(xs: &list(int)) -> int {
+  case xs {
+  | Nil =>
+    0
+  | Cons(x, ys) =>
+    add-int(*x, _list-sum(ys))
+  }
+}
+
+define _find-int(i: int, xs: &list(int)) -> bool {
+  case xs {
+  | Nil =>
+    False
+  | Cons(x, ys) =>
+    if eq-int(*x, i) {
+      True
+    } else {
+      _find-int(i, ys)
+    }
+  }
+}
+
+define _vector-has(xs: &vector(int), needle: int) -> bool {
+  let len = core::vector.length(xs);
+  let go =
+    define loop(i: int) -> bool {
+      if ge-int(i, len) {
+        False
+      } else-if eq-int(*access-unchecked(xs, i), needle) {
+        True
+      } else {
+        loop(add-int(i, 1))
+      }
+    };
+  go(0)
+}
+
+define _vector-in-range(xs: &vector(int), lo: int, hi: int) -> bool {
+  let len = core::vector.length(xs);
+  let go =
+    define loop(i: int) -> bool {
+      if ge-int(i, len) {
+        True
+      } else {
+        let v = *access-unchecked(xs, i);
+        if ge-int(v, lo) {
+          if le-int(v, hi) {
+            loop(add-int(i, 1))
+          } else {
+            False
+          }
+        } else {
+          False
+        }
+      }
+    };
+  go(0)
+}
+
+define _int-in-range(v: int, lo: int, hi: int) -> bool {
+  if ge-int(v, lo) {
+    le-int(v, hi)
+  } else {
+    False
+  }
+}
+
+define _inner-in-range(p: &inner, lo: int, hi: int) -> bool {
+  tie Inner(x, y) = p;
+  if _int-in-range(*x, lo, hi) {
+    _int-in-range(*y, lo, hi)
+  } else {
+    False
+  }
+}
+
+define _mixed-rec-in-range(m: &mixed-rec, lo: int, hi: int) -> bool {
+  tie Mixed-Rec(head, tail) = m;
+  if _inner-in-range(head, lo, hi) {
+    _int-in-range(*tail, lo, hi)
+  } else {
+    False
+  }
+}
+
+define _mixed-variant-in-range(m: &mixed-variant, lo: int, hi: int) -> bool {
+  case m {
+  | MV-None =>
+    True
+  | MV-Some(payload, tag) =>
+    if _inner-in-range(payload, lo, hi) {
+      _int-in-range(*tag, lo, hi)
+    } else {
+      False
+    }
+  }
+}
+
+define _tree-size(t: &tree) -> int {
+  case t {
+  | Leaf =>
+    0
+  | Node(l, _, r) =>
+    add-int(1, add-int(_tree-size(l), _tree-size(r)))
+  }
+}
+
+define _expr-size(e: &expr) -> int {
+  case e {
+  | Lit(_) =>
+    1
+  | Add(l, r) =>
+    add-int(1, add-int(_expr-size(l), _expr-size(r)))
+  | Neg(x) =>
+    add-int(1, _expr-size(x))
+  }
+}
+
+define _expr-is-lit(e: &expr) -> bool {
+  case e {
+  | Lit(_) =>
+    True
+  | _ =>
+    False
+  }
+}
+
+nominal {
+  define _grove-size(g: &grove) -> int,
+}
+
+define _rose-size(r: &rose) -> int {
+  case r {
+  | Rose(_, g) =>
+    add-int(1, _grove-size(g))
+  }
+}
+
+define _grove-size(g: &grove) -> int {
+  case g {
+  | Grove-Nil =>
+    0
+  | Grove-Cons(r, rest) =>
+    add-int(_rose-size(r), _grove-size(rest))
+  }
+}
+
+nominal {
+  define _json-list-size(xs: &json-list) -> int,
+}
+
+define _json-size(j: &json) -> int {
+  case j {
+  | J-Null =>
+    1
+  | J-Bool(_) =>
+    1
+  | J-Num(_) =>
+    1
+  | J-Arr(xs) =>
+    add-int(1, _json-list-size(xs))
+  }
+}
+
+define _json-list-size(xs: &json-list) -> int {
+  case xs {
+  | JL-Nil =>
+    0
+  | JL-Cons(j, rest) =>
+    add-int(_json-size(j), _json-list-size(rest))
+  }
+}
+
+define _tree-bl-size(t: &tree-bl) -> int {
+  case t {
+  | Leaf-BL =>
+    0
+  | Node-BL(l, _, r) =>
+    add-int(1, add-int(_tree-bl-size(l), _tree-bl-size(r)))
+  }
+}
+
+define _is-nan(x: float) -> bool {
+  if eq-float(x, x) {
+    False
+  } else {
+    True
+  }
+}
+
+define _show-then-parse(x: float) -> ?float {
+  let s = show-float(x);
+  pin s = s;
+  parse-float(s)
+}
+
+define _show-parseable(x: float) -> bool {
+  match _show-then-parse(x) {
   | Left(_) =>
     False
-  | Right(Pair(x, xs)) =>
-    if eq-int(x, i) {
-      True
-    } else {
-      _find-int-vec(i, xs)
-    }
+  | Right(_) =>
+    True
   }
 }
 
-define _find-float(i: float, xs: list(float)) -> bool {
-  match xs {
-  | Nil =>
-    False
-  | Cons(x, xs) =>
-    if gt-float(x, i) {
-      True
-    } else {
-      _find-float(i, xs)
-    }
-  }
+define _correctness-cases() -> list(spec) {
+  List::[
+    property::(
+      "int stays within [-1000, 1000]",
+      gen-int(-1000, 1000, 0),
+      (x: &int) => {
+        let v = *x;
+        if ge-int(v, -1000) {
+          le-int(v, 1000)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "single-value int generator yields 7",
+      gen-int(7, 7, 0),
+      (x: &int) => {
+        eq-int(*x, 7)
+      },
+    ),
+    property::(
+      "negative-range int within [-100, -50]",
+      gen-int(-100, -50, 0),
+      (x: &int) => {
+        let v = *x;
+        if ge-int(v, -100) {
+          le-int(v, -50)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "float within [-3.5, 9.25]",
+      gen-float(-3.5, 9.25, 0.0),
+      (x: &float) => {
+        let v = *x;
+        if ge-float(v, -3.5) {
+          le-float(v, 9.25)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "list elements within [0, 9]",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        _list-in-range(xs, 0, 9)
+      },
+    ),
+    property::(
+      "list length is bounded by sizing",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        le-int(length(xs), 1000)
+      },
+    ),
+    property::(
+      "vector elements within [0, 30]",
+      gen-vector(gen-int(0, 30, 0)),
+      (xs: &vector(int)) => {
+        _vector-in-range(xs, 0, 30)
+      },
+    ),
+    property::(
+      "one-of {2, 4, 6} returns a member",
+      one-of(List::[2, 4, 6]),
+      (x: &int) => {
+        let v = *x;
+        if eq-int(v, 2) {
+          True
+        } else-if eq-int(v, 4) {
+          True
+        } else {
+          eq-int(v, 6)
+        }
+      },
+    ),
+    property::(
+      "one-of singleton always 42",
+      one-of(List::[42]),
+      (x: &int) => {
+        eq-int(*x, 42)
+      },
+    ),
+    property::(
+      "optional is well-formed",
+      derive::()[int-lo := 0, int-hi := 100],
+      (m: &?int) => {
+        case m {
+        | Left(_) =>
+          True
+        | Right(_) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "either is well-formed",
+      derive::()[int-lo := 0, int-hi := 100],
+      (e: &either(int, int)) => {
+        case e {
+        | Left(_) =>
+          True
+        | Right(_) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "nested pair(list, optional)",
+      derive::()[int-lo := 0, int-hi := 50],
+      (p: &pair(list(int), ?int)) => {
+        tie Pair(xs, _) = p;
+        ge-int(length(xs), 0)
+      },
+    ),
+    property::(
+      "derive int is reflexive",
+      derive::(),
+      (x: &int) => {
+        eq-int(*x, *x)
+      },
+    ),
+    property::(
+      "derive bool is well-formed",
+      derive::(),
+      (b: &bool) => {
+        case b {
+        | True =>
+          True
+        | False =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive color is a variant",
+      derive::(),
+      (c: &color) => {
+        case c {
+        | Red =>
+          True
+        | Green =>
+          True
+        | Blue =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive rgb record",
+      derive::(),
+      (r: &rgb) => {
+        tie RGB(_, _, _) = r;
+        True
+      },
+    ),
+    property::(
+      "derive widths (int8/16/32, float32, rune)",
+      derive::(),
+      (w: &widths) => {
+        case w {
+        | Widths(_, _, _, _, _) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive nested record (outer of inner)",
+      derive::(),
+      (o: &outer) => {
+        case o {
+        | Outer(_, _) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive optional",
+      derive::(),
+      (m: &?int) => {
+        case m {
+        | Left(_) =>
+          True
+        | Right(_) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive either(int, bool)",
+      derive::(),
+      (e: &either(int, bool)) => {
+        case e {
+        | Left(_) =>
+          True
+        | Right(_) =>
+          True
+        }
+      },
+    ),
+    property::(
+      "derive record with a mixed field (in range)",
+      derive::()[int-lo := 0, int-hi := 100],
+      (m: &mixed-rec) => {
+        _mixed-rec-in-range(m, 0, 100)
+      },
+    ),
+    property::(
+      "derive multi-constructor with a mixed field (in range)",
+      derive::()[int-lo := 0, int-hi := 100],
+      (m: &mixed-variant) => {
+        _mixed-variant-in-range(m, 0, 100)
+      },
+    ),
+    property::(
+      "derive recursive tree, size >= 0",
+      derive::(),
+      (t: &tree) => {
+        ge-int(_tree-size(t), 0)
+      },
+    ),
+    property::(
+      "derive recursive expr, size >= 1",
+      derive::(),
+      (e: &expr) => {
+        ge-int(_expr-size(e), 1)
+      },
+    ),
+    property::(
+      "derive string, length >= 0",
+      derive::(),
+      (s: &string) => {
+        ge-int(core::string.length(s), 0)
+      },
+    ),
+    property::(
+      "[Finite-Float-Special-Values] derived float is finite (no NaN/Inf)",
+      derive::()[float-special-values := Finite-Float-Special-Values],
+      (x: &float) => {
+        eq-float(sub-float(*x, *x), 0.0)
+      },
+    ),
+    property::(
+      "[float-lo/hi = -10,10] derived float stays in [-10, 10]",
+      derive::()[float-lo := -10.0, float-hi := 10.0, float-special-values := In-Range-Float-Special-Values],
+      (x: &float) => {
+        if ge-float(*x, -10.0) {
+          le-float(*x, 10.0)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "show-float output is always parseable",
+      derive::(),
+      (x: &float) => {
+        _show-parseable(*x)
+      },
+    ),
+    property::(
+      "[Printable-Ascii] derived rune is in U+0020..U+007E",
+      derive::()[rune-category := Printable-Ascii],
+      (r: &rune) => {
+        let c = magic cast(rune, int, *r);
+        if ge-int(c, 32) {
+          le-int(c, 126)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "[Alphanumeric] derived rune is [0-9A-Za-z]",
+      derive::()[rune-category := Alphanumeric],
+      (r: &rune) => {
+        let c = magic cast(rune, int, *r);
+        if ge-int(c, 48) {
+          if le-int(c, 57) {
+            True
+          } else-if ge-int(c, 65) {
+            if le-int(c, 90) {
+              True
+            } else-if ge-int(c, 97) {
+              le-int(c, 122)
+            } else {
+              False
+            }
+          } else {
+            False
+          }
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "fail: built-in rune specials can surface control characters",
+      derive::()[
+        rune-category := Full-Ascii,
+        rune-special-values := Category-Representative-Rune-Special-Values,
+        rune-special-ratio := 1.0,
+      ],
+      (r: &rune) => {
+        let c = magic cast(rune, int, *r);
+        if ge-int(c, 32) {
+          le-int(c, 126)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "fail: every int < 5 (shrink to 5)",
+      gen-int(0, 50, 0),
+      (x: &int) => {
+        lt-int(*x, 5)
+      },
+    ),
+    property::(
+      "fail: every int in [10, 20] is < 10 (shrink to 10)",
+      gen-int(10, 20, 0),
+      (x: &int) => {
+        lt-int(*x, 10)
+      },
+    ),
+    property::(
+      "fail: every int in [-100, -50] is > 0 (shrink to -50)",
+      gen-int(-100, -50, 0),
+      (x: &int) => {
+        gt-int(*x, 0)
+      },
+    ),
+    property::(
+      "fail: every list is empty (shrink to [0])",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        eq-int(length(xs), 0)
+      },
+    ),
+    property::(
+      "fail: every list length < 3 (shrink to [0, 0, 0])",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        lt-int(length(xs), 3)
+      },
+    ),
+    property::(
+      "fail: no list contains 15 (shrink to [15])",
+      gen-list(gen-int(0, 30, 0)),
+      (xs: &list(int)) => {
+        not(_find-int(15, xs))
+      },
+    ),
+    property::(
+      "fail: list sum < 50 (shrink toward a small refuting list)",
+      gen-list(gen-int(0, 30, 0)),
+      (xs: &list(int)) => {
+        lt-int(_list-sum(xs), 50)
+      },
+    ),
+    property::(
+      "fail: no vector contains 15 (shrink to [15])",
+      gen-vector(gen-int(0, 30, 0)),
+      (xs: &vector(int)) => {
+        not(_vector-has(xs, 15))
+      },
+    ),
+    property::(
+      "fail: every float < 10.0 (shrink near 10.0)",
+      gen-float(0.0, 1000.0, 0.0),
+      (x: &float) => {
+        lt-float(*x, 10.0)
+      },
+    ),
+    property::(
+      "fail: int pivot 50 shrinks to the pivot",
+      gen-int(0, 100, 50),
+      (x: &int) => {
+        if lt-int(*x, 40) {
+          True
+        } else {
+          gt-int(*x, 60)
+        }
+      },
+    ),
+    property::(
+      "fail: int pivot above range shrinks to hi",
+      gen-int(10, 20, 100),
+      (x: &int) => {
+        lt-int(*x, 20)
+      },
+    ),
+    property::(
+      "fail: gen-map preserves multiples while shrinking (shrink to 50)",
+      gen-map(derive::()[
+        int-lo := 0,
+        int-hi := 100,
+        int-special-values := No-Int-Special-Values,
+      ], (x) => {
+        mul-int(x, 10)
+      }),
+      (x: &int) => {
+        le-int(*x, 46)
+      },
+    ),
+    property::(
+      "fail: built-in int special ratio 1 surfaces the singleton value",
+      derive::()[
+        int-lo := 42,
+        int-hi := 42,
+        int-special-values := Pivot-And-Boundary-Int-Special-Values,
+        int-special-ratio := 1.0,
+      ],
+      (x: &int) => {
+        not(eq-int(*x, 42))
+      },
+    ),
+    property::(
+      "int special ratio below 0 is accepted",
+      derive::()[
+        int-lo := 0,
+        int-hi := 10,
+        int-special-values := Pivot-And-Boundary-Int-Special-Values,
+        int-special-ratio := -1.0,
+      ],
+      (x: &int) => {
+        let v = *x;
+        if ge-int(v, 0) {
+          le-int(v, 10)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "fail: built-in float special ratio above 1 is clamped",
+      derive::()[
+        float-lo := 42.5,
+        float-hi := 42.5,
+        float-special-values := In-Range-Float-Special-Values,
+        float-special-ratio := 2.0,
+      ],
+      (x: &float) => {
+        not(eq-float(*x, 42.5))
+      },
+    ),
+    property::(
+      "fail: float pivot 5.0 shrinks to the pivot",
+      gen-float(0.0, 10.0, 5.0),
+      (x: &float) => {
+        if lt-float(*x, 4.5) {
+          True
+        } else {
+          gt-float(*x, 5.5)
+        }
+      },
+    ),
+    property::(
+      "fail: one-of {2, 4, 6} is odd (shrink to 2)",
+      one-of(List::[2, 4, 6]),
+      (x: &int) => {
+        eq-int(rem-int(*x, 2), 1)
+      },
+    ),
+    property::(
+      "fail: every string shorter than 8 (shrink to 8 spaces)",
+      derive::(),
+      (s: &string) => {
+        lt-int(core::string.length(s), 8)
+      },
+    ),
+    property::(
+      "fail: derived tree is a Leaf (shrink to Node(Leaf, 0, Leaf))",
+      derive::(),
+      (t: &tree) => {
+        eq-int(_tree-size(t), 0)
+      },
+    ),
+    property::(
+      "fail: derived expr is a Lit (shrink to a minimal non-Lit)",
+      derive::(),
+      (e: &expr) => {
+        _expr-is-lit(e)
+      },
+    ),
+    property::(
+      "fail: pair both below 3 (shrink to a small refuting pair)",
+      derive::()[int-lo := 0, int-hi := 40],
+      (p: &pair(int, int)) => {
+        tie Pair(x, y) = p;
+        if lt-int(*x, 3) {
+          lt-int(*y, 3)
+        } else {
+          False
+        }
+      },
+    ),
+    example::(
+      "one-shot List::[1, 2, 3] is non-empty",
+      {
+        pin xs: list(int) = List::[1, 2, 3];
+        gt-int(length(xs), 0)
+      },
+    ),
+    example::(
+      "one-shot 2 + 3 == 5",
+      eq-int(add-int(2, 3), 5),
+    ),
+    example::(
+      "one-shot fail: 1 == 2 (must fail)",
+      eq-int(1, 2),
+    ),
+    example::(
+      "one-shot: show/parse round-trip preserves +infinity",
+      {
+        match _show-then-parse(magic cast(int64, float64, 0x7FF0000000000000)) {
+        | Left(_) =>
+          False
+        | Right(v) =>
+          gt-float(v, 1.0e308)
+        }
+      },
+    ),
+    example::(
+      "one-shot: show/parse round-trip preserves -infinity",
+      {
+        match _show-then-parse(magic cast(int64, float64, 0xFFF0000000000000)) {
+        | Left(_) =>
+          False
+        | Right(v) =>
+          lt-float(v, -1.0e308)
+        }
+      },
+    ),
+    example::(
+      "one-shot: show/parse round-trip preserves nan",
+      {
+        match _show-then-parse(magic cast(int64, float64, 0x7FF8000000000000)) {
+        | Left(_) =>
+          False
+        | Right(v) =>
+          _is-nan(v)
+        }
+      },
+    ),
+    example::(
+      "one-shot: show/parse round-trip of a huge finite stays huge",
+      {
+        match _show-then-parse(magic cast(int64, float64, 0x7FEFFFFFFFFFFFFF)) {
+        | Left(_) =>
+          False
+        | Right(v) =>
+          gt-float(v, 1.0e308)
+        }
+      },
+    ),
+    example::(
+      "one-shot: show/parse round-trip of 3.5 is exact",
+      {
+        match _show-then-parse(3.5) {
+        | Left(_) =>
+          False
+        | Right(v) =>
+          eq-float(v, 3.5)
+        }
+      },
+    ),
+  ]
+}
+
+define _stress-cases() -> list(spec) {
+  List::[
+    property::(
+      "stress: derived tree size >= 0 (high volume, large size)",
+      derive::(),
+      (t: &tree) => {
+        ge-int(_tree-size(t), 0)
+      },
+    ),
+    property::(
+      "stress: derived expr size >= 1 (high volume, large size)",
+      derive::(),
+      (e: &expr) => {
+        ge-int(_expr-size(e), 1)
+      },
+    ),
+    property::(
+      "stress: nested list-of-lists is well-formed",
+      gen-list(gen-list(gen-int(0, 9, 0))),
+      (xss: &list(list(int))) => {
+        ge-int(length(xss), 0)
+      },
+    ),
+    property::(
+      "stress: every tree has size < 1 (heavy shrink to Node(Leaf, 0, Leaf))",
+      derive::(),
+      (t: &tree) => {
+        lt-int(_tree-size(t), 1)
+      },
+    ),
+    property::(
+      "stress: every list length < 1 (heavy shrink to [0])",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        lt-int(length(xs), 1)
+      },
+    ),
+    property::(
+      "stress: no large vector contains 7 (heavy shrink to [7])",
+      gen-vector(gen-int(0, 9, 0)),
+      (xs: &vector(int)) => {
+        not(_vector-has(xs, 7))
+      },
+    ),
+  ]
+}
+
+define _edge-cases() -> list(spec) {
+  List::[
+    property::(
+      "edge: derived float surfaces NaN (must fail -> nan)",
+      derive::(),
+      (x: &float) => {
+        eq-float(*x, *x)
+      },
+    ),
+    property::(
+      "edge: derived float reaches large magnitude (must fail)",
+      derive::(),
+      (x: &float) => {
+        if _is-nan(*x) {
+          True
+        } else {
+          le-float(abs-float(*x), 1.0e9)
+        }
+      },
+    ),
+    property::(
+      "edge: derived int surfaces 0 (must fail -> 0)",
+      derive::(),
+      (x: &int) => {
+        if eq-int(*x, 0) {
+          False
+        } else {
+          True
+        }
+      },
+    ),
+    property::(
+      "edge: derived int surfaces INT64_MAX (must fail -> max)",
+      derive::(),
+      (x: &int) => {
+        lt-int(*x, 0x7FFFFFFFFFFFFFFF)
+      },
+    ),
+    property::(
+      "edge: derived int surfaces INT64_MIN (must fail -> min)",
+      derive::(),
+      (x: &int) => {
+        gt-int(*x, 0x8000000000000000)
+      },
+    ),
+    property::(
+      "edge: derived int reaches large magnitude (must fail)",
+      derive::(),
+      (x: &int) => {
+        le-int(abs-int(*x), 1000000000)
+      },
+    ),
+    property::(
+      "edge: derived rune surfaces a non-printable/non-ASCII rune (must fail)",
+      derive::(),
+      (r: &rune) => {
+        let cp = magic cast(rune, int, *r);
+        if ge-int(cp, 32) {
+          le-int(cp, 126)
+        } else {
+          False
+        }
+      },
+    ),
+    property::(
+      "edge: derived tree grows past size 10 (must fail)",
+      derive::(),
+      (t: &tree) => {
+        lt-int(_tree-size(t), 10)
+      },
+    ),
+    property::(
+      "edge: list grows past length 10 (must fail)",
+      gen-list(gen-int(0, 9, 0)),
+      (xs: &list(int)) => {
+        lt-int(length(xs), 10)
+      },
+    ),
+  ]
 }
 
 define zen() -> unit {
+  let _ = Inner; // suppress the warning
   pin k = make-default-noa-kit();
-  check::(
-    k,
-    "unpack then pack is identity",
-    string-gen,
-    (t) => {
-      pin t = t;
-      pin xs = unpack(t);
-      pin t-new = pack(xs);
-      eq-string(t, t-new)
-    },
-  );
-  check::(
-    k,
-    "(length as string) == (length as listchars)",
-    string-gen,
-    (t) => {
-      pin t = t;
-      pin xs = unpack(t);
-      let len1 = core.string.length(t);
-      let len2 = length(xs);
-      eq-int(len1, len2)
-    },
-  );
-  check::(
-    k,
-    "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
-    pair-gen(list-gen(rune-gen), list-gen(rune-gen)),
-    (p) => {
-      let Pair(!xs, !ys) = p;
-      pin left = append(reverse(ys), reverse(xs));
-      pin right = reverse(append(xs, ys));
-      eq-data::(left, right)
-    },
-  );
-  pin xs = List[1, 2, 3];
-  pin x = 4;
-  check::(
-    k,
-    "one-of (should fail)",
-    one-of(xs, x),
-    (x) => {
-      let b1 = eq-int(x, 1);
-      let b2 = eq-int(x, 3);
-      let b3 = eq-int(x, 3);
-      or(b1, or(b2, b3))
-    },
-  );
-  check::(
-    k,
-    "shrinking strings (should fail)",
-    string-gen,
-    (t) => {
-      let len on t = core.string.length(t);
-      let _ = t;
-      lt-int(len, 10)
-    },
-  );
-  check::(
-    k,
-    "there is no list that contains 15 (should fail and report [15])",
-    list-gen(int-gen),
-    (xs) => {
-      not(_find-int(15, xs))
-    },
-  );
-  check::(
-    k,
-    "there is no list that contains a value bigger than 15 (should fail and report [15.XXXXXX])",
-    list-gen(float-gen),
-    (xs) => {
-      not(_find-float(15, xs))
-    },
-  );
-  pin kv = make-verbose-noa-kit();
-  check::(
-    kv,
-    "there is no list that contains 15 (should fail and report [15])",
-    vector-gen(int-gen),
-    (xs) => {
-      not(_find-int-vec(15, xs))
-    },
-  );
-  check::(
-    k,
-    "ascii",
-    ascii-string-gen,
-    (_) => {
-      True
-    },
-  );
-  test(
-    k,
-    "the list `List[1, 2, 3]` contains 2",
-    () => {
-      pin xs = List[1, 2, 3];
-      pin f =
-        (y) => {
-          eq-int(*y, 2)
-        };
-      let result = core.list.find(xs, f);
-      match result {
-      | Left(_) =>
-        False
-      | Right(_) =>
-        True
-      }
-    },
-  );
+  check(k, _correctness-cases());
+  pin ek = make-noa-kit(stdout, 8192, 500, 100, False);
+  check(ek, _edge-cases());
+  pin sk = make-noa-kit(stdout, 8192, 200, 250, False);
+  check(sk, _stress-cases());
 }
 
 define main() -> unit {

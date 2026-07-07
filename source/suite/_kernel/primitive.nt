@@ -1,0 +1,12 @@
+import {
+  core::float {max-float, min-float},
+  core::int {max-int, min-int},
+}
+
+define shrink-target-int(lo: int, hi: int, pivot: int) -> int {
+  max-int(lo, min-int(hi, pivot))
+}
+
+define shrink-target-float(lo: float, hi: float, pivot: float) -> float {
+  max-float(lo, min-float(hi, pivot))
+}

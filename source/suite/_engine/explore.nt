@@ -1,0 +1,184 @@
+import {
+  core::box {axiom-T},
+  core::cell {extract, make-cell},
+  core::debug {panic},
+  core::doc {doc},
+  core::doc.show {show-doc},
+  core::string.builder {append-int64-UTF8, append-string, string-builder},
+  control {Control-Escape, Control-Failure, Control-Success},
+  gen {Gen, gen},
+  suite._engine.replay {replay-and-render},
+  suite._engine.shrink {shrink},
+  suite._kernel.prng {golden-gamma},
+  suite._kernel.seam {new-generate-kit},
+}
+
+constant _ribbon-width: int {
+  60
+}
+
+constant _max-discards: int {
+  200
+}
+
+data _exploration {
+| _Exploration-Pass
+| _Exploration-Fail
+| _Exploration-Discard
+}
+
+data _explore-result {
+| _Explore-Discard
+| _Explore-Pass
+| _Explore-Fail(string)
+}
+
+define _append-verbose-line(
+  b: &string-builder,
+  iteration: int,
+  _: int,
+  verdict: &string,
+  value: &string,
+) -> unit {
+  append-string(b, "    #");
+  append-int64-UTF8(b, iteration);
+  append-string(b, " ");
+  append-string(b, verdict);
+  append-string(b, ": ");
+  append-string(b, value);
+  append-string(b, "\n")
+}
+
+define _record-value<a>(
+  tb: &string-builder,
+  iteration: int,
+  size: int,
+  verdict: &string,
+  render: &(&a) -> doc,
+  value: &a,
+) -> unit {
+  pin d = render(value);
+  pin rendered = show-doc(d, _ribbon-width);
+  _append-verbose-line(tb, iteration, size, verdict, rendered)
+}
+
+define _explore<a>(
+  seed: int,
+  size: int,
+  max-size: int,
+  iteration: int,
+  verbose: bool,
+  g: &gen(a),
+  prop: &(&a) -> bool,
+  render: &(&a) -> doc,
+  tb: &string-builder,
+) ->> _explore-result {
+  let events-cell = make-cell(lift {core::array.make::(96)});
+  tie Gen(run) = g;
+  let status on events-cell = {
+    pin k = new-generate-kit(events-cell, seed, size, max-size);
+    let trial =
+      match run<a>(k) {
+      | Control-Success(value) =>
+        pin value = value;
+        let ok = prop(value);
+        if verbose {
+          let message =
+            if ok {
+              "pass"
+            } else {
+              "fail"
+            };
+          _record-value(tb, iteration, size, message, render, value)
+        } else {
+          Unit
+        };
+        if ok {
+          _Exploration-Pass
+        } else {
+          _Exploration-Fail
+        }
+      | Control-Escape(v) =>
+        let _ = v;
+        panic("BUG: top-level generation escaped its scope")
+      | Control-Failure(_) =>
+        if verbose {
+          _append-verbose-line(tb, iteration, size, "discard", "(invalid generator)")
+        } else {
+          Unit
+        };
+        _Exploration-Discard
+      };
+    trial
+  };
+  match status {
+  | _Exploration-Fail =>
+    let events = axiom-T(extract(events-cell));
+    let shrunk-events = shrink(events, verbose, g, prop, render, tb);
+    let rendered on shrunk-events = replay-and-render(shrunk-events, g, render);
+    let _ = shrunk-events;
+    match rendered {
+    | Right(s) =>
+      _Explore-Fail(s)
+    | Left(_) =>
+      _Explore-Fail(*"<could not render counterexample>")
+    }
+  | _Exploration-Pass =>
+    let _ = extract(events-cell);
+    _Explore-Pass
+  | _Exploration-Discard =>
+    let _ = extract(events-cell);
+    _Explore-Discard
+  }
+}
+
+define _seed-for-iteration(seed: int, iteration: int) -> int {
+  add-int(seed, mul-int(iteration, golden-gamma))
+}
+
+define _size-for-iteration(iteration: int, count: int, max-size: int) -> int {
+  let denom =
+    if le-int(count, 1) {
+      1
+    } else {
+      count
+    };
+  let s = add-int(1, div-int(mul-int(max-size, iteration), denom));
+  if gt-int(s, max-size) {
+    max-size
+  } else {
+    s
+  }
+}
+
+define check-core<a>(
+  seed: int,
+  count: int,
+  max-size: int,
+  verbose: bool,
+  g: &gen(a),
+  prop: &(&a) -> bool,
+  render: &(&a) -> doc,
+  tb: &string-builder,
+) ->> ?string {
+  let go =
+    define loop(iteration: int, success-count: int, discards: int) ->> ?string {
+      if ge-int(success-count, count) {
+        none
+      } else-if ge-int(discards, _max-discards) {
+        none
+      } else {
+        let gen-seed = _seed-for-iteration(seed, iteration);
+        let size = _size-for-iteration(iteration, count, max-size);
+        match _explore(gen-seed, size, max-size, iteration, verbose, g, prop, render, tb) {
+        | _Explore-Discard =>
+          loop(add-int(iteration, 1), success-count, add-int(discards, 1))
+        | _Explore-Pass =>
+          loop(add-int(iteration, 1), add-int(success-count, 1), discards)
+        | _Explore-Fail(counterexample) =>
+          Right(counterexample)
+        }
+      }
+    };
+  go(0, 0, 0)
+}

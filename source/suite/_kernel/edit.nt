@@ -1,0 +1,109 @@
+import {
+  core::debug {panic},
+  suite._kernel.scenario {
+    Draw-Float,
+    Draw-Int,
+    Shift,
+    read-event-at,
+    replace-event-at,
+    scenario,
+    shift-mode,
+  },
+}
+
+data edit {
+| Edit-Int(
+    at: int,
+    value: int,
+  )
+| Edit-Float(
+    at: int,
+    value: float,
+  )
+| Edit-Shift-Mode(
+    at: int,
+    value: shift-mode,
+  )
+}
+
+define edit-target(e: &edit) -> int {
+  case e {
+  | Edit-Int(at, _) =>
+    *at
+  | Edit-Float(at, _) =>
+    *at
+  | Edit-Shift-Mode(at, _) =>
+    *at
+  }
+}
+
+define apply-edit(sc: scenario, e: &edit) -> scenario {
+  let index = edit-target(e);
+  let new-event on sc = {
+    case read-event-at(sc, index) {
+    | Draw-Int(lo, hi, pivot, _) =>
+      case e {
+      | Edit-Int(_, value) =>
+        Draw-Int(*lo, *hi, *pivot, *value)
+      | _ =>
+        panic("BUG: edit/event mismatch (Draw-Int)")
+      }
+    | Draw-Float(lo, hi, pivot, _) =>
+      case e {
+      | Edit-Float(_, value) =>
+        Draw-Float(*lo, *hi, *pivot, *value)
+      | _ =>
+        panic("BUG: edit/event mismatch (Draw-Float)")
+      }
+    | Shift(_, end) =>
+      case e {
+      | Edit-Shift-Mode(_, mode) =>
+        Shift(*mode, *end)
+      | _ =>
+        panic("BUG: edit/event mismatch (Shift)")
+      }
+    | _ =>
+      panic("BUG: edit targets a non-editable event")
+    }
+  };
+  replace-event-at::(sc, index, new-event)
+}
+
+define overlay-int(overlay: &edit, index: int, value: int) -> int {
+  case overlay {
+  | Edit-Int(at, v) =>
+    if eq-int(*at, index) {
+      *v
+    } else {
+      value
+    }
+  | _ =>
+    value
+  }
+}
+
+define overlay-float(overlay: &edit, index: int, value: float) -> float {
+  case overlay {
+  | Edit-Float(at, v) =>
+    if eq-int(*at, index) {
+      *v
+    } else {
+      value
+    }
+  | _ =>
+    value
+  }
+}
+
+define overlay-shift-mode(overlay: &edit, index: int, mode: shift-mode) -> shift-mode {
+  case overlay {
+  | Edit-Shift-Mode(at, new-mode) =>
+    if eq-int(*at, index) {
+      *new-mode
+    } else {
+      mode
+    }
+  | _ =>
+    mode
+  }
+}

@@ -1,0 +1,31 @@
+import {
+  control.failure {failure},
+}
+
+data control(r, a) {
+| Control-Success(a)
+| Control-Escape(r)
+| Control-Failure(failure)
+}
+
+inline control-map<r, a, b>(x: control(r, a), f: (a) -> b) -> control(r, b) {
+  match x {
+  | Control-Success(value) =>
+    Control-Success(f(value))
+  | Control-Escape(e) =>
+    Control-Escape(e)
+  | Control-Failure(err) =>
+    Control-Failure(err)
+  }
+}
+
+inline control-bind<r, a, b>(x: control(r, a), f: (a) -> control(r, b)) -> control(r, b) {
+  match x {
+  | Control-Success(value) =>
+    f(value)
+  | Control-Escape(e) =>
+    Control-Escape(e)
+  | Control-Failure(err) =>
+    Control-Failure(err)
+  }
+}

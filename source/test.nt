@@ -1,8 +1,0 @@
-import {
-  this.noa-kit {noa-kit},
-  this.noa-kit.test,
-}
-
-define test(k: &noa-kit, label: &string, property: () -> bool) -> unit {
-  this.noa-kit.test.test(k, label, property)
-}

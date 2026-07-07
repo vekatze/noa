@@ -1,0 +1,88 @@
+import {
+  core::box {axiom-T},
+  core::cell {cell, make-cell, modify},
+  core::file.descriptor {descriptor, stdout},
+  suite._kernel.edit {edit},
+  suite._kernel.prng {prng},
+  suite._kernel.scenario {scenario},
+  suite._report.io {make-writer, writer},
+}
+
+data gen-kit {
+| _Gen-Kit-Generate(
+    events: &cell(scenario),
+    rng: cell(prng),
+    budget: cell(int),
+    value-size: int,
+    max-value-size: int,
+  )
+| _Gen-Kit-Replay(
+    events: &scenario,
+    pc: cell(int),
+    ends: cell(vector(int)),
+    overlay: &edit,
+  )
+}
+
+data noa-kit {
+| _Noa-Kit(
+    sink: writer,
+    test-count: int,
+    max-size: int,
+    verbose: bool,
+    seed-counter: cell(int),
+  )
+}
+
+define _noa-kit-count(k: &noa-kit) -> int {
+  tie _Noa-Kit{test-count} = k;
+  *test-count
+}
+
+define _noa-kit-max-size(k: &noa-kit) -> int {
+  tie _Noa-Kit{max-size} = k;
+  *max-size
+}
+
+define _noa-kit-verbose(k: &noa-kit) -> bool {
+  tie _Noa-Kit{verbose} = k;
+  *verbose
+}
+
+define _next-seed(k: &noa-kit) -> int {
+  tie _Noa-Kit{seed-counter} = k;
+  modify(seed-counter, (n0) => {
+    let n = axiom-T(n0);
+    Pair(lift {add-int(n, 1)}, n)
+  })
+}
+
+define make-noa-kit(
+  sink: descriptor,
+  buffer-capacity: int,
+  test-count: int,
+  max-size: int,
+  verbose: bool,
+) ->> noa-kit {
+  _Noa-Kit(make-writer(sink, buffer-capacity), test-count, max-size, verbose, make-cell(lift {0}))
+}
+
+define make-default-noa-kit() ->> noa-kit {
+  make-noa-kit{
+    sink := stdout,
+    buffer-capacity := 4096,
+    test-count := 100,
+    max-size := 100,
+    verbose := False,
+  }
+}
+
+define make-verbose-noa-kit() ->> noa-kit {
+  make-noa-kit{
+    sink := stdout,
+    buffer-capacity := 4096,
+    test-count := 100,
+    max-size := 100,
+    verbose := True,
+  }
+}

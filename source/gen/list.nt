@@ -1,21 +1,38 @@
 import {
-  core.control {grow},
-  core.random {random-int},
-  this.gen {Gen, draw, gen},
-  this.gen._list {shrink-list},
+  control {Control-Success, control, control-bind},
+  gen {Gen, apply, gen},
+  suite {gen-kit},
+  suite.combinator {cut, draw-continue, scope},
 }
 
-inline list-gen<a>(!g: gen(a)) -> gen(list(a)) {
-  Gen{
-    generate := {
-      (size) => {
-        let trunc-size = trunc-int-int32(size);
-        grow(Nil, size, (acc, _) => {
-          let elem = draw(random-int(trunc-size), g);
-          Cons(elem, acc)
-        })
+constant _continue-fanout: int {
+  8
+}
+
+define _list-go<a>(!elem: gen(a), k: &gen-kit) ->> control(list(a), list(a)) {
+  scope<list(a), list(a)>(k, (k) =>> {
+    with control-bind {
+      bind more = draw-continue<list(a)>(k, _continue-fanout);
+      if eq-int(more, 0) {
+        Control-Success(Nil)
+      } else {
+        bind x = apply(elem, k);
+        bind rest =
+          cut(k, (k) =>> {
+            _list-go(elem, k)
+          });
+        Control-Success(Cons(x, rest))
       }
+    }
+  })
+}
+
+define gen-list<a>(elem: gen(a)) -> gen(list(a)) {
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      scope<r, list(a)>(k, (k) =>> {
+        _list-go(elem, k)
+      })
     },
-    shrink := shrink-list(g),
-  }
+  )
 }

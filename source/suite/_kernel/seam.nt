@@ -1,0 +1,76 @@
+import {
+  core::array {length},
+  core::box {axiom-T},
+  core::cell {borrow, cell, clone, make-cell, mutate},
+  core::debug {panic},
+  core::vector {drop-end},
+  core::vector.unsafe,
+  suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
+  suite._kernel.edit {edit},
+  suite._kernel.prng {make-prng},
+  suite._kernel.scenario {scenario},
+}
+
+define write-int(r: &cell(int), value: int) -> unit {
+  mutate(r, (old) => {
+    let _ = old;
+    lift {value}
+  })
+}
+
+define last-end(r: &cell(vector(int))) -> int {
+  borrow(r, (ends) => {
+    let len = core::vector.length(ends);
+    if le-int(len, 0) {
+      panic("BUG: empty replay end stack")
+    } else {
+      lift {*core::vector.unsafe.access-unchecked(ends, sub-int(len, 1))}
+    }
+  })
+}
+
+define end-depth(r: &cell(vector(int))) -> int {
+  borrow(r, (ends) => {
+    lift {core::vector.length(ends)}
+  })
+}
+
+define push-end(r: &cell(vector(int)), x: int) -> unit {
+  mutate(r, (ends0) => {
+    lift {core::vector.push-back(axiom-T(ends0), x)}
+  })
+}
+
+define pop-end(r: &cell(vector(int))) -> unit {
+  mutate(r, (ends0) => {
+    lift {drop-end(axiom-T(ends0), 1)}
+  })
+}
+
+inline new-generate-kit(events: &cell(scenario), seed: int, size: int, max-size: int) -> gen-kit {
+  let rng = make-cell(lift {make-prng(seed)});
+  let budget = make-cell(lift {size});
+  _Gen-Kit-Generate(events, rng, budget, size, max-size)
+}
+
+inline new-replay-kit(events: &scenario, overlay: &edit) -> gen-kit {
+  let pc = make-cell(lift {0});
+  let ends = make-cell(lift {core::vector.push-back(core::vector.make(16), length(events))});
+  _Gen-Kit-Replay(events, pc, ends, overlay)
+}
+
+define replay-consumed-all(k: &gen-kit) -> bool {
+  case k {
+  | _Gen-Kit-Replay(_, pc, ends, _) =>
+    let p = clone(pc);
+    let end = last-end(ends);
+    let depth = end-depth(ends);
+    if ge-int(p, end) {
+      eq-int(depth, 1)
+    } else {
+      False
+    }
+  | _ =>
+    panic("BUG: expected a replay gen-kit")
+  }
+}

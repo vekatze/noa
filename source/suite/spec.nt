@@ -1,0 +1,156 @@
+import {
+  core::doc {doc},
+  core::path.io {get-current-directory},
+  core::platform {get-cpu-count},
+  core::show.generic {to-doc},
+  core::string {append, empty},
+  core::string.builder {make-string-builder},
+  core::sync.pool {for-each-parallel},
+  core::vector {for-N, from-list},
+  gen {gen},
+  suite {_Noa-Kit, _next-seed, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
+  suite._engine.explore {check-core},
+  suite._report {Report, report},
+  suite._report.io {flush, print-report},
+}
+
+data spec {
+| _Spec(run: (k: &noa-kit) -> report)
+}
+
+define _run-check<a>(
+  seed: int,
+  count: int,
+  max-size: int,
+  verbose: bool,
+  label: string,
+  g: gen(a),
+  prop: (&a) -> bool,
+  render: (&a) -> doc,
+  origin-file: text,
+  origin-line: int,
+  origin-column: int,
+) -> report {
+  let trace-builder = make-string-builder(256);
+  pin g = g;
+  pin prop = prop;
+  pin render = render;
+  let detail on trace-builder =
+    check-core(
+      seed,
+      count,
+      max-size,
+      verbose,
+      g,
+      prop,
+      render,
+      trace-builder,
+    );
+  let trace = core::string.builder.extract(trace-builder);
+  match detail {
+  | Left(_) =>
+    Report(label, True, none, trace, origin-file, origin-line, origin-column)
+  | Right(counterexample) =>
+    Report(label, False, Right(counterexample), trace, origin-file, origin-line, origin-column)
+  }
+}
+
+define _make-check<a>(
+  label: &string,
+  g: gen(a),
+  prop: (&a) -> bool,
+  render: (&a) -> doc,
+  origin-file: text,
+  origin-line: int,
+  origin-column: int,
+) -> spec {
+  let label = *label;
+  _Spec(
+    (k: &noa-kit) => {
+      let seed = _next-seed(k);
+      let count = _noa-kit-count(k);
+      let max-size = _noa-kit-max-size(k);
+      let verbose = _noa-kit-verbose(k);
+      _run-check(seed, count, max-size, verbose, label, g, prop, render, origin-file, origin-line, origin-column)
+    },
+  )
+}
+
+define _make-test(
+  label: &string,
+  property: () -> bool,
+  origin-file: text,
+  origin-line: int,
+  origin-column: int,
+) -> spec {
+  let label = *label;
+  _Spec(
+    (_: &noa-kit) => {
+      if property() {
+        Report(label, True, none, *"", origin-file, origin-line, origin-column)
+      } else {
+        Report(label, False, none, *"", origin-file, origin-line, origin-column)
+      }
+    },
+  )
+}
+
+inline-meta property<a>(label: '&string, !g: 'gen(a), !prop: '(&a) -> bool) -> 'spec {
+  let file = magic get-origin-file-name();
+  let line = magic get-origin-line();
+  let column = magic get-origin-column();
+  quote {
+    _make-check(
+      unquote {label},
+      unquote {g},
+      unquote {prop},
+      (v: &a) => {
+        to-doc::(v)
+      },
+      unquote {promote {file}},
+      unquote {promote {line}},
+      unquote {promote {column}},
+    )
+  }
+}
+
+inline-meta example(label: '&string, !property: 'bool) -> 'spec {
+  let file = magic get-origin-file-name();
+  let line = magic get-origin-line();
+  let column = magic get-origin-column();
+  quote {
+    _make-test(
+      unquote {label},
+      () => {
+        unquote {property}
+      },
+      unquote {promote {file}},
+      unquote {promote {line}},
+      unquote {promote {column}},
+    )
+  }
+}
+
+define check(k: &noa-kit, cases: list(spec)) -> unit {
+  let worker-count = get-cpu-count();
+  let reports =
+    for-each-parallel(worker-count, from-list(cases), (tc) => {
+      let _Spec(run) = tc;
+      run(k)
+    });
+  tie _Noa-Kit{sink, verbose} = k;
+  let root =
+    match get-current-directory() {
+    | Right(cwd) =>
+      pin cwd = cwd;
+      append(cwd, "/")
+    | Left(_) =>
+      empty()
+    };
+  pin root = root;
+  pin reports = reports;
+  for-N(reports, (r, _) => {
+    print-report(sink, *verbose, root, r)
+  });
+  flush(sink)
+}

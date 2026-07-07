@@ -1,0 +1,11 @@
+data report {
+| Report(
+    label: string,
+    passed: bool,
+    detail: ?string,
+    trace: string,
+    origin-file: text,
+    origin-line: int,
+    origin-column: int,
+  )
+}

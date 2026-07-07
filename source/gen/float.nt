@@ -1,42 +1,13 @@
 import {
-  core.float {abs-float},
-  core.list {for-each},
-  core.random {random-float},
-  this.gen {Gen, gen},
+  gen {Gen, gen},
+  suite {gen-kit},
+  suite.combinator {draw-float},
 }
 
-constant _epsilon: float {
-  1
-}
-
-define _div-seq(k: float) -> list(float) {
-  if lt-float(abs-float(k), _epsilon) {
-    Nil
-  } else {
-    Cons(k, _div-seq(div-float(k, 2)))
-  }
-}
-
-constant float-gen: gen(float) {
-  Gen{
-    generate := {
-      (size) => {
-        let size = uitofp-int-float(size);
-        random-float(mul-float(-1, size), size)
-      }
+inline gen-float(lo: float, hi: float, pivot: float) -> gen(float) {
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      draw-float<r>(k, lo, hi, pivot)
     },
-    shrink := {
-      (x: float) => {
-        let tmp =
-          for-each(_div-seq(x), (diff) => {
-            sub-float(x, diff)
-          });
-        if lt-float(x, 0) {
-          Cons(abs-float(x), tmp)
-        } else {
-          tmp
-        }
-      }
-    },
-  }
+  )
 }

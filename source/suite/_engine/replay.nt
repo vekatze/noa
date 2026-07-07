@@ -1,0 +1,69 @@
+import {
+  core::doc {doc},
+  core::doc.show {show-doc},
+  control {Control-Escape, Control-Failure, Control-Success},
+  gen {Gen, gen},
+  suite._kernel.edit {Edit-Int, edit},
+  suite._kernel.scenario {scenario},
+  suite._kernel.seam {new-replay-kit, replay-consumed-all},
+}
+
+constant _ribbon-width: int {
+  60
+}
+
+constant _no-edit: edit {
+  Edit-Int(-1, 0)
+}
+
+define replay-and-test<a>(
+  events: &scenario,
+  g: &gen(a),
+  overlay: edit,
+  prop: &(&a) -> bool,
+) ->> pair(bool, edit) {
+  tie Gen(run) = g;
+  let is-counterexample on overlay = {
+    pin k = new-replay-kit(events, overlay);
+    match run<a>(k) {
+    | Control-Success(value) =>
+      if replay-consumed-all(k) {
+        let ok on value = prop(value);
+        let _ = value;
+        not(ok)
+      } else {
+        let _ = value;
+        False
+      }
+    | Control-Escape(_) =>
+      False
+    | Control-Failure(_) =>
+      False
+    }
+  };
+  Pair(is-counterexample, overlay)
+}
+
+define replay-and-render<a>(events: &scenario, g: &gen(a), render: &(&a) -> doc) ->> ?string {
+  tie Gen(run) = g;
+  pin no-edit = _no-edit;
+  pin k = new-replay-kit(events, no-edit);
+  match run<a>(k) {
+  | Control-Success(value) =>
+    if replay-consumed-all(k) {
+      let rendered on value = {
+        pin d = render(value);
+        show-doc(d, _ribbon-width)
+      };
+      let _ = value;
+      Right(rendered)
+    } else {
+      let _ = value;
+      none
+    }
+  | Control-Escape(_) =>
+    none
+  | Control-Failure(_) =>
+    none
+  }
+}

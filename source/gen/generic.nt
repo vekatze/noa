@@ -1,0 +1,1027 @@
+import {
+  core::c-size {C-Size},
+  core::float {max-float, min-float},
+  core::int {max-int, min-int},
+  core::list.meta {fold-left, length},
+  core::memory {malloc},
+  core::memory.unsafe {free, memcpy, store-int},
+  core::pointer {shift},
+  core::rune {from-int},
+  core::string {pack},
+  core::type-value {
+    Algebraic,
+    Binary,
+    Box-T,
+    Direct,
+    Enum,
+    Float16,
+    Float32,
+    Float64,
+    Function,
+    Int1,
+    Int16,
+    Int2,
+    Int32,
+    Int4,
+    Int64,
+    Int8,
+    Mixed,
+    Noema,
+    Null,
+    Pointer,
+    Rune,
+    Type,
+    Wrapper,
+    constructor,
+    field,
+  },
+  core::type-value.meta {
+    algebraic-header-slot-count,
+    constructor-fields,
+    constructor-payload-slot-count,
+    field-layout-of,
+    field-slot-count,
+    field-type,
+    fields-with-cursors,
+    nth-field-slot-pointer,
+  },
+  core::word,
+  control {Control-Success, control, control-bind},
+  gen {
+    Gen,
+    apply,
+    gen,
+    gen-map,
+  },
+  gen.float {gen-float},
+  gen.int {gen-choose, gen-int},
+  gen.list {gen-list},
+  gen.vector {gen-vector},
+  suite {gen-kit},
+  suite.combinator {choose, draw-disc, draw-int, draw-int-fixed, read-budget, scope, set-budget},
+}
+
+inline-meta _mmax-payload-slots(cons: list(constructor)) -> int {
+  fold-left(0, cons, (acc, c) => {
+    let here = constructor-payload-slot-count(c);
+    if gt-int(here, acc) {
+      here
+    } else {
+      acc
+    }
+  })
+}
+
+inline-meta _field-is-structural(f: field) -> bool {
+  let t = field-type(f);
+  unpack-type t = t;
+  let tv = magic inspect-type(t);
+  match tv {
+  | Int1 =>
+    False
+  | Int2 =>
+    False
+  | Int4 =>
+    False
+  | Int8 =>
+    False
+  | Int16 =>
+    False
+  | Int32 =>
+    False
+  | Int64 =>
+    False
+  | Float16 =>
+    False
+  | Float32 =>
+    False
+  | Float64 =>
+    False
+  | Pointer =>
+    False
+  | Null =>
+    False
+  | Rune =>
+    False
+  | Type =>
+    False
+  | Function =>
+    False
+  | Enum(_) =>
+    False
+  | _ =>
+    True
+  }
+}
+
+inline-meta _fields-weight(fields: list(field)) -> int {
+  fold-left(0, fields, (acc, f) => {
+    if _field-is-structural(f) {
+      add-int(acc, 1)
+    } else {
+      acc
+    }
+  })
+}
+
+inline-meta _rankable(cons: list(constructor), i: int) -> list(pair(int, pair(int, constructor))) {
+  match cons {
+  | Nil =>
+    Nil
+  | Cons(!c, rest) =>
+    Cons(Pair(_fields-weight(constructor-fields(c)), Pair(i, c)), _rankable(rest, add-int(i, 1)))
+  }
+}
+
+inline-meta _insert-ranked(
+  x: pair(int, pair(int, constructor)),
+  sorted: list(pair(int, pair(int, constructor))),
+) -> list(pair(int, pair(int, constructor))) {
+  match sorted {
+  | Nil =>
+    Cons(x, Nil)
+  | Cons(y, rest) =>
+    let Pair(ax, ix) = x;
+    let Pair(ay, iy) = y;
+    if le-int(ax, ay) {
+      Cons(Pair(ax, ix), Cons(Pair(ay, iy), rest))
+    } else {
+      Cons(Pair(ay, iy), _insert-ranked(Pair(ax, ix), rest))
+    }
+  }
+}
+
+inline-meta _sort-ranked(
+  xs: list(pair(int, pair(int, constructor))),
+) -> list(pair(int, pair(int, constructor))) {
+  match xs {
+  | Nil =>
+    Nil
+  | Cons(x, rest) =>
+    _insert-ranked(x, _sort-ranked(rest))
+  }
+}
+
+inline-meta _terminal-prefix-count(
+  !xs: list(pair(int, pair(int, constructor))),
+) -> int {
+  match xs {
+  | Nil =>
+    0
+  | Cons(x, rest) =>
+    let Pair(weight, _) = x;
+    if eq-int(weight, 0) {
+      add-int(1, _terminal-prefix-count(rest))
+    } else {
+      0
+    }
+  }
+}
+
+data rune-category {
+| Printable-Ascii // U+0020 .. U+007E
+| Full-Ascii // U+0000 .. U+007F (includes control characters)
+| Unicode-Scalar // any valid scalar value (mostly ASCII, occasionally astral)
+| Alphanumeric // [0-9A-Za-z]
+}
+
+data int-special-values {
+| No-Int-Special-Values
+| Pivot-And-Boundary-Int-Special-Values
+}
+
+data float-special-values {
+| No-Float-Special-Values
+| In-Range-Float-Special-Values
+| Finite-Float-Special-Values
+| Any-Float-Special-Values
+}
+
+data rune-special-values {
+| No-Rune-Special-Values
+| Category-Representative-Rune-Special-Values
+}
+
+data _gen-opt {
+| _Gen-Opt(
+    int-lo: 'int,
+    int-hi: 'int,
+    int-pivot: 'int,
+    int-special-values: 'int-special-values,
+    int-special-ratio: 'float,
+    float-lo: 'float,
+    float-hi: 'float,
+    float-pivot: 'float,
+    float-special-values: 'float-special-values,
+    float-special-ratio: 'float,
+    rune-cat: 'rune-category,
+    rune-special-values: 'rune-special-values,
+    rune-special-ratio: 'float,
+  )
+}
+
+constant _special-ratio-denominator: int {
+  1000000
+}
+
+define _special-threshold(ratio: float) -> int {
+  if not(eq-float(ratio, ratio)) {
+    0
+  } else-if le-float(ratio, 0.0) {
+    0
+  } else-if ge-float(ratio, 1.0) {
+    _special-ratio-denominator
+  } else {
+    fptosi-float64-int64(mul-float(ratio, sitofp-int64-float64(_special-ratio-denominator)))
+  }
+}
+
+inline _mix-specials<a>(ratio: float, main: gen(a), special: gen(a)) -> gen(a) {
+  let threshold = _special-threshold(ratio);
+  if le-int(threshold, 0) {
+    let _ = special;
+    main
+  } else {
+    Gen(
+      <r>(k: &gen-kit) =>> {
+        scope<r, a>(k, (k) =>> {
+          with control-bind {
+            bind roll = choose<a>(k, _special-ratio-denominator);
+            if ge-int(roll, threshold) {
+              apply<a, a>(main, k)
+            } else {
+              apply<a, a>(special, k)
+            }
+          }
+        })
+      },
+    )
+  }
+}
+
+define _clamp-int(lo: int, hi: int, x: int) -> int {
+  max-int(lo, min-int(hi, x))
+}
+
+define _int-special-gen(lo: int, hi: int, pivot: int) -> gen(int) {
+  let target = _clamp-int(lo, hi, pivot);
+  let above = _clamp-int(lo, hi, add-int(target, 1));
+  let below = _clamp-int(lo, hi, sub-int(target, 1));
+  Gen(
+    <r>(k: &gen-kit) =>> {
+      scope<r, int>(k, (k) =>> {
+        with control-bind {
+          bind idx = choose<int>(k, 5);
+          draw-int-fixed(
+            k,
+            lo,
+            hi,
+            pivot,
+            match idx {
+            | 0 =>
+              target
+            | 1 =>
+              above
+            | 2 =>
+              below
+            | 3 =>
+              lo
+            | _ =>
+              hi
+            },
+          )
+        }
+      })
+    },
+  )
+}
+
+define _pos-max-finite() -> float {
+  magic cast(int64, float64, 0x7FEFFFFFFFFFFFFF)
+}
+
+define _neg-max-finite() -> float {
+  magic cast(int64, float64, 0xFFEFFFFFFFFFFFFF)
+}
+
+define _min-subnormal() -> float {
+  magic cast(int64, float64, 0x0000000000000001)
+}
+
+define _clamp-float(lo: float, hi: float, x: float) -> float {
+  max-float(lo, min-float(hi, x))
+}
+
+define _in-range-float-special-gen(lo: float, hi: float, pivot: float) -> gen(float) {
+  let target = _clamp-float(lo, hi, pivot);
+  let above = _clamp-float(lo, hi, add-float(target, 1.0));
+  let below = _clamp-float(lo, hi, sub-float(target, 1.0));
+  let min-subnormal = _clamp-float(lo, hi, _min-subnormal());
+  gen-map(gen-choose(6), (idx) => {
+    match idx {
+    | 0 =>
+      target
+    | 1 =>
+      above
+    | 2 =>
+      below
+    | 3 =>
+      min-subnormal
+    | 4 =>
+      lo
+    | _ =>
+      hi
+    }
+  })
+}
+
+define _finite-float-special-gen(pivot: float) -> gen(float) {
+  gen-map(gen-choose(8), (idx) => {
+    match idx {
+    | 0 =>
+      pivot
+    | 1 =>
+      _neg-max-finite()
+    | 2 =>
+      _pos-max-finite()
+    | 3 =>
+      0.0
+    | 4 =>
+      magic cast(int64, float64, 0x8000000000000000)
+    | 5 =>
+      1.0
+    | 6 =>
+      -1.0
+    | _ =>
+      _min-subnormal()
+    }
+  })
+}
+
+define _any-float-special-gen(pivot: float) -> gen(float) {
+  gen-map(gen-choose(11), (idx) => {
+    match idx {
+    | 0 =>
+      pivot
+    | 1 =>
+      _neg-max-finite()
+    | 2 =>
+      _pos-max-finite()
+    | 3 =>
+      0.0
+    | 4 =>
+      magic cast(int64, float64, 0x8000000000000000)
+    | 5 =>
+      1.0
+    | 6 =>
+      -1.0
+    | 7 =>
+      _min-subnormal()
+    | 8 =>
+      inf
+    | 9 =>
+      -inf
+    | _ =>
+      nan
+    }
+  })
+}
+
+define _cp-to-rune(cp: int) -> rune {
+  match from-int(cp) {
+  | Right(r) =>
+    r
+  | Left(_) =>
+    `?`
+  }
+}
+
+define _alnum-cp(idx: int) -> int {
+  if lt-int(idx, 10) {
+    add-int(48, idx)
+  } else-if lt-int(idx, 36) {
+    add-int(65, sub-int(idx, 10))
+  } else {
+    add-int(97, sub-int(idx, 36))
+  }
+}
+
+define _main-rune-gen(cat: rune-category) -> gen(rune) {
+  match cat {
+  | Printable-Ascii =>
+    gen-map(gen-int(32, 126, 0), (cp) => {
+      _cp-to-rune(cp)
+    })
+  | Full-Ascii =>
+    gen-map(gen-int(0, 127, 0), (cp) => {
+      _cp-to-rune(cp)
+    })
+  | Unicode-Scalar =>
+    gen-map(gen-int(32, 0x10FFFF, 0), (cp) => {
+      _cp-to-rune(cp)
+    })
+  | Alphanumeric =>
+    gen-map(gen-int(0, 61, 0), (idx) => {
+      _cp-to-rune(_alnum-cp(idx))
+    })
+  }
+}
+
+define _rune-special-gen(cat: rune-category) -> gen(rune) {
+  match cat {
+  | Printable-Ascii =>
+    gen-map(gen-choose(5), (idx) => {
+      _cp-to-rune(
+        match idx {
+        | 0 =>
+          0x20 // SPACE
+        | 1 =>
+          0x21 // EXCLAMATION MARK
+        | 2 =>
+          0x22 // QUOTATION MARK
+        | 3 =>
+          0x5C // REVERSE SOLIDUS
+        | _ =>
+          0x7E // TILDE
+        },
+      )
+    })
+  | Full-Ascii =>
+    gen-map(gen-choose(8), (idx) => {
+      _cp-to-rune(
+        match idx {
+        | 0 =>
+          0x00 // NULL
+        | 1 =>
+          0x09 // CHARACTER TABULATION
+        | 2 =>
+          0x0A // LINE FEED
+        | 3 =>
+          0x0D // CARRIAGE RETURN
+        | 4 =>
+          0x20 // SPACE
+        | 5 =>
+          0x22 // QUOTATION MARK
+        | 6 =>
+          0x5C // REVERSE SOLIDUS
+        | _ =>
+          0x7F // DELETE
+        },
+      )
+    })
+  | Unicode-Scalar =>
+    gen-map(gen-choose(13), (idx) => {
+      _cp-to-rune(
+        match idx {
+        | 0 =>
+          0x00 // NULL
+        | 1 =>
+          0x09 // CHARACTER TABULATION
+        | 2 =>
+          0x0A // LINE FEED
+        | 3 =>
+          0x0D // CARRIAGE RETURN
+        | 4 =>
+          0x20 // SPACE
+        | 5 =>
+          0x22 // QUOTATION MARK
+        | 6 =>
+          0x5C // REVERSE SOLIDUS
+        | 7 =>
+          0x7F // DELETE
+        | 8 =>
+          0xE9 // LATIN SMALL LETTER E WITH ACUTE
+        | 9 =>
+          0x3042 // HIRAGANA LETTER A
+        | 10 =>
+          0x1F600 // GRINNING FACE
+        | _ =>
+          0x10FFFF // largest scalar value
+        },
+      )
+    })
+  | Alphanumeric =>
+    gen-map(gen-choose(6), (idx) => {
+      _cp-to-rune(
+        match idx {
+        | 0 =>
+          0x30 // DIGIT ZERO
+        | 1 =>
+          0x39 // DIGIT NINE
+        | 2 =>
+          0x41 // LATIN CAPITAL LETTER A
+        | 3 =>
+          0x5A // LATIN CAPITAL LETTER Z
+        | 4 =>
+          0x61 // LATIN SMALL LETTER A
+        | _ =>
+          0x7A // LATIN SMALL LETTER Z
+        },
+      )
+    })
+  }
+}
+
+define _int-gen(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(int) {
+  let main = gen-int(lo, hi, pivot);
+  match special-values {
+  | No-Int-Special-Values =>
+    main
+  | Pivot-And-Boundary-Int-Special-Values =>
+    _mix-specials(ratio, main, _int-special-gen(lo, hi, pivot))
+  }
+}
+
+define _float-gen(lo: float, hi: float, pivot: float, special-values: float-special-values, ratio: float) -> gen(float) {
+  let main = gen-float(lo, hi, pivot);
+  match special-values {
+  | No-Float-Special-Values =>
+    main
+  | In-Range-Float-Special-Values =>
+    _mix-specials(ratio, main, _in-range-float-special-gen(lo, hi, pivot))
+  | Finite-Float-Special-Values =>
+    _mix-specials(ratio, main, _finite-float-special-gen(pivot))
+  | Any-Float-Special-Values =>
+    _mix-specials(ratio, main, _any-float-special-gen(pivot))
+  }
+}
+
+define _rune-gen-base(cat: rune-category, special-values: rune-special-values, ratio: float) -> gen(rune) {
+  let main = _main-rune-gen(cat);
+  match special-values {
+  | No-Rune-Special-Values =>
+    main
+  | Category-Representative-Rune-Special-Values =>
+    _mix-specials(ratio, main, _rune-special-gen(cat))
+  }
+}
+
+define _int64-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _int-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(int64, a, v)
+    },
+  )
+}
+
+define _int32-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _int-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(int32, a, trunc-int-int32(v))
+    },
+  )
+}
+
+define _int16-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _int-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(int16, a, trunc-int-int16(v))
+    },
+  )
+}
+
+define _int8-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _int-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(int8, a, trunc-int-int8(v))
+    },
+  )
+}
+
+define _float64-gen<a>(lo: float, hi: float, pivot: float, special-values: float-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _float-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(float64, a, v)
+    },
+  )
+}
+
+define _float32-gen<a>(lo: float, hi: float, pivot: float, special-values: float-special-values, ratio: float) -> gen(a) {
+  gen-map(
+    _float-gen(lo, hi, pivot, special-values, ratio),
+    (v) => {
+      magic cast(float32, a, fptrunc-float64-float32(v))
+    },
+  )
+}
+
+define _rune-gen<a>(cat: rune-category, special-values: rune-special-values, ratio: float) -> gen(a) {
+  gen-map(_rune-gen-base(cat, special-values, ratio), (r) => {
+    magic cast(rune, a, r)
+  })
+}
+
+define _string-gen<a>(cat: rune-category, special-values: rune-special-values, ratio: float) -> gen(a) {
+  gen-map(gen-list(_rune-gen<rune>(cat, special-values, ratio)), (rs) => {
+    let s = {
+      pin rs = rs;
+      pack(rs)
+    };
+    magic cast(string, a, s)
+  })
+}
+
+define _wrapper-gen<a, t>(inner: gen(t)) -> gen(a) {
+  gen-map(inner, (v) => {
+    magic cast(t, a, v)
+  })
+}
+
+define _gen-vector<a, t>(elem: gen(t)) -> gen(a) {
+  gen-map(gen-vector(elem), (v) => {
+    magic cast(vector(t), a, v)
+  })
+}
+
+nominal {
+  define-meta _derive<a>(
+    int-lo: 'int,
+    int-hi: 'int,
+    int-pivot: 'int,
+    int-special-values: 'int-special-values,
+    int-special-ratio: 'float,
+    float-lo: 'float,
+    float-hi: 'float,
+    float-pivot: 'float,
+    float-special-values: 'float-special-values,
+    float-special-ratio: 'float,
+    rune-cat: 'rune-category,
+    rune-special-values: 'rune-special-values,
+    rune-special-ratio: 'float,
+  ) -> 'gen(a),
+}
+
+inline-meta _derive-with<t>(opt: _gen-opt) -> 'gen(t) {
+  let
+    _Gen-Opt(
+      int-lo,
+      int-hi,
+      int-pivot,
+      int-special-values,
+      int-special-ratio,
+      float-lo,
+      float-hi,
+      float-pivot,
+      float-special-values,
+      float-special-ratio,
+      rune-cat,
+      rune-special-values,
+      rune-special-ratio,
+    )
+  = opt;
+  _derive<t>(
+    int-lo,
+    int-hi,
+    int-pivot,
+    int-special-values,
+    int-special-ratio,
+    float-lo,
+    float-hi,
+    float-pivot,
+    float-special-values,
+    float-special-ratio,
+    rune-cat,
+    rune-special-values,
+    rune-special-ratio,
+  )
+}
+
+inline-meta _build-fields<a>(
+  field-cursors: list(pair(field, int)),
+  header: int,
+  data-arg-num: int,
+  divisor: int,
+  p: 'pointer,
+  kk: '&gen-kit,
+  rem-ref: 'int,
+  !opt: _gen-opt,
+) -> 'control(a, a) {
+  match field-cursors {
+  | Nil =>
+    let _ = opt;
+    let _ = rem-ref;
+    quote {Control-Success(magic cast(pointer, a, unquote {p}))}
+  | Cons(!entry, rest) =>
+    let Pair(f-raw, cursor) = entry;
+    let !f = f-raw;
+    let t = field-type(f);
+    let !layout = field-layout-of(f);
+    let slot-count = field-slot-count(layout);
+    unpack-type t = t;
+    let rest-code = _build-fields<a>(rest, header, data-arg-num, divisor, p, kk, rem-ref, opt);
+    let set-code =
+      if gt-int(divisor, 0) {
+        if _field-is-structural(f) {
+          quote {set-budget(unquote {kk}, div-int(unquote {rem-ref}, unquote {promote {divisor}}))}
+        } else {
+          quote {set-budget(unquote {kk}, unquote {rem-ref})}
+        }
+      } else {
+        quote {Unit}
+      };
+    let slot-ptr =
+      quote {
+        nth-field-slot-pointer(
+          unquote {promote {header}},
+          unquote {promote {data-arg-num}},
+          unquote {promote {cursor}},
+          unquote {p},
+        )
+      };
+    match layout {
+    | Direct =>
+      quote {
+        with control-bind {
+          let _ = unquote {set-code};
+          bind v = apply<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
+          store-int(magic cast(t, int, v), unquote {slot-ptr});
+          unquote {rest-code}
+        }
+      }
+    | Mixed(_) =>
+      quote {
+        with control-bind {
+          let _ = unquote {set-code};
+          bind v = apply<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
+          let v-ptr = magic cast(t, pointer, v);
+          memcpy(
+            unquote {slot-ptr},
+            v-ptr,
+            mul-int(core::word.size, unquote {promote {slot-count}}),
+          );
+          free(v-ptr);
+          unquote {rest-code}
+        }
+      }
+    }
+  }
+}
+
+inline-meta _store-params<a>(
+  params: list(type),
+  slot: int,
+  p: 'pointer,
+  k-cont: 'control(a, a),
+) -> 'control(a, a) {
+  match params {
+  | Nil =>
+    k-cont
+  | Cons(t, rest) =>
+    unpack-type t = t;
+    let rest-code = _store-params<a>(rest, add-int(slot, 1), p, k-cont);
+    quote {
+      store-int(
+        magic cast(type, int, pack-type {t}),
+        shift(unquote {p}, mul-int(core::word.size, unquote {promote {slot}})),
+      );
+      unquote {rest-code}
+    }
+  }
+}
+
+inline-meta _build-cons<a>(
+  params: list(type),
+  !fields: list(field),
+  disc-index: int,
+  header: int,
+  param-num: int,
+  alloc: int,
+  kk: '&gen-kit,
+  opt: _gen-opt,
+) -> 'control(a, a) {
+  let field-count = length(fields);
+  let divisor = _fields-weight(fields);
+  let field-cursors = fields-with-cursors(fields, 0);
+  quote {
+    let p = malloc(C-Size(mul-int(core::word.size, unquote {promote {alloc}})));
+    unquote {
+      let p-ref = quote {p};
+      let fields-code =
+        if gt-int(field-count, 0) {
+          quote {
+            let rem = read-budget(unquote {kk});
+            unquote {_build-fields<a>(field-cursors, header, param-num, divisor, p-ref, kk, quote {rem}, opt)}
+          }
+        } else {
+          _build-fields<a>(field-cursors, header, param-num, divisor, p-ref, kk, quote {0}, opt)
+        };
+      let params-code = _store-params<a>(params, header, p-ref, fields-code);
+      if gt-int(header, 0) {
+        quote {
+          store-int(unquote {promote {disc-index}}, unquote {p-ref});
+          unquote {params-code}
+        }
+      } else {
+        params-code
+      }
+    }
+  }
+}
+
+inline-meta _dispatch-clauses<a>(
+  ranked: list(pair(int, pair(int, constructor))),
+  rank-pos: int,
+  !params: list(type),
+  param-num: int,
+  header: int,
+  alloc: int,
+  kk: '&gen-kit,
+  !opt: _gen-opt,
+) -> list(pair(int, 'control(a, a))) {
+  match ranked {
+  | Nil =>
+    Nil
+  | Cons(!entry, rest) =>
+    let Pair(_, Pair(decl-index, c)) = entry;
+    let fields = constructor-fields(c);
+    let body = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
+    Cons(
+      Pair(rank-pos, body),
+      _dispatch-clauses<a>(rest, add-int(rank-pos, 1), params, param-num, header, alloc, kk, opt),
+    )
+  }
+}
+
+inline-meta _dispatch<a>(
+  ranked: list(pair(int, pair(int, constructor))),
+  !params: list(type),
+  param-num: int,
+  header: int,
+  alloc: int,
+  rank: 'int,
+  kk: '&gen-kit,
+  !opt: _gen-opt,
+) -> 'control(a, a) {
+  match ranked {
+  | Nil =>
+    let _ = params;
+    let _ = rank;
+    let _ = kk;
+    let _ = opt;
+    magic compile-error("BUG: derive dispatched with no constructors")
+  | Cons(!entry, rest) =>
+    let Pair(_, Pair(decl-index, c)) = entry;
+    let fields = constructor-fields(c);
+    let fallback = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
+    let clauses = _dispatch-clauses<a>(rest, 1, params, param-num, header, alloc, kk, opt);
+    magic make-switch(rank, fallback, clauses)
+  }
+}
+
+inline-meta _draw-discriminant<a>(
+  n: int,
+  header: int,
+  terminal-count: int,
+  kk: '&gen-kit,
+) -> 'control(a, int) {
+  if gt-int(header, 0) {
+    quote {draw-disc(unquote {kk}, unquote {promote {n}}, unquote {promote {terminal-count}})}
+  } else {
+    quote {Control-Success(0)}
+  }
+}
+
+define-meta _derive<a>(
+  int-lo: 'int,
+  int-hi: 'int,
+  int-pivot: 'int,
+  int-special-values: 'int-special-values,
+  int-special-ratio: 'float,
+  float-lo: 'float,
+  float-hi: 'float,
+  float-pivot: 'float,
+  float-special-values: 'float-special-values,
+  float-special-ratio: 'float,
+  rune-cat: 'rune-category,
+  rune-special-values: 'rune-special-values,
+  rune-special-ratio: 'float,
+) -> 'gen(a) {
+  let opt =
+    _Gen-Opt(
+      int-lo,
+      int-hi,
+      int-pivot,
+      int-special-values,
+      int-special-ratio,
+      float-lo,
+      float-hi,
+      float-pivot,
+      float-special-values,
+      float-special-ratio,
+      rune-cat,
+      rune-special-values,
+      rune-special-ratio,
+    );
+  let k = magic inspect-type(a);
+  match k {
+  | Int64 =>
+    let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
+    quote {gen.generic._int64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Int32 =>
+    let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
+    quote {gen.generic._int32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Int16 =>
+    let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
+    quote {gen.generic._int16-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Int8 =>
+    let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
+    quote {gen.generic._int8-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Float64 =>
+    let _Gen-Opt(_, _, _, _, _, lo, hi, pivot, specials, ratio, _, _, _) = opt;
+    quote {gen.generic._float64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Float32 =>
+    let _Gen-Opt(_, _, _, _, _, lo, hi, pivot, specials, ratio, _, _, _) = opt;
+    quote {gen.generic._float32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+  | Rune =>
+    let _Gen-Opt(_, _, _, _, _, _, _, _, _, _, rc, specials, ratio) = opt;
+    quote {gen.generic._rune-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
+  | Binary =>
+    let _Gen-Opt(_, _, _, _, _, _, _, _, _, _, rc, specials, ratio) = opt;
+    quote {gen.generic._string-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
+  | Wrapper(t) =>
+    unpack-type t = t;
+    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+  | Noema(t) =>
+    unpack-type t = t;
+    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+  | Box-T(t) =>
+    unpack-type t = t;
+    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+  | core::type-value.Vector(t) =>
+    unpack-type t = t;
+    quote {gen.generic._gen-vector<a, t>(unquote {_derive-with<t>(opt)})}
+  | Enum(names) =>
+    let _ = opt;
+    let n = length(names);
+    quote {
+      Gen(
+        <r>(k: &gen-kit) =>> {
+          scope<r, a>(k, (k) =>> {
+            with control-bind {
+              bind disc = draw-int(k, 0, unquote {promote {sub-int(n, 1)}}, 0);
+              Control-Success(magic cast(int, a, disc))
+            }
+          })
+        },
+      )
+    }
+  | Algebraic(_, !params, !cons) =>
+    let param-num = length(params);
+    let n = length(cons);
+    let header = algebraic-header-slot-count(cons);
+    let alloc = add-int(header, add-int(param-num, _mmax-payload-slots(cons)));
+    let !ranked = _sort-ranked(_rankable(cons, 0));
+    let terminal-count = _terminal-prefix-count(ranked);
+    quote {
+      Gen(
+        <r>(k: &gen-kit) =>> {
+          scope<r, a>(k, (k) =>> {
+            with control-bind {
+              bind rank = unquote {_draw-discriminant<a>(n, header, terminal-count, quote {k})};
+              unquote {_dispatch<a>(ranked, params, param-num, header, alloc, quote {rank}, quote {k}, opt)}
+            }
+          })
+        },
+      )
+    }
+  | _ =>
+    magic compile-error("derive: unsupported type")
+  }
+}
+
+inline-meta derive<a>()[
+  int-lo: 'int := quote {0x8000000000000000}, // INT64_MIN
+  int-hi: 'int := quote {0x7FFFFFFFFFFFFFFF}, // INT64_MAX
+  int-pivot: 'int := quote {0},
+  int-special-values: 'int-special-values := quote {Pivot-And-Boundary-Int-Special-Values},
+  int-special-ratio: 'float := quote {0.1},
+  float-lo: 'float := quote {magic cast(int64, float64, 0xFFEFFFFFFFFFFFFF)},
+  float-hi: 'float := quote {magic cast(int64, float64, 0x7FEFFFFFFFFFFFFF)},
+  float-pivot: 'float := quote {0.0},
+  float-special-values: 'float-special-values := quote {Any-Float-Special-Values},
+  float-special-ratio: 'float := quote {0.1},
+  rune-category: 'rune-category := quote {Unicode-Scalar},
+  rune-special-values: 'rune-special-values := quote {Category-Representative-Rune-Special-Values},
+  rune-special-ratio: 'float := quote {0.1},
+] -> 'gen(a) {
+  _derive<a>(
+    int-lo,
+    int-hi,
+    int-pivot,
+    int-special-values,
+    int-special-ratio,
+    float-lo,
+    float-hi,
+    float-pivot,
+    float-special-values,
+    float-special-ratio,
+    rune-category,
+    rune-special-values,
+    rune-special-ratio,
+  )
+}

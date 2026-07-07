@@ -1,0 +1,66 @@
+import {
+  core::box {axiom-T},
+  core::cell {cell, modify},
+}
+
+data prng {
+| _Prng(
+    seed: int,
+    gamma: int,
+  )
+}
+
+constant golden-gamma: int {
+  0x9E3779B97F4A7C15
+}
+
+foreign {
+  llvm.ctpop.i64(int) -> int,
+  llvm.ctlz.i64(int, int1) -> int,
+}
+
+define _mix64(z0: int) -> int {
+  let z1 = mul-int(xor-int(z0, lshr-int(z0, 30)), 0xBF58476D1CE4E5B9);
+  let z2 = mul-int(xor-int(z1, lshr-int(z1, 27)), 0x94D049BB133111EB);
+  xor-int(z2, lshr-int(z2, 31))
+}
+
+define _mix-gamma(z0: int) -> int {
+  let z1 = or-int(_mix64(z0), 1);
+  let n = magic external llvm.ctpop.i64(xor-int(z1, lshr-int(z1, 1)));
+  if ge-int(n, 24) {
+    xor-int(z1, 0xAAAAAAAAAAAAAAAA)
+  } else {
+    z1
+  }
+}
+
+define make-prng(s: int) -> prng {
+  _Prng(_mix64(s), _mix-gamma(add-int(s, golden-gamma)))
+}
+
+define next-int-cell(r: &cell(prng)) -> int {
+  modify(r, (g0) => {
+    let _Prng(seed, gamma) = axiom-T(g0);
+    let new-seed = add-int(seed, gamma);
+    Pair(lift {_Prng(new-seed, gamma)}, _mix64(new-seed))
+  })
+}
+
+define _reject-mask(range: int) -> int {
+  lshr-int(-1, magic external llvm.ctlz.i64(or-int(range, 1), 0))
+}
+
+define bounded-int-cell(range: int, r: &cell(prng)) -> int {
+  let mask = _reject-mask(range);
+  let go =
+    define loop() -> int {
+      let x = and-int(next-int-cell(r), mask);
+      if lt-int(x, range) {
+        x
+      } else {
+        loop()
+      }
+    };
+  go()
+}

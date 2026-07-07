@@ -1,0 +1,7 @@
+data event-tag {
+| Tag-Choose
+| Tag-Draw-Int
+| Tag-Draw-Float
+| Tag-Reset
+| Tag-Shift
+}

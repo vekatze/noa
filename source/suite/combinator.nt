@@ -1,0 +1,594 @@
+import {
+  core::array.unsafe {access-unchecked},
+  core::box {axiom-T},
+  core::cell {borrow, cell, clone, mutate},
+  core::debug {panic},
+  core::float {max-float, min-float},
+  core::int {max-int, min-int},
+  control {Control-Escape, Control-Failure, Control-Success, control},
+  control.failure {Invalid-Generator, Replay-Mismatch, Replay-Mismatch-Simple, failure},
+  suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
+  suite._kernel.edit {edit, overlay-float, overlay-int, overlay-shift-mode},
+  suite._kernel.primitive {
+    shrink-target-float,
+    shrink-target-int,
+  },
+  suite._kernel.prng {bounded-int-cell, next-int-cell, prng},
+  suite._kernel.scenario {
+    Active,
+    Choose,
+    Draw-Float,
+    Draw-Int,
+    Inactive,
+    Reset,
+    Shift,
+    append-event,
+    append-event-simple,
+    event,
+    event-tag-of,
+    replace-event,
+    scenario,
+    scenario-length,
+    shift-mode,
+  },
+  suite._kernel.seam {last-end, pop-end, push-end, write-int},
+}
+
+define _clamp-int(lo: int, hi: int, x: int) -> int {
+  max-int(lo, min-int(hi, x))
+}
+
+define _clamp-float(lo: float, hi: float, x: float) -> float {
+  max-float(lo, min-float(hi, x))
+}
+
+define _next-event(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  expected: &string,
+) ->> either(failure, &event) {
+  let p = clone(pc);
+  let end = last-end(ends);
+  if ge-int(p, end) {
+    Left(Replay-Mismatch-Simple(expected))
+  } else {
+    let e = access-unchecked(events, p);
+    write-int(pc, add-int(p, 1));
+    Right(e)
+  }
+}
+
+define _take-choose<r>(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  n: int,
+) ->> control(r, int) {
+  match _next-event(events, pc, ends, "Choose") {
+  | Left(err) =>
+    Control-Failure(err)
+  | Right(e) =>
+    case e {
+    | Choose(i0) =>
+      Control-Success(min-int(*i0, sub-int(n, 1)))
+    | _ =>
+      Control-Failure(Replay-Mismatch("Choose", event-tag-of(e)))
+    }
+  }
+}
+
+define _take-draw-int<r>(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  overlay: &edit,
+  lo: int,
+  hi: int,
+) ->> control(r, int) {
+  let index = clone(pc);
+  match _next-event(events, pc, ends, "Draw-Int") {
+  | Left(err) =>
+    Control-Failure(err)
+  | Right(e) =>
+    case e {
+    | Draw-Int(_, _, _, value0) =>
+      let value = overlay-int(overlay, index, *value0);
+      Control-Success(_clamp-int(lo, hi, value))
+    | _ =>
+      Control-Failure(Replay-Mismatch("Draw-Int", event-tag-of(e)))
+    }
+  }
+}
+
+define _take-draw-float<r>(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  overlay: &edit,
+  lo: float,
+  hi: float,
+) ->> control(r, float) {
+  let index = clone(pc);
+  match _next-event(events, pc, ends, "Draw-Float") {
+  | Left(err) =>
+    Control-Failure(err)
+  | Right(e) =>
+    case e {
+    | Draw-Float(_, _, _, value0) =>
+      let value = overlay-float(overlay, index, *value0);
+      Control-Success(_clamp-float(lo, hi, value))
+    | _ =>
+      Control-Failure(Replay-Mismatch("Draw-Float", event-tag-of(e)))
+    }
+  }
+}
+
+define _take-reset(events: &scenario, pc: &cell(int), ends: &cell(vector(int))) ->> either(failure, int) {
+  match _next-event(events, pc, ends, "Reset") {
+  | Left(err) =>
+    Left(err)
+  | Right(e) =>
+    case e {
+    | Reset(end) =>
+      Right(*end)
+    | _ =>
+      Left(Replay-Mismatch("Reset", event-tag-of(e)))
+    }
+  }
+}
+
+data _shift-read {
+| _Shift-Read-Failure(failure)
+| _Shift-Read-Ok(shift-mode, int)
+}
+
+define _take-shift(events: &scenario, pc: &cell(int), ends: &cell(vector(int)), overlay: &edit) ->> _shift-read {
+  let index = clone(pc);
+  match _next-event(events, pc, ends, "Shift") {
+  | Left(err) =>
+    _Shift-Read-Failure(err)
+  | Right(e) =>
+    case e {
+    | Shift(mode0, end) =>
+      let mode = overlay-shift-mode(overlay, index, *mode0);
+      _Shift-Read-Ok(mode, *end)
+    | _ =>
+      _Shift-Read-Failure(Replay-Mismatch("Shift", event-tag-of(e)))
+    }
+  }
+}
+
+define choose<r>(k: &gen-kit, n: int) ->> control(r, int) {
+  if le-int(n, 0) {
+    Control-Failure(Invalid-Generator("choose: n must be positive"))
+  } else {
+    case k {
+    | _Gen-Kit-Generate(events, rng, _, _, _) =>
+      let index = bounded-int-cell(n, rng);
+      append-event-simple(*events, Choose(index));
+      Control-Success(index)
+    | _Gen-Kit-Replay(events, pc, ends, _) =>
+      _take-choose(*events, pc, ends, n)
+    }
+  }
+}
+
+define _read-budget(r: &cell(int)) -> int {
+  borrow(r, (b) => {
+    lift {*b}
+  })
+}
+
+define _spend-budget(r: &cell(int)) -> unit {
+  mutate(r, (old) => {
+    let value = sub-int(axiom-T(old), 1);
+    lift {value}
+  });
+}
+
+constant _decay-bias: int {
+  8
+}
+
+define _grow-allowed(budget: &cell(int), rng: &cell(prng)) -> bool {
+  let b = _read-budget(budget);
+  if le-int(b, 0) {
+    False
+  } else {
+    lt-int(bounded-int-cell(add-int(b, _decay-bias), rng), b)
+  }
+}
+
+define read-budget(k: &gen-kit) -> int {
+  case k {
+  | _Gen-Kit-Generate(_, _, budget, _, _) =>
+    _read-budget(budget)
+  | _Gen-Kit-Replay(_, _, _, _) =>
+    0
+  }
+}
+
+define set-budget(k: &gen-kit, v: int) -> unit {
+  case k {
+  | _Gen-Kit-Generate(_, _, budget, _, _) =>
+    write-int(budget, v)
+  | _Gen-Kit-Replay(_, _, _, _) =>
+    Unit
+  }
+}
+
+define draw-disc<r>(k: &gen-kit, n: int, terminal-count: int) ->> control(r, int) {
+  if le-int(n, 0) {
+    Control-Failure(Invalid-Generator("draw-disc: n must be positive"))
+  } else {
+    let hi = sub-int(n, 1);
+    let terminals = _clamp-int(0, n, terminal-count);
+    case k {
+    | _Gen-Kit-Generate(events, rng, budget, _, _) =>
+      let value =
+        if or::(eq-int(terminals, 0), eq-int(terminals, n)) {
+          bounded-int-cell(n, rng)
+        } else-if _grow-allowed(budget, rng) {
+          add-int(terminals, bounded-int-cell(sub-int(n, terminals), rng))
+        } else {
+          bounded-int-cell(terminals, rng)
+        };
+      _spend-budget(budget);
+      append-event-simple(*events, Draw-Int(0, hi, 0, value));
+      Control-Success(value)
+    | _Gen-Kit-Replay(events, pc, ends, overlay) =>
+      _take-draw-int(*events, pc, ends, *overlay, 0, hi)
+    }
+  }
+}
+
+define draw-continue<r>(k: &gen-kit, fanout: int) ->> control(r, int) {
+  if le-int(fanout, 0) {
+    Control-Failure(Invalid-Generator("draw-continue: fanout must be positive"))
+  } else {
+    case k {
+    | _Gen-Kit-Generate(events, rng, budget, _, _) =>
+      let value =
+        if _grow-allowed(budget, rng) {
+          1
+        } else {
+          0
+        };
+      if eq-int(value, 0) {
+        Unit
+      } else {
+        _spend-budget(budget)
+      };
+      append-event-simple(*events, Choose(value));
+      Control-Success(value)
+    | _Gen-Kit-Replay(events, pc, ends, _) =>
+      _take-choose(*events, pc, ends, fanout)
+    }
+  }
+}
+
+define _budget-to-espread(b: int) -> int {
+  let s = mul-int(b, 16);
+  if le-int(s, 0) {
+    0
+  } else-if ge-int(s, 1023) {
+    1023
+  } else {
+    s
+  }
+}
+
+define _biased-magnitude(kmax: int, rng: &cell(prng)) -> int {
+  let w1 = bounded-int-cell(add-int(kmax, 1), rng);
+  let w2 = bounded-int-cell(add-int(kmax, 1), rng);
+  let nbits = min-int(w1, w2);
+  let mask = sub-int(shl-int(1, nbits), 1);
+  and-int(next-int-cell(rng), mask)
+}
+
+constant _max-int-value: int {
+  0x7FFFFFFFFFFFFFFF
+}
+
+define _magnitude-cap(kmax: int) -> int {
+  if le-int(kmax, 0) {
+    0
+  } else-if ge-int(kmax, 62) {
+    _max-int-value
+  } else {
+    sub-int(shl-int(1, kmax), 1)
+  }
+}
+
+define _bounded-biased-magnitude(limit: int, rng: &cell(prng)) -> int {
+  let cap = min-int(limit, _magnitude-cap(62));
+  if le-int(cap, 0) {
+    0
+  } else-if ge-int(cap, _max-int-value) {
+    _biased-magnitude(62, rng)
+  } else {
+    let width = add-int(cap, 1);
+    min-int(bounded-int-cell(width, rng), bounded-int-cell(width, rng))
+  }
+}
+
+define _magnitude-bit-width(limit: int) -> int {
+  let go =
+    define loop(k: int) -> int {
+      if ge-int(k, 62) {
+        62
+      } else-if ge-int(_magnitude-cap(k), limit) {
+        k
+      } else {
+        loop(add-int(k, 1))
+      }
+    };
+  if le-int(limit, 0) {
+    0
+  } else {
+    go(0)
+  }
+}
+
+define _scaled-bit-count(limit: int, value-size: int, max-value-size: int) -> int {
+  let width = _magnitude-bit-width(limit);
+  if or::(le-int(width, 0), le-int(value-size, 0)) {
+    0
+  } else-if or::(le-int(max-value-size, 0), ge-int(value-size, max-value-size)) {
+    width
+  } else {
+    div-int(add-int(sub-int(mul-int(width, value-size), 1), max-value-size), max-value-size)
+  }
+}
+
+define _scaled-magnitude-limit(limit: int, value-size: int, max-value-size: int) -> int {
+  if or::(le-int(limit, 0), le-int(value-size, 0)) {
+    0
+  } else {
+    min-int(limit, _magnitude-cap(_scaled-bit-count(limit, value-size, max-value-size)))
+  }
+}
+
+// (1 << 52) - 1: the float64 mantissa mask.
+constant _mantissa-mask: int {
+  0xFFFFFFFFFFFFF
+}
+
+define _make-float(espread: int, rng: &cell(prng)) -> float {
+  let e1 = bounded-int-cell(add-int(espread, 1), rng);
+  let e2 = bounded-int-cell(add-int(espread, 1), rng);
+  let dmag = min-int(e1, e2);
+  let raw = next-int-cell(rng);
+  let delta =
+    if eq-int(and-int(lshr-int(raw, 1), 1), 0) {
+      dmag
+    } else {
+      sub-int(0, dmag)
+    };
+  let exp0 = add-int(1023, delta);
+  let exp =
+    if lt-int(exp0, 0) {
+      0
+    } else-if gt-int(exp0, 2046) {
+      2046
+    } else {
+      exp0
+    };
+  let mantissa = and-int(next-int-cell(rng), _mantissa-mask);
+  let bits = or-int(shl-int(and-int(raw, 1), 63), or-int(shl-int(exp, 52), mantissa));
+  magic cast(int64, float64, bits)
+}
+
+define _sized-int-value(
+  lo: int,
+  hi: int,
+  pivot: int,
+  value-size: int,
+  max-value-size: int,
+  rng: &cell(prng),
+) -> int {
+  let target = shrink-target-int(lo, hi, pivot);
+  let up0 = sub-int(hi, target);
+  let up =
+    if lt-int(up0, 0) {
+      _max-int-value
+    } else {
+      up0
+    };
+  let down0 = sub-int(target, lo);
+  let down =
+    if lt-int(down0, 0) {
+      _max-int-value
+    } else {
+      down0
+    };
+  let up-limit = _scaled-magnitude-limit(up, value-size, max-value-size);
+  let down-limit = _scaled-magnitude-limit(down, value-size, max-value-size);
+  if le-int(up, 0) {
+    if le-int(down, 0) {
+      target
+    } else {
+      sub-int(target, _bounded-biased-magnitude(down-limit, rng))
+    }
+  } else-if le-int(down, 0) {
+    add-int(target, _bounded-biased-magnitude(up-limit, rng))
+  } else-if eq-int(and-int(next-int-cell(rng), 1), 0) {
+    add-int(target, _bounded-biased-magnitude(up-limit, rng))
+  } else {
+    sub-int(target, _bounded-biased-magnitude(down-limit, rng))
+  }
+}
+
+define _sized-float-value(
+  lo: float,
+  hi: float,
+  pivot: float,
+  value-size: int,
+  max-value-size: int,
+  rng: &cell(prng),
+) -> float {
+  let target = shrink-target-float(lo, hi, pivot);
+  let relative-size =
+    if le-int(max-value-size, 0) {
+      value-size
+    } else {
+      div-int(mul-int(value-size, 100), max-value-size)
+    };
+  _clamp-float(lo, hi, add-float(target, _make-float(_budget-to-espread(relative-size), rng)))
+}
+
+define draw-int<r>(k: &gen-kit, lo: int, hi: int, pivot: int) ->> control(r, int) {
+  if gt-int(lo, hi) {
+    Control-Failure(Invalid-Generator("draw-int: lo > hi"))
+  } else {
+    case k {
+    | _Gen-Kit-Generate(events, rng, _, value-size, max-value-size) =>
+      let value = _sized-int-value(lo, hi, pivot, *value-size, *max-value-size, rng);
+      append-event-simple(*events, Draw-Int(lo, hi, pivot, value));
+      Control-Success(value)
+    | _Gen-Kit-Replay(events, pc, ends, overlay) =>
+      _take-draw-int(*events, pc, ends, *overlay, lo, hi)
+    }
+  }
+}
+
+define draw-int-fixed<r>(k: &gen-kit, lo: int, hi: int, pivot: int, value: int) ->> control(r, int) {
+  if gt-int(lo, hi) {
+    Control-Failure(Invalid-Generator("draw-int-fixed: lo > hi"))
+  } else {
+    let value = _clamp-int(lo, hi, value);
+    case k {
+    | _Gen-Kit-Generate(events, _, _, _, _) =>
+      append-event-simple(*events, Draw-Int(lo, hi, pivot, value));
+      Control-Success(value)
+    | _Gen-Kit-Replay(events, pc, ends, overlay) =>
+      _take-draw-int(*events, pc, ends, *overlay, lo, hi)
+    }
+  }
+}
+
+define draw-float<r>(k: &gen-kit, lo: float, hi: float, pivot: float) ->> control(r, float) {
+  if gt-float(lo, hi) {
+    Control-Failure(Invalid-Generator("draw-float: lo > hi"))
+  } else {
+    case k {
+    | _Gen-Kit-Generate(events, rng, _, value-size, max-value-size) =>
+      let value = _sized-float-value(lo, hi, pivot, *value-size, *max-value-size, rng);
+      append-event-simple(*events, Draw-Float(lo, hi, pivot, value));
+      Control-Success(value)
+    | _Gen-Kit-Replay(events, pc, ends, overlay) =>
+      _take-draw-float(*events, pc, ends, *overlay, lo, hi)
+    }
+  }
+}
+
+constant _placeholder-end: int {
+  -1
+}
+
+define _generate-scope<r, a>(events: &cell(scenario), body: (&gen-kit) ->> control(a, a), k: &gen-kit) ->> control(r, a) {
+  let at = append-event(events, Reset(_placeholder-end));
+  let result = body(k);
+  let end = scenario-length(events);
+  replace-event(events, at, Reset(end));
+  match result {
+  | Control-Success(value) =>
+    Control-Success(value)
+  | Control-Escape(value) =>
+    Control-Success(value)
+  | Control-Failure(err) =>
+    Control-Failure(err)
+  }
+}
+
+define _generate-cut<a>(events: &cell(scenario), body: (&gen-kit) ->> control(a, a), k: &gen-kit) ->> control(a, a) {
+  let at = append-event(events, Shift(Inactive, _placeholder-end));
+  let result = body(k);
+  let end = scenario-length(events);
+  replace-event(events, at, Shift(Inactive, end));
+  match result {
+  | Control-Success(value) =>
+    Control-Success(value)
+  | Control-Escape(_) =>
+    panic("BUG: generate-mode cut escaped")
+  | Control-Failure(err) =>
+    Control-Failure(err)
+  }
+}
+
+define _replay-scope<r, a>(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  body: (&gen-kit) ->> control(a, a),
+  k: &gen-kit,
+) ->> control(r, a) {
+  match _take-reset(events, pc, ends) {
+  | Left(err) =>
+    Control-Failure(err)
+  | Right(end) =>
+    push-end(ends, end);
+    let result = body(k);
+    pop-end(ends);
+    write-int(pc, end);
+    match result {
+    | Control-Success(value) =>
+      Control-Success(value)
+    | Control-Escape(value) =>
+      Control-Success(value)
+    | Control-Failure(err) =>
+      Control-Failure(err)
+    }
+  }
+}
+
+define _replay-cut<a>(
+  events: &scenario,
+  pc: &cell(int),
+  ends: &cell(vector(int)),
+  overlay: &edit,
+  body: (&gen-kit) ->> control(a, a),
+  k: &gen-kit,
+) ->> control(a, a) {
+  match _take-shift(events, pc, ends, overlay) {
+  | _Shift-Read-Failure(err) =>
+    Control-Failure(err)
+  | _Shift-Read-Ok(mode, end) =>
+    push-end(ends, end);
+    let result = body(k);
+    pop-end(ends);
+    write-int(pc, end);
+    match result {
+    | Control-Success(value) =>
+      match mode {
+      | Active =>
+        Control-Escape(value)
+      | Inactive =>
+        Control-Success(value)
+      }
+    | Control-Escape(value) =>
+      Control-Escape(value)
+    | Control-Failure(err) =>
+      Control-Failure(err)
+    }
+  }
+}
+
+define scope<r, a>(k: &gen-kit, body: (&gen-kit) ->> control(a, a)) ->> control(r, a) {
+  case k {
+  | _Gen-Kit-Generate(events, _, _, _, _) =>
+    _generate-scope(*events, body, k)
+  | _Gen-Kit-Replay(events, pc, ends, _) =>
+    _replay-scope(*events, pc, ends, body, k)
+  }
+}
+
+define cut<a>(k: &gen-kit, body: (&gen-kit) ->> control(a, a)) ->> control(a, a) {
+  case k {
+  | _Gen-Kit-Generate(events, _, _, _, _) =>
+    _generate-cut(*events, body, k)
+  | _Gen-Kit-Replay(events, pc, ends, overlay) =>
+    _replay-cut(*events, pc, ends, *overlay, body, k)
+  }
+}

@@ -1,0 +1,12 @@
+import {
+  control.event-tag {event-tag},
+}
+
+data failure {
+| Replay-Mismatch(
+    expected: &string,
+    found: event-tag,
+  )
+| Replay-Mismatch-Simple(expected: &string)
+| Invalid-Generator(&string)
+}
