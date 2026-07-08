@@ -1,8 +1,8 @@
 import {
   core::array {length, push-back},
   core::array.unsafe {access-unchecked, put-unchecked},
-  core::box {axiom-T},
   core::cell {borrow, cell, mutate},
+  core::layer {axiom-T},
   control.event-tag {Tag-Choose, Tag-Draw-Float, Tag-Draw-Int, Tag-Reset, Tag-Shift, event-tag},
 }
 

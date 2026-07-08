@@ -1,9 +1,9 @@
 import {
-  core::box {axiom-T},
   core::cell {extract, make-cell},
   core::debug {panic},
   core::doc {doc},
   core::doc.show {show-doc},
+  core::layer {axiom-T},
   core::string.builder {append-int64-UTF8, append-string, string-builder},
   control {Control-Escape, Control-Failure, Control-Success},
   gen {Gen, gen},

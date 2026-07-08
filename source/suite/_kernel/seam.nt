@@ -1,8 +1,8 @@
 import {
   core::array {length},
-  core::box {axiom-T},
   core::cell {borrow, cell, clone, make-cell, mutate},
   core::debug {panic},
+  core::layer {axiom-T},
   core::vector {drop-end},
   core::vector.unsafe,
   suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},

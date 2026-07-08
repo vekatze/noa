@@ -1,7 +1,7 @@
 import {
-  core::box {axiom-T},
   core::cell {cell, make-cell, modify},
   core::file.descriptor {descriptor, stdout},
+  core::layer {axiom-T},
   suite._kernel.edit {edit},
   suite._kernel.prng {prng},
   suite._kernel.scenario {scenario},

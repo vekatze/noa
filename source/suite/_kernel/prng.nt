@@ -1,6 +1,6 @@
 import {
-  core::box {axiom-T},
   core::cell {cell, modify},
+  core::layer {axiom-T},
 }
 
 data prng {

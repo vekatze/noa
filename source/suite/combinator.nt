@@ -1,10 +1,10 @@
 import {
   core::array.unsafe {access-unchecked},
-  core::box {axiom-T},
   core::cell {borrow, cell, clone, mutate},
   core::debug {panic},
   core::float {max-float, min-float},
   core::int {max-int, min-int},
+  core::layer {axiom-T},
   control {Control-Escape, Control-Failure, Control-Success, control},
   control.failure {Invalid-Generator, Replay-Mismatch, Replay-Mismatch-Simple, failure},
   suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
