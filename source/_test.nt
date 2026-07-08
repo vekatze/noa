@@ -24,7 +24,7 @@ import {
   gen.one-of {one-of},
   gen.vector {gen-vector},
   suite {make-default-noa-kit, make-noa-kit},
-  suite.spec {check, example, property, spec},
+  suite.spec {check, example, property, quickprop, spec},
 }
 
 data tree {
@@ -795,9 +795,8 @@ define _correctness-cases() -> list(spec) {
         eq-int(rem-int(*x, 2), 1)
       },
     ),
-    property::(
+    quickprop::(
       "fail: every string shorter than 8 (shrink to 8 spaces)",
-      derive::(),
       (s: &string) => {
         lt-int(core::string.length(s), 8)
       },

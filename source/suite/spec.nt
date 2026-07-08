@@ -8,6 +8,7 @@ import {
   core::sync.pool {for-each-parallel},
   core::vector {for-N, from-list},
   gen {gen},
+  gen.generic {derive},
   suite {_Noa-Kit, _next-seed, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
   suite._engine.explore {check-core},
   suite._report {Report, report},
@@ -129,6 +130,10 @@ inline-meta example(label: '&string, !property: 'bool) -> 'spec {
       unquote {promote {column}},
     )
   }
+}
+
+inline-meta quickprop<a>(label: '&string, !prop: '(&a) -> bool) -> 'spec {
+  property(label, derive(), prop)
 }
 
 define check(k: &noa-kit, cases: list(spec)) -> unit {
