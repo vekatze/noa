@@ -108,7 +108,7 @@ define print-report(w: &writer, verbose: bool, root: &string, r: &report) -> uni
     | Right(d) =>
       _write-red-bold(w, "  → ");
       pin txt = replace(d, "\n", *"\n    ");
-      _write-red-bold(w, txt);
+      _write(w, txt);
       _write(w, "\n")
     | Left(_) =>
       Unit

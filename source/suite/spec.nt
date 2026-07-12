@@ -106,7 +106,7 @@ inline-meta property<a>(label: '&string, !g: 'gen(a), !prop: '(&a) -> bool) -> '
       unquote {g},
       unquote {prop},
       (v: &a) => {
-        to-doc::(v)
+        to-doc::(v, False)
       },
       unquote {promote {file}},
       unquote {promote {line}},

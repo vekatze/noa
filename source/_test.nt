@@ -69,40 +69,6 @@ data mixed-variant {
 | MV-Some(payload: inner mix, tag: int)
 }
 
-data tree-bl {
-| Node-BL(tree-bl, int, tree-bl)
-| Leaf-BL
-}
-
-nominal {
-  data grove,
-}
-
-data rose {
-| Rose(int, grove)
-}
-
-data grove {
-| Grove-Nil
-| Grove-Cons(rose, grove)
-}
-
-nominal {
-  data json-list,
-}
-
-data json {
-| J-Null
-| J-Bool(bool)
-| J-Num(int)
-| J-Arr(json-list)
-}
-
-data json-list {
-| JL-Nil
-| JL-Cons(json, json-list)
-}
-
 define _list-in-range(xs: &list(int), lo: int, hi: int) -> bool {
   case xs {
   | Nil =>
@@ -245,61 +211,6 @@ define _expr-is-lit(e: &expr) -> bool {
     True
   | _ =>
     False
-  }
-}
-
-nominal {
-  define _grove-size(g: &grove) -> int,
-}
-
-define _rose-size(r: &rose) -> int {
-  case r {
-  | Rose(_, g) =>
-    add-int(1, _grove-size(g))
-  }
-}
-
-define _grove-size(g: &grove) -> int {
-  case g {
-  | Grove-Nil =>
-    0
-  | Grove-Cons(r, rest) =>
-    add-int(_rose-size(r), _grove-size(rest))
-  }
-}
-
-nominal {
-  define _json-list-size(xs: &json-list) -> int,
-}
-
-define _json-size(j: &json) -> int {
-  case j {
-  | J-Null =>
-    1
-  | J-Bool(_) =>
-    1
-  | J-Num(_) =>
-    1
-  | J-Arr(xs) =>
-    add-int(1, _json-list-size(xs))
-  }
-}
-
-define _json-list-size(xs: &json-list) -> int {
-  case xs {
-  | JL-Nil =>
-    0
-  | JL-Cons(j, rest) =>
-    add-int(_json-size(j), _json-list-size(rest))
-  }
-}
-
-define _tree-bl-size(t: &tree-bl) -> int {
-  case t {
-  | Leaf-BL =>
-    0
-  | Node-BL(l, _, r) =>
-    add-int(1, add-int(_tree-bl-size(l), _tree-bl-size(r)))
   }
 }
 

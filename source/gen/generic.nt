@@ -556,7 +556,7 @@ define _rune-gen-base(cat: rune-category, special-values: rune-special-values, r
   }
 }
 
-define _int64-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
+inline _int64-gen<a>(lo: int, hi: int, pivot: int, special-values: int-special-values, ratio: float) -> gen(a) {
   gen-map(
     _int-gen(lo, hi, pivot, special-values, ratio),
     (v) => {
