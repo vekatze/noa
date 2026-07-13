@@ -10,6 +10,7 @@ import {
   core::string {pack},
   core::type-value {
     Algebraic,
+    Array,
     Binary,
     Box-T,
     Direct,
@@ -53,6 +54,7 @@ import {
     gen,
     gen-map,
   },
+  gen.array {gen-array},
   gen.float {gen-float},
   gen.int {gen-choose, gen-int},
   gen.list {gen-list},
@@ -638,6 +640,14 @@ define _gen-vector<a, t>(elem: gen(t)) -> gen(a) {
   })
 }
 
+inline-meta _gen-array<a, t>(elem: 'gen(t)) -> 'gen(a) {
+  quote {
+    gen-map(unquote {gen-array<t>(elem)}, (v: array(t)) => {
+      magic cast(array(t), a, v)
+    })
+  }
+}
+
 nominal {
   define-meta _derive<a>(
     int-lo: 'int,
@@ -955,6 +965,9 @@ define-meta _derive<a>(
   | core::type-value.Vector(t) =>
     unpack-type t = t;
     quote {gen.generic._gen-vector<a, t>(unquote {_derive-with<t>(opt)})}
+  | Array(t) =>
+    unpack-type t = t;
+    _gen-array<a, t>(_derive-with<t>(opt))
   | Enum(names) =>
     let _ = opt;
     let n = length(names);
