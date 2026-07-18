@@ -2,14 +2,14 @@ import {
   core::array {length},
   core::doc {doc},
   core::string.builder {append-string, string-builder},
-  gen {gen},
-  suite._engine.replay {replay-and-render, replay-and-test},
-  suite._kernel.edit {Edit-Float, Edit-Int, Edit-Shift-Mode, apply-edit, edit},
-  suite._kernel.primitive {
+  this::gen {gen},
+  this::suite._engine.replay {replay-and-render, replay-and-test},
+  this::suite._kernel.edit {Edit-Float, Edit-Int, Edit-Shift-Mode, apply-edit, edit},
+  this::suite._kernel.primitive {
     shrink-target-float,
     shrink-target-int,
   },
-  suite._kernel.scenario {
+  this::suite._kernel.scenario {
     Active,
     Draw-Float,
     Draw-Int,

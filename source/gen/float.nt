@@ -1,7 +1,7 @@
 import {
-  gen {Gen, gen},
-  suite {gen-kit},
-  suite.combinator {draw-float},
+  this::gen {Gen, gen},
+  this::suite {gen-kit},
+  this::suite.combinator {draw-float},
 }
 
 inline gen-float(lo: float, hi: float, pivot: float) -> gen(float) {

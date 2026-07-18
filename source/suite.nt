@@ -2,10 +2,10 @@ import {
   core::cell {cell, make-cell, modify},
   core::file.descriptor {descriptor, stdout},
   core::layer {axiom-T},
-  suite._kernel.edit {edit},
-  suite._kernel.prng {prng},
-  suite._kernel.scenario {scenario},
-  suite._report.io {make-writer, writer},
+  this::suite._kernel.edit {edit},
+  this::suite._kernel.prng {prng},
+  this::suite._kernel.scenario {scenario},
+  this::suite._report.io {make-writer, writer},
 }
 
 data gen-kit {

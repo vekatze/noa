@@ -1,6 +1,5 @@
 import {
-  core::debug {panic},
-  suite._kernel.scenario {
+  this::suite._kernel.scenario {
     Draw-Float,
     Draw-Int,
     Shift,

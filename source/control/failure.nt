@@ -1,5 +1,5 @@
 import {
-  control.event-tag {event-tag},
+  this::control.event-tag {event-tag},
 }
 
 data failure {

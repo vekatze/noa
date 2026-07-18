@@ -1,14 +1,13 @@
 import {
   core::array {length},
   core::cell {borrow, cell, clone, make-cell, mutate},
-  core::debug {panic},
   core::layer {axiom-T},
   core::vector {drop-end},
   core::vector.unsafe,
-  suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
-  suite._kernel.edit {edit},
-  suite._kernel.prng {make-prng},
-  suite._kernel.scenario {scenario},
+  this::suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
+  this::suite._kernel.edit {edit},
+  this::suite._kernel.prng {make-prng},
+  this::suite._kernel.scenario {scenario},
 }
 
 define write-int(r: &cell(int), value: int) -> unit {
@@ -20,24 +19,24 @@ define write-int(r: &cell(int), value: int) -> unit {
 
 define last-end(r: &cell(vector(int))) -> int {
   borrow(r, (ends) => {
-    let len = core::vector.length(ends);
+    let len = core::vector::length(ends);
     if le-int(len, 0) {
       panic("BUG: empty replay end stack")
     } else {
-      lift {*core::vector.unsafe.access-unchecked(ends, sub-int(len, 1))}
+      lift {*core::vector.unsafe::access-unchecked(ends, sub-int(len, 1))}
     }
   })
 }
 
 define end-depth(r: &cell(vector(int))) -> int {
   borrow(r, (ends) => {
-    lift {core::vector.length(ends)}
+    lift {core::vector::length(ends)}
   })
 }
 
 define push-end(r: &cell(vector(int)), x: int) -> unit {
   mutate(r, (ends0) => {
-    lift {core::vector.push-back(axiom-T(ends0), x)}
+    lift {core::vector::push-back(axiom-T(ends0), x)}
   })
 }
 
@@ -55,7 +54,7 @@ inline new-generate-kit(events: &cell(scenario), seed: int, size: int, max-size:
 
 inline new-replay-kit(events: &scenario, overlay: &edit) -> gen-kit {
   let pc = make-cell(lift {0});
-  let ends = make-cell(lift {core::vector.push-back(core::vector.make(16), length(events))});
+  let ends = make-cell(lift {core::vector::push-back(core::vector::make(16), length(events))});
   _Gen-Kit-Replay(events, pc, ends, overlay)
 }
 

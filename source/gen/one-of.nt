@@ -1,10 +1,9 @@
 import {
-  core::debug {panic},
   core::list {length},
-  control {Control-Success, control-bind},
-  gen {Gen, gen},
-  suite {gen-kit},
-  suite.combinator {choose},
+  this::control {Control-Success, control-bind},
+  this::gen {Gen, gen},
+  this::suite {gen-kit},
+  this::suite.combinator {choose},
 }
 
 define _list-nth<a>(xs: list(a), i: int) -> a {

@@ -1,8 +1,8 @@
 import {
   core::array {make, push-back},
   core::list {length},
-  gen {gen, gen-map},
-  gen.list {gen-list},
+  this::gen {gen, gen-map},
+  this::gen.list {gen-list},
 }
 
 define _from-list<a>(xs: list(a), acc: array(a)) -> array(a) {
@@ -20,7 +20,7 @@ inline-meta gen-array<a>(!elem: 'gen(a)) -> 'gen(array(a)) {
     gen-map(gen-list(unquote {elem}), (xs: list(a)) => {
       let len on xs = length(xs);
       let acc: array(a) = make::(len);
-      gen.array._from-list(xs, acc)
+      this::gen.array::_from-list(xs, acc)
     })
   }
 }

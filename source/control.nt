@@ -1,5 +1,5 @@
 import {
-  control.failure {failure},
+  this::control.failure {failure},
 }
 
 data control(r, a) {

@@ -1,8 +1,8 @@
 import {
-  control {Control-Success, control, control-bind},
-  gen {Gen, apply, gen},
-  suite {gen-kit},
-  suite.combinator {cut, draw-continue, scope},
+  this::control {Control-Success, control, control-bind},
+  this::gen {Gen, apply, gen},
+  this::suite {gen-kit},
+  this::suite.combinator {cut, draw-continue, scope},
 }
 
 constant _continue-fanout: int {

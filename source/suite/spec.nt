@@ -7,12 +7,12 @@ import {
   core::string.builder {make-string-builder},
   core::sync.pool {for-each-parallel},
   core::vector {for-N, from-list},
-  gen {gen},
-  gen.generic {derive},
-  suite {_Noa-Kit, _next-seed, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
-  suite._engine.explore {check-core},
-  suite._report {Report, report},
-  suite._report.io {flush, print-report},
+  this::gen {gen},
+  this::gen.generic {derive},
+  this::suite {_Noa-Kit, _next-seed, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
+  this::suite._engine.explore {check-core},
+  this::suite._report {Report, report},
+  this::suite._report.io {flush, print-report},
 }
 
 data spec {
@@ -47,7 +47,7 @@ define _run-check<a>(
       render,
       trace-builder,
     );
-  let trace = core::string.builder.extract(trace-builder);
+  let trace = core::string.builder::extract(trace-builder);
   match detail {
   | Left(_) =>
     Report(label, True, none, trace, origin-file, origin-line, origin-column)

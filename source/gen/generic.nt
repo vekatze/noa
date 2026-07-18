@@ -47,20 +47,20 @@ import {
     nth-field-slot-pointer,
   },
   core::word,
-  control {Control-Success, control, control-bind},
-  gen {
+  this::control {Control-Success, control, control-bind},
+  this::gen {
     Gen,
     apply,
     gen,
     gen-map,
   },
-  gen.array {gen-array},
-  gen.float {gen-float},
-  gen.int {gen-choose, gen-int},
-  gen.list {gen-list},
-  gen.vector {gen-vector},
-  suite {gen-kit},
-  suite.combinator {choose, draw-disc, draw-int, draw-int-fixed, read-budget, scope, set-budget},
+  this::gen.array {gen-array},
+  this::gen.float {gen-float},
+  this::gen.int {gen-choose, gen-int},
+  this::gen.list {gen-list},
+  this::gen.vector {gen-vector},
+  this::suite {gen-kit},
+  this::suite.combinator {choose, draw-disc, draw-int, draw-int-fixed, read-budget, scope, set-budget},
 }
 
 inline-meta _mmax-payload-slots(cons: list(constructor)) -> int {
@@ -762,7 +762,7 @@ inline-meta _build-fields<a>(
           memcpy(
             unquote {slot-ptr},
             v-ptr,
-            mul-int(core::word.size, unquote {promote {slot-count}}),
+            mul-int(core::word::size, unquote {promote {slot-count}}),
           );
           free(v-ptr);
           unquote {rest-code}
@@ -787,7 +787,7 @@ inline-meta _store-params<a>(
     quote {
       store-int(
         magic cast(type, int, pack-type {t}),
-        shift(unquote {p}, mul-int(core::word.size, unquote {promote {slot}})),
+        shift(unquote {p}, mul-int(core::word::size, unquote {promote {slot}})),
       );
       unquote {rest-code}
     }
@@ -808,7 +808,7 @@ inline-meta _build-cons<a>(
   let divisor = _fields-weight(fields);
   let field-cursors = fields-with-cursors(fields, 0);
   quote {
-    let p = malloc(C-Size(mul-int(core::word.size, unquote {promote {alloc}})));
+    let p = malloc(C-Size(mul-int(core::word::size, unquote {promote {alloc}})));
     unquote {
       let p-ref = quote {p};
       let fields-code =
@@ -931,40 +931,40 @@ define-meta _derive<a>(
   match k {
   | Int64 =>
     let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
-    quote {gen.generic._int64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_int64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Int32 =>
     let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
-    quote {gen.generic._int32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_int32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Int16 =>
     let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
-    quote {gen.generic._int16-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_int16-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Int8 =>
     let _Gen-Opt(lo, hi, pivot, specials, ratio, _, _, _, _, _, _, _, _) = opt;
-    quote {gen.generic._int8-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_int8-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Float64 =>
     let _Gen-Opt(_, _, _, _, _, lo, hi, pivot, specials, ratio, _, _, _) = opt;
-    quote {gen.generic._float64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_float64-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Float32 =>
     let _Gen-Opt(_, _, _, _, _, lo, hi, pivot, specials, ratio, _, _, _) = opt;
-    quote {gen.generic._float32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_float32-gen<a>(unquote {lo}, unquote {hi}, unquote {pivot}, unquote {specials}, unquote {ratio})}
   | Rune =>
     let _Gen-Opt(_, _, _, _, _, _, _, _, _, _, rc, specials, ratio) = opt;
-    quote {gen.generic._rune-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_rune-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
   | Binary =>
     let _Gen-Opt(_, _, _, _, _, _, _, _, _, _, rc, specials, ratio) = opt;
-    quote {gen.generic._string-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
+    quote {this::gen.generic::_string-gen<a>(unquote {rc}, unquote {specials}, unquote {ratio})}
   | Wrapper(t) =>
     unpack-type t = t;
-    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+    quote {this::gen.generic::_wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
   | Noema(t) =>
     unpack-type t = t;
-    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+    quote {this::gen.generic::_wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
   | Box-T(t) =>
     unpack-type t = t;
-    quote {gen.generic._wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
-  | core::type-value.Vector(t) =>
+    quote {this::gen.generic::_wrapper-gen<a, t>(unquote {_derive-with<t>(opt)})}
+  | core::type-value::Vector(t) =>
     unpack-type t = t;
-    quote {gen.generic._gen-vector<a, t>(unquote {_derive-with<t>(opt)})}
+    quote {this::gen.generic::_gen-vector<a, t>(unquote {_derive-with<t>(opt)})}
   | Array(t) =>
     unpack-type t = t;
     _gen-array<a, t>(_derive-with<t>(opt))

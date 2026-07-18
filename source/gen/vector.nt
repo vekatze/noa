@@ -1,7 +1,7 @@
 import {
   core::vector {from-list},
-  gen {gen, gen-map},
-  gen.list {gen-list},
+  this::gen {gen, gen-map},
+  this::gen.list {gen-list},
 }
 
 define gen-vector<a>(elem: gen(a)) -> gen(vector(a)) {

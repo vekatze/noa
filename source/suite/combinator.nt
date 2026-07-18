@@ -1,20 +1,19 @@
 import {
   core::array.unsafe {access-unchecked},
   core::cell {borrow, cell, clone, mutate},
-  core::debug {panic},
   core::float {max-float, min-float},
   core::int {max-int, min-int},
   core::layer {axiom-T},
-  control {Control-Escape, Control-Failure, Control-Success, control},
-  control.failure {Invalid-Generator, Replay-Mismatch, Replay-Mismatch-Simple, failure},
-  suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
-  suite._kernel.edit {edit, overlay-float, overlay-int, overlay-shift-mode},
-  suite._kernel.primitive {
+  this::control {Control-Escape, Control-Failure, Control-Success, control},
+  this::control.failure {Invalid-Generator, Replay-Mismatch, Replay-Mismatch-Simple, failure},
+  this::suite {_Gen-Kit-Generate, _Gen-Kit-Replay, gen-kit},
+  this::suite._kernel.edit {edit, overlay-float, overlay-int, overlay-shift-mode},
+  this::suite._kernel.primitive {
     shrink-target-float,
     shrink-target-int,
   },
-  suite._kernel.prng {bounded-int-cell, next-int-cell, prng},
-  suite._kernel.scenario {
+  this::suite._kernel.prng {bounded-int-cell, next-int-cell, prng},
+  this::suite._kernel.scenario {
     Active,
     Choose,
     Draw-Float,
@@ -31,7 +30,7 @@ import {
     scenario-length,
     shift-mode,
   },
-  suite._kernel.seam {last-end, pop-end, push-end, write-int},
+  this::suite._kernel.seam {* as seam},
 }
 
 define _clamp-int(lo: int, hi: int, x: int) -> int {
@@ -49,12 +48,12 @@ define _next-event(
   expected: &string,
 ) ->> either(failure, &event) {
   let p = clone(pc);
-  let end = last-end(ends);
+  let end = seam.last-end(ends);
   if ge-int(p, end) {
     Left(Replay-Mismatch-Simple(expected))
   } else {
     let e = access-unchecked(events, p);
-    write-int(pc, add-int(p, 1));
+    seam.write-int(pc, add-int(p, 1));
     Right(e)
   }
 }
@@ -212,7 +211,7 @@ define read-budget(k: &gen-kit) -> int {
 define set-budget(k: &gen-kit, v: int) -> unit {
   case k {
   | _Gen-Kit-Generate(_, _, budget, _, _) =>
-    write-int(budget, v)
+    seam.write-int(budget, v)
   | _Gen-Kit-Replay(_, _, _, _) =>
     Unit
   }
@@ -528,10 +527,10 @@ define _replay-scope<r, a>(
   | Left(err) =>
     Control-Failure(err)
   | Right(end) =>
-    push-end(ends, end);
+    seam.push-end(ends, end);
     let result = body(k);
-    pop-end(ends);
-    write-int(pc, end);
+    seam.pop-end(ends);
+    seam.write-int(pc, end);
     match result {
     | Control-Success(value) =>
       Control-Success(value)
@@ -555,10 +554,10 @@ define _replay-cut<a>(
   | _Shift-Read-Failure(err) =>
     Control-Failure(err)
   | _Shift-Read-Ok(mode, end) =>
-    push-end(ends, end);
+    seam.push-end(ends, end);
     let result = body(k);
-    pop-end(ends);
-    write-int(pc, end);
+    seam.pop-end(ends);
+    seam.write-int(pc, end);
     match result {
     | Control-Success(value) =>
       match mode {

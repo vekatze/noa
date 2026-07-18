@@ -1,6 +1,6 @@
 import {
-  control {Control-Success, control, control-bind, control-map},
-  suite {gen-kit},
+  this::control {Control-Success, control, control-bind, control-map},
+  this::suite {gen-kit},
 }
 
 data gen(a) {

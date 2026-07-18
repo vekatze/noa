@@ -1,11 +1,11 @@
 import {
   core::doc {doc},
   core::doc.show {show-doc},
-  control {Control-Escape, Control-Failure, Control-Success},
-  gen {Gen, gen},
-  suite._kernel.edit {Edit-Int, edit},
-  suite._kernel.scenario {scenario},
-  suite._kernel.seam {new-replay-kit, replay-consumed-all},
+  this::control {Control-Escape, Control-Failure, Control-Success},
+  this::gen {Gen, gen},
+  this::suite._kernel.edit {Edit-Int, edit},
+  this::suite._kernel.scenario {scenario},
+  this::suite._kernel.seam {new-replay-kit, replay-consumed-all},
 }
 
 constant _ribbon-width: int {

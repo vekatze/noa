@@ -7,10 +7,10 @@ import {
   core::int {abs-int},
   core::list {length},
   core::vector.unsafe {access-unchecked},
-  gen {gen-map},
-  gen.array {gen-array},
-  gen.float {gen-float},
-  gen.generic {
+  this::gen {gen-map},
+  this::gen.array {gen-array},
+  this::gen.float {gen-float},
+  this::gen.generic {
     Alphanumeric,
     Category-Representative-Rune-Special-Values,
     Finite-Float-Special-Values,
@@ -21,12 +21,12 @@ import {
     Printable-Ascii,
     derive,
   },
-  gen.int {gen-int},
-  gen.list {gen-list},
-  gen.one-of {one-of},
-  gen.vector {gen-vector},
-  suite {make-default-noa-kit, make-noa-kit},
-  suite.spec {check, example, property, quickprop, spec},
+  this::gen.int {gen-int},
+  this::gen.list {gen-list},
+  this::gen.one-of {one-of},
+  this::gen.vector {gen-vector},
+  this::suite {make-default-noa-kit, make-noa-kit},
+  this::suite.spec {check, example, property, quickprop, spec},
 }
 
 data tree {
@@ -112,7 +112,7 @@ define _find-int(i: int, xs: &list(int)) -> bool {
 }
 
 define _vector-has(xs: &vector(int), needle: int) -> bool {
-  let len = core::vector.length(xs);
+  let len = core::vector::length(xs);
   let go =
     define loop(i: int) -> bool {
       if ge-int(i, len) {
@@ -127,7 +127,7 @@ define _vector-has(xs: &vector(int), needle: int) -> bool {
 }
 
 define _vector-in-range(xs: &vector(int), lo: int, hi: int) -> bool {
-  let len = core::vector.length(xs);
+  let len = core::vector::length(xs);
   let go =
     define loop(i: int) -> bool {
       if ge-int(i, len) {
@@ -149,13 +149,13 @@ define _vector-in-range(xs: &vector(int), lo: int, hi: int) -> bool {
 }
 
 define _array-pairs-in-range(xs: &array(pair(int, bool)), lo: int, hi: int) -> bool {
-  let len = core::array.length(xs);
+  let len = core::array::length(xs);
   let go =
     define loop(i: int) -> bool {
       if ge-int(i, len) {
         True
       } else {
-        tie Pair(x, flag) = core::array.unsafe.access-unchecked(xs, i);
+        tie Pair(x, flag) = core::array.unsafe::access-unchecked(xs, i);
         let in-range =
           if ge-int(*x, lo) {
             le-int(*x, hi)
@@ -524,7 +524,7 @@ define _correctness-cases() -> list(spec) {
       "derive string, length >= 0",
       derive::(),
       (s: &string) => {
-        ge-int(core::string.length(s), 0)
+        ge-int(core::string::length(s), 0)
       },
     ),
     property::(
@@ -664,7 +664,7 @@ define _correctness-cases() -> list(spec) {
       "fail: every derived array(pair(int, bool)) is empty",
       derive::()[int-lo := 0, int-hi := 30],
       (xs: &array(pair(int, bool))) => {
-        eq-int(core::array.length(xs), 0)
+        eq-int(core::array::length(xs), 0)
       },
     ),
     property::(
@@ -767,7 +767,7 @@ define _correctness-cases() -> list(spec) {
     quickprop::(
       "fail: every string shorter than 8 (shrink to 8 spaces)",
       (s: &string) => {
-        lt-int(core::string.length(s), 8)
+        lt-int(core::string::length(s), 8)
       },
     ),
     property::(

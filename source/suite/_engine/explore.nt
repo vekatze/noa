@@ -1,16 +1,15 @@
 import {
   core::cell {extract, make-cell},
-  core::debug {panic},
   core::doc {doc},
   core::doc.show {show-doc},
   core::layer {axiom-T},
   core::string.builder {append-int64-UTF8, append-string, string-builder},
-  control {Control-Escape, Control-Failure, Control-Success},
-  gen {Gen, gen},
-  suite._engine.replay {replay-and-render},
-  suite._engine.shrink {shrink},
-  suite._kernel.prng {golden-gamma},
-  suite._kernel.seam {new-generate-kit},
+  this::control {Control-Escape, Control-Failure, Control-Success},
+  this::gen {Gen, gen},
+  this::suite._engine.replay {replay-and-render},
+  this::suite._engine.shrink {shrink},
+  this::suite._kernel.prng {golden-gamma},
+  this::suite._kernel.seam {new-generate-kit},
 }
 
 constant _ribbon-width: int {
@@ -73,7 +72,7 @@ define _explore<a>(
   render: &(&a) -> doc,
   tb: &string-builder,
 ) ->> _explore-result {
-  let events-cell = make-cell(lift {core::array.make::(96)});
+  let events-cell = make-cell(lift {core::array::make::(96)});
   tie Gen(run) = g;
   let status on events-cell = {
     pin k = new-generate-kit(events-cell, seed, size, max-size);

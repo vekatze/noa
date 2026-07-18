@@ -14,7 +14,7 @@ import {
   core::ansi.io {ansi-kit, make-ansi-kit},
   core::file.descriptor {descriptor},
   core::string {from-text, replace, strip-prefix},
-  suite._report {Report, report},
+  this::suite._report {Report, report},
 }
 
 alias writer {
@@ -26,29 +26,29 @@ define make-writer(sink: descriptor, capacity: int) -> writer {
 }
 
 define _write(w: &writer, t: &string) -> unit {
-  let _ = core::ansi.io.write(w, t);
+  let _ = core::ansi.io::write(w, t);
   Unit
 }
 
 define _write-line(w: &writer, t: &string) -> unit {
   let _ = {
-    try _ = core::ansi.io.write(w, t);
-    core::ansi.io.write(w, "\n")
+    try _ = core::ansi.io::write(w, t);
+    core::ansi.io::write(w, "\n")
   };
   Unit
 }
 
 define flush(w: &writer) -> unit {
-  let _ = core::ansi.io.flush(w);
+  let _ = core::ansi.io::flush(w);
   Unit
 }
 
-define _styled(w: &writer, style: core::ansi.style, t: &string) -> unit {
+define _styled(w: &writer, style: core::ansi::style, t: &string) -> unit {
   let _ = {
-    try _ = core::ansi.io.write-code(w, Set-Style(style));
-    try _ = core::ansi.io.write-code(w, Set-Style(Bold));
-    try _ = core::ansi.io.write(w, t);
-    core::ansi.io.write-code(w, Set-Style(Normal))
+    try _ = core::ansi.io::write-code(w, Set-Style(style));
+    try _ = core::ansi.io::write-code(w, Set-Style(Bold));
+    try _ = core::ansi.io::write(w, t);
+    core::ansi.io::write-code(w, Set-Style(Normal))
   };
   Unit
 }
@@ -62,17 +62,17 @@ define _write-green-bold(w: &writer, t: &string) -> unit {
 }
 
 define _begin-dim(w: &writer) -> unit {
-  let _ = core::ansi.io.write-code(w, Set-Style(Faint));
+  let _ = core::ansi.io::write-code(w, Set-Style(Faint));
   Unit
 }
 
 define _end-dim(w: &writer) -> unit {
-  let _ = core::ansi.io.write-code(w, Set-Style(Normal));
+  let _ = core::ansi.io::write-code(w, Set-Style(Normal));
   Unit
 }
 
 define _write-int(w: &writer, x: int) -> unit {
-  let _ = core::ansi.io.write-int(w, x);
+  let _ = core::ansi.io::write-int(w, x);
   Unit
 }
 

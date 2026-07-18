@@ -1,7 +1,7 @@
 import {
-  gen {Gen, gen},
-  suite {gen-kit},
-  suite.combinator {choose, draw-int},
+  this::gen {Gen, gen},
+  this::suite {gen-kit},
+  this::suite.combinator {choose, draw-int},
 }
 
 inline gen-int(lo: int, hi: int, pivot: int) -> gen(int) {

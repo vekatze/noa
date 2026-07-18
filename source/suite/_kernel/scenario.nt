@@ -3,7 +3,7 @@ import {
   core::array.unsafe {access-unchecked, put-unchecked},
   core::cell {borrow, cell, mutate},
   core::layer {axiom-T},
-  control.event-tag {Tag-Choose, Tag-Draw-Float, Tag-Draw-Int, Tag-Reset, Tag-Shift, event-tag},
+  this::control.event-tag {Tag-Choose, Tag-Draw-Float, Tag-Draw-Int, Tag-Reset, Tag-Shift, event-tag},
 }
 
 data shift-mode {
