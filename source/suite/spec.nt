@@ -6,17 +6,17 @@ import {
   core::string {append, empty},
   core::string.builder {make-string-builder},
   core::sync.pool {for-each-parallel},
-  core::vector {for-N, from-list},
+  core::vector {for-N, from-list, vector},
   this::gen {gen},
   this::gen.generic {derive},
-  this::suite {_Noa-Kit, _next-seed, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
+  this::suite {_Noa-Kit, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
   this::suite._engine.explore {check-core},
   this::suite._report {Report, report},
   this::suite._report.io {flush, print-report},
 }
 
 data spec {
-| _Spec(run: (k: &noa-kit) -> report)
+| _Spec(run: (k: &noa-kit, seed: int) -> report)
 }
 
 define _run-check<a>(
@@ -67,8 +67,7 @@ define _make-check<a>(
 ) -> spec {
   let label = *label;
   _Spec(
-    (k: &noa-kit) => {
-      let seed = _next-seed(k);
+    (k: &noa-kit, seed: int) => {
       let count = _noa-kit-count(k);
       let max-size = _noa-kit-max-size(k);
       let verbose = _noa-kit-verbose(k);
@@ -86,7 +85,7 @@ define _make-test(
 ) -> spec {
   let label = *label;
   _Spec(
-    (_: &noa-kit) => {
+    (_: &noa-kit, _: int) => {
       if property() {
         Report(label, True, none, *"", origin-file, origin-line, origin-column)
       } else {
@@ -138,10 +137,14 @@ inline-meta quickprop<a>(label: '&string, !prop: '(&a) -> bool) -> 'spec {
 
 define check(k: &noa-kit, cases: list(spec)) -> unit {
   let worker-count = get-cpu-count();
+  let seeded-cases: vector(pair(spec, int)) =
+    core::vector::for-each(from-list(cases), (tc, index) => {
+      Pair(tc, index)
+    });
   let reports =
-    for-each-parallel(worker-count, from-list(cases), (tc) => {
-      let _Spec(run) = tc;
-      run(k)
+    for-each-parallel(worker-count, seeded-cases, (seeded-tc) => {
+      let Pair(_Spec(run), seed) = seeded-tc;
+      run(k, seed)
     });
   tie _Noa-Kit{sink, verbose} = k;
   let root =

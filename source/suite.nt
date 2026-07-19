@@ -1,7 +1,6 @@
 import {
-  core::cell {cell, make-cell, modify},
+  core::cell {cell},
   core::file.descriptor {descriptor, stdout},
-  core::layer {axiom-T},
   this::suite._kernel.edit {edit},
   this::suite._kernel.prng {prng},
   this::suite._kernel.scenario {scenario},
@@ -30,7 +29,6 @@ data noa-kit {
     test-count: int,
     max-size: int,
     verbose: bool,
-    seed-counter: cell(int),
   )
 }
 
@@ -49,14 +47,6 @@ define _noa-kit-verbose(k: &noa-kit) -> bool {
   *verbose
 }
 
-define _next-seed(k: &noa-kit) -> int {
-  tie _Noa-Kit{seed-counter} = k;
-  modify(seed-counter, (n0) => {
-    let n = axiom-T(n0);
-    Pair(lift {add-int(n, 1)}, n)
-  })
-}
-
 define make-noa-kit(
   sink: descriptor,
   buffer-capacity: int,
@@ -64,7 +54,7 @@ define make-noa-kit(
   max-size: int,
   verbose: bool,
 ) ->> noa-kit {
-  _Noa-Kit(make-writer(sink, buffer-capacity), test-count, max-size, verbose, make-cell(lift {0}))
+  _Noa-Kit(make-writer(sink, buffer-capacity), test-count, max-size, verbose)
 }
 
 define make-default-noa-kit() ->> noa-kit {
