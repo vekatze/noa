@@ -70,8 +70,8 @@ define _record-shrink-step<a>(
   events: &scenario,
   g: &gen(a),
   render: &(&a) -> doc,
-) ->> unit {
-  match replay-and-render(events, g, render) {
+) -> unit {
+  match replay-and-render@(events, g, render) {
   | Right(s) =>
     pin s = s;
     _append-shrink-line(tb, s)
@@ -80,13 +80,13 @@ define _record-shrink-step<a>(
   }
 }
 
-define _try-candidate<a>(
+define _try-candidate@<a>(
   events: &scenario,
   g: &gen(a),
   e: edit,
   prop: &(&a) -> bool,
-) ->> ?edit {
-  let Pair(is-counterexample, e) = replay-and-test(events, g, e, prop);
+) -> ?edit {
+  let Pair(is-counterexample, e) = replay-and-test@(events, g, e, prop);
   if is-counterexample {
     Right(e)
   } else {
@@ -100,7 +100,7 @@ data active-shift {
 | Found(int, int)
 }
 
-define _first-active-shift-in-range(ops: &scenario, start: int, end: int) ->> active-shift {
+define _first-active-shift-in-range@(ops: &scenario, start: int, end: int) -> active-shift {
   if ge-int(start, end) {
     Not-Found
   } else {
@@ -108,84 +108,84 @@ define _first-active-shift-in-range(ops: &scenario, start: int, end: int) ->> ac
     | Shift(Active, inner-end) =>
       Found(start, *inner-end)
     | Reset(inner-end) =>
-      _first-active-shift-in-range(ops, *inner-end, end)
+      _first-active-shift-in-range@(ops, *inner-end, end)
     | Shift(_, inner-end) =>
-      _first-active-shift-in-range(ops, *inner-end, end)
+      _first-active-shift-in-range@(ops, *inner-end, end)
     | _ =>
-      _first-active-shift-in-range(ops, add-int(start, 1), end)
+      _first-active-shift-in-range@(ops, add-int(start, 1), end)
     }
   }
 }
 
-define _visit-activate<a>(
+define _visit-activate@<a>(
   ops: &scenario,
   start: int,
   end: int,
   events: &scenario,
   g: &gen(a),
   prop: &(&a) -> bool,
-) ->> ?edit {
-  match _first-active-shift-in-range(ops, start, end) {
+) -> ?edit {
+  match _first-active-shift-in-range@(ops, start, end) {
   | Found(index, inner-end) =>
-    _visit-activate(ops, add-int(index, 1), inner-end, events, g, prop)
+    _visit-activate@(ops, add-int(index, 1), inner-end, events, g, prop)
   | Not-Found =>
     let go =
-      define loop(index: int) ->> ?edit {
+      define loop@(index: int) -> ?edit {
         if ge-int(index, end) {
           none
         } else {
           case read-event-at(ops, index) {
           | Shift(Inactive, inner-end) =>
-            match _try-candidate(events, g, Edit-Shift-Mode(index, Active), prop) {
+            match _try-candidate@(events, g, Edit-Shift-Mode(index, Active), prop) {
             | Right(found) =>
               Right(found)
             | Left(_) =>
-              match _visit-activate(ops, add-int(index, 1), *inner-end, events, g, prop) {
+              match _visit-activate@(ops, add-int(index, 1), *inner-end, events, g, prop) {
               | Right(found) =>
                 Right(found)
               | Left(_) =>
-                loop(*inner-end)
+                loop@(*inner-end)
               }
             }
           | Reset(inner-end) =>
-            match _visit-activate(ops, add-int(index, 1), *inner-end, events, g, prop) {
+            match _visit-activate@(ops, add-int(index, 1), *inner-end, events, g, prop) {
             | Right(found) =>
               Right(found)
             | Left(_) =>
-              loop(*inner-end)
+              loop@(*inner-end)
             }
           | Shift(_, inner-end) =>
-            match _visit-activate(ops, add-int(index, 1), *inner-end, events, g, prop) {
+            match _visit-activate@(ops, add-int(index, 1), *inner-end, events, g, prop) {
             | Right(found) =>
               Right(found)
             | Left(_) =>
-              loop(*inner-end)
+              loop@(*inner-end)
             }
           | _ =>
-            loop(add-int(index, 1))
+            loop@(add-int(index, 1))
           }
         }
       };
-    go(start)
+    go@(start)
   }
 }
 
-define _visit-shrink-fate<a>(
+define _visit-shrink-fate@<a>(
   ops: &scenario,
   start: int,
   end: int,
   events: &scenario,
   g: &gen(a),
   prop: &(&a) -> bool,
-) ->> ?edit {
-  match _first-active-shift-in-range(ops, start, end) {
+) -> ?edit {
+  match _first-active-shift-in-range@(ops, start, end) {
   | Found(index, inner-end) =>
-    _visit-shrink-fate(ops, add-int(index, 1), inner-end, events, g, prop)
+    _visit-shrink-fate@(ops, add-int(index, 1), inner-end, events, g, prop)
   | Not-Found =>
     let go =
-      define loop(index: int) ->> ?edit {
+      define loop@(index: int) -> ?edit {
         let try-int-bisect =
-          define loop(index: int, fail-key: int, pass-key: int, best: ?edit) ->> ?edit {
+          define loop@(index: int, fail-key: int, pass-key: int, best: ?edit) -> ?edit {
             let mid-key = _avg-key(fail-key, pass-key);
             if eq-int(mid-key, fail-key) {
               best
@@ -193,17 +193,17 @@ define _visit-shrink-fate<a>(
               best
             } else {
               let mid-value = _int-key(mid-key);
-              match _try-candidate(events, g, Edit-Int(index, mid-value), prop) {
+              match _try-candidate@(events, g, Edit-Int(index, mid-value), prop) {
               | Right(found) =>
                 let _ = best;
-                loop(index, mid-key, pass-key, Right(found))
+                loop@(index, mid-key, pass-key, Right(found))
               | Left(_) =>
-                loop(index, fail-key, mid-key, best)
+                loop@(index, fail-key, mid-key, best)
               }
             }
           };
         let try-float-bisect =
-          define loop(index: int, fail-key: int, pass-key: int, best: ?edit) ->> ?edit {
+          define loop@(index: int, fail-key: int, pass-key: int, best: ?edit) -> ?edit {
             let mid-key = _avg-key(fail-key, pass-key);
             if eq-int(mid-key, fail-key) {
               best
@@ -211,12 +211,12 @@ define _visit-shrink-fate<a>(
               best
             } else {
               let mid-value = _key-float(mid-key);
-              match _try-candidate(events, g, Edit-Float(index, mid-value), prop) {
+              match _try-candidate@(events, g, Edit-Float(index, mid-value), prop) {
               | Right(found) =>
                 let _ = best;
-                loop(index, mid-key, pass-key, Right(found))
+                loop@(index, mid-key, pass-key, Right(found))
               | Left(_) =>
-                loop(index, fail-key, mid-key, best)
+                loop@(index, fail-key, mid-key, best)
               }
             }
           };
@@ -228,17 +228,17 @@ define _visit-shrink-fate<a>(
             let current-value = *value;
             let target = shrink-target-int(*lo, *hi, *pivot);
             if eq-int(current-value, target) {
-              loop(add-int(index, 1))
+              loop@(add-int(index, 1))
             } else {
-              match _try-candidate(events, g, Edit-Int(index, target), prop) {
+              match _try-candidate@(events, g, Edit-Int(index, target), prop) {
               | Right(found) =>
                 Right(found)
               | Left(_) =>
-                match try-int-bisect(index, _int-key(current-value), _int-key(target), none) {
+                match try-int-bisect@(index, _int-key(current-value), _int-key(target), none) {
                 | Right(found) =>
                   Right(found)
                 | Left(_) =>
-                  loop(add-int(index, 1))
+                  loop@(add-int(index, 1))
                 }
               }
             }
@@ -246,51 +246,51 @@ define _visit-shrink-fate<a>(
             let current-value = *value;
             let target = shrink-target-float(*lo, *hi, *pivot);
             if _is-nan(current-value) {
-              match _try-candidate(events, g, Edit-Float(index, target), prop) {
+              match _try-candidate@(events, g, Edit-Float(index, target), prop) {
               | Right(found) =>
                 Right(found)
               | Left(_) =>
-                loop(add-int(index, 1))
+                loop@(add-int(index, 1))
               }
             } else-if eq-float(current-value, target) {
-              loop(add-int(index, 1))
+              loop@(add-int(index, 1))
             } else {
-              match _try-candidate(events, g, Edit-Float(index, target), prop) {
+              match _try-candidate@(events, g, Edit-Float(index, target), prop) {
               | Right(found) =>
                 Right(found)
               | Left(_) =>
-                match try-float-bisect(index, _float-key(current-value), _float-key(target), none) {
+                match try-float-bisect@(index, _float-key(current-value), _float-key(target), none) {
                 | Right(found) =>
                   Right(found)
                 | Left(_) =>
-                  loop(add-int(index, 1))
+                  loop@(add-int(index, 1))
                 }
               }
             }
           | Reset(inner-end) =>
-            match _visit-shrink-fate(ops, add-int(index, 1), *inner-end, events, g, prop) {
+            match _visit-shrink-fate@(ops, add-int(index, 1), *inner-end, events, g, prop) {
             | Right(found) =>
               Right(found)
             | Left(_) =>
-              loop(*inner-end)
+              loop@(*inner-end)
             }
           | Shift(_, inner-end) =>
-            match _visit-shrink-fate(ops, add-int(index, 1), *inner-end, events, g, prop) {
+            match _visit-shrink-fate@(ops, add-int(index, 1), *inner-end, events, g, prop) {
             | Right(found) =>
               Right(found)
             | Left(_) =>
-              loop(*inner-end)
+              loop@(*inner-end)
             }
           | _ =>
-            loop(add-int(index, 1))
+            loop@(add-int(index, 1))
           }
         }
       };
-    go(start)
+    go@(start)
   }
 }
 
-define _try-one-edit<a>(
+define _try-one-edit@<a>(
   events: scenario,
   mode: _shrink-mode,
   verbose: bool,
@@ -298,14 +298,14 @@ define _try-one-edit<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) ->> pair(scenario, bool) {
+) -> pair(scenario, bool) {
   let end on events = length(events);
   let found on events =
     match mode {
     | _Shrink-Activate =>
-      _visit-activate(events, 0, end, events, g, prop)
+      _visit-activate@(events, 0, end, events, g, prop)
     | _Shrink-Fate =>
-      _visit-shrink-fate(events, 0, end, events, g, prop)
+      _visit-shrink-fate@(events, 0, end, events, g, prop)
     };
   match found {
   | Left(_) =>
@@ -331,7 +331,7 @@ define _shrink-go<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) ->> scenario {
+) -> scenario {
   let second-mode =
     match mode {
     | _Shrink-Activate =>
@@ -339,11 +339,11 @@ define _shrink-go<a>(
     | _Shrink-Fate =>
       _Shrink-Activate
     };
-  let Pair(events1, changed1) = _try-one-edit(events, mode, verbose, g, prop, render, tb);
+  let Pair(events1, changed1) = _try-one-edit@(events, mode, verbose, g, prop, render, tb);
   if changed1 {
     _shrink-go(events1, mode, verbose, g, prop, render, tb)
   } else {
-    let Pair(events2, changed2) = _try-one-edit(events1, second-mode, verbose, g, prop, render, tb);
+    let Pair(events2, changed2) = _try-one-edit@(events1, second-mode, verbose, g, prop, render, tb);
     if changed2 {
       _shrink-go(events2, second-mode, verbose, g, prop, render, tb)
     } else {
@@ -359,6 +359,6 @@ define shrink<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) ->> scenario {
+) -> scenario {
   _shrink-go(events, _Shrink-Activate, verbose, g, prop, render, tb)
 }

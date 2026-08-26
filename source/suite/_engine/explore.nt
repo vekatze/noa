@@ -61,7 +61,7 @@ define _record-value<a>(
   _append-verbose-line(tb, iteration, size, verdict, rendered)
 }
 
-define _explore<a>(
+define _explore@<a>(
   seed: int,
   size: int,
   max-size: int,
@@ -71,13 +71,13 @@ define _explore<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) ->> _explore-result {
-  let events-cell = make-cell(lift {core::array::make::(96)});
+) -> _explore-result {
+  let events-cell = make-cell(lift {core::array::make(96)});
   tie Gen(run) = g;
   let status on events-cell = {
     pin k = new-generate-kit(events-cell, seed, size, max-size);
     let trial =
-      match run<a>(k) {
+      match run@<a>(k) {
       | Control-Success(value) =>
         pin value = value;
         let ok = prop(value);
@@ -114,7 +114,7 @@ define _explore<a>(
   | _Exploration-Fail =>
     let events = axiom-T(extract(events-cell));
     let shrunk-events = shrink(events, verbose, g, prop, render, tb);
-    let rendered on shrunk-events = replay-and-render(shrunk-events, g, render);
+    let rendered on shrunk-events = replay-and-render@(shrunk-events, g, render);
     let _ = shrunk-events;
     match rendered {
     | Right(s) =>
@@ -150,7 +150,7 @@ define _size-for-iteration(iteration: int, count: int, max-size: int) -> int {
   }
 }
 
-define check-core<a>(
+define check-core@<a>(
   seed: int,
   count: int,
   max-size: int,
@@ -159,9 +159,9 @@ define check-core<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) ->> ?string {
+) -> ?string {
   let go =
-    define loop(iteration: int, success-count: int, discards: int) ->> ?string {
+    define loop@(iteration: int, success-count: int, discards: int) -> ?string {
       if ge-int(success-count, count) {
         none
       } else-if ge-int(discards, _max-discards) {
@@ -169,15 +169,15 @@ define check-core<a>(
       } else {
         let gen-seed = _seed-for-iteration(seed, iteration);
         let size = _size-for-iteration(iteration, count, max-size);
-        match _explore(gen-seed, size, max-size, iteration, verbose, g, prop, render, tb) {
+        match _explore@(gen-seed, size, max-size, iteration, verbose, g, prop, render, tb) {
         | _Explore-Discard =>
-          loop(add-int(iteration, 1), success-count, add-int(discards, 1))
+          loop@(add-int(iteration, 1), success-count, add-int(discards, 1))
         | _Explore-Pass =>
-          loop(add-int(iteration, 1), add-int(success-count, 1), discards)
+          loop@(add-int(iteration, 1), add-int(success-count, 1), discards)
         | _Explore-Fail(counterexample) =>
           Right(counterexample)
         }
       }
     };
-  go(0, 0, 0)
+  go@(0, 0, 0)
 }

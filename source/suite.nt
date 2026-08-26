@@ -47,18 +47,18 @@ define _noa-kit-verbose(k: &noa-kit) -> bool {
   *verbose
 }
 
-define make-noa-kit(
+define make-noa-kit@(
   sink: descriptor,
   buffer-capacity: int,
   test-count: int,
   max-size: int,
   verbose: bool,
-) ->> noa-kit {
+) -> noa-kit {
   _Noa-Kit(make-writer(sink, buffer-capacity), test-count, max-size, verbose)
 }
 
-define make-default-noa-kit() ->> noa-kit {
-  make-noa-kit{
+define make-default-noa-kit@() -> noa-kit {
+  make-noa-kit@{
     sink := stdout,
     buffer-capacity := 4096,
     test-count := 100,
@@ -67,8 +67,8 @@ define make-default-noa-kit() ->> noa-kit {
   }
 }
 
-define make-verbose-noa-kit() ->> noa-kit {
-  make-noa-kit{
+define make-verbose-noa-kit@() -> noa-kit {
+  make-noa-kit@{
     sink := stdout,
     buffer-capacity := 4096,
     test-count := 100,

@@ -165,7 +165,7 @@ inline-meta _sort-ranked(
 }
 
 inline-meta _terminal-prefix-count(
-  !xs: list(pair(int, pair(int, constructor))),
+  xs: list(pair(int, pair(int, constructor))),
 ) -> int {
   match xs {
   | Nil =>
@@ -245,14 +245,14 @@ inline _mix-specials<a>(ratio: float, main: gen(a), special: gen(a)) -> gen(a) {
     main
   } else {
     Gen(
-      <r>(k: &gen-kit) =>> {
-        scope<r, a>(k, (k) =>> {
+      @<r>(k: &gen-kit) => {
+        scope@<r, a>(k, @(k) => {
           with control-bind {
-            bind roll = choose<a>(k, _special-ratio-denominator);
+            bind roll = choose@<a>(k, _special-ratio-denominator);
             if ge-int(roll, threshold) {
-              apply<a, a>(main, k)
+              apply@<a, a>(main, k)
             } else {
-              apply<a, a>(special, k)
+              apply@<a, a>(special, k)
             }
           }
         })
@@ -270,11 +270,11 @@ define _int-special-gen(lo: int, hi: int, pivot: int) -> gen(int) {
   let above = _clamp-int(lo, hi, add-int(target, 1));
   let below = _clamp-int(lo, hi, sub-int(target, 1));
   Gen(
-    <r>(k: &gen-kit) =>> {
-      scope<r, int>(k, (k) =>> {
+    @<r>(k: &gen-kit) => {
+      scope@<r, int>(k, @(k) => {
         with control-bind {
-          bind idx = choose<int>(k, 5);
-          draw-int-fixed(
+          bind idx = choose@<int>(k, 5);
+          draw-int-fixed@(
             k,
             lo,
             hi,
@@ -390,7 +390,7 @@ define _any-float-special-gen(pivot: float) -> gen(float) {
 }
 
 define _cp-to-rune(cp: int) -> rune {
-  match from-int(cp) {
+  match from-int@(cp) {
   | Right(r) =>
     r
   | Left(_) =>
@@ -640,7 +640,7 @@ define _gen-vector<a, t>(elem: gen(t)) -> gen(a) {
   })
 }
 
-inline-meta _gen-array<a, t>(elem: 'gen(t)) -> 'gen(a) {
+inline-meta _gen-array<a, sized t>(elem: 'gen(t)) -> 'gen(a) {
   quote {
     gen-map(unquote {gen-array<t>(elem)}, (v: array(t)) => {
       magic cast(array(t), a, v)
@@ -716,7 +716,7 @@ inline-meta _build-fields<a>(
     let _ = opt;
     let _ = rem-ref;
     quote {Control-Success(magic cast(pointer, a, unquote {p}))}
-  | Cons(!entry, rest) =>
+  | Cons(entry, rest) =>
     let Pair(f-raw, cursor) = entry;
     let !f = f-raw;
     let t = field-type(f);
@@ -748,7 +748,7 @@ inline-meta _build-fields<a>(
       quote {
         with control-bind {
           let _ = unquote {set-code};
-          bind v = apply<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
+          bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
           store-int(magic cast(t, int, v), unquote {slot-ptr});
           unquote {rest-code}
         }
@@ -757,7 +757,7 @@ inline-meta _build-fields<a>(
       quote {
         with control-bind {
           let _ = unquote {set-code};
-          bind v = apply<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
+          bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
           let v-ptr = magic cast(t, pointer, v);
           memcpy(
             unquote {slot-ptr},
@@ -846,7 +846,7 @@ inline-meta _dispatch-clauses<a>(
   match ranked {
   | Nil =>
     Nil
-  | Cons(!entry, rest) =>
+  | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
     let fields = constructor-fields(c);
     let body = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
@@ -874,7 +874,7 @@ inline-meta _dispatch<a>(
     let _ = kk;
     let _ = opt;
     magic compile-error("BUG: derive dispatched with no constructors")
-  | Cons(!entry, rest) =>
+  | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
     let fields = constructor-fields(c);
     let fallback = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
@@ -890,7 +890,7 @@ inline-meta _draw-discriminant<a>(
   kk: '&gen-kit,
 ) -> 'control(a, int) {
   if gt-int(header, 0) {
-    quote {draw-disc(unquote {kk}, unquote {promote {n}}, unquote {promote {terminal-count}})}
+    quote {draw-disc@(unquote {kk}, unquote {promote {n}}, unquote {promote {terminal-count}})}
   } else {
     quote {Control-Success(0)}
   }
@@ -966,17 +966,17 @@ define-meta _derive<a>(
     unpack-type t = t;
     quote {this::gen.generic::_gen-vector<a, t>(unquote {_derive-with<t>(opt)})}
   | Array(t) =>
-    unpack-type t = t;
+    unpack-type unsafe-sized t = t;
     _gen-array<a, t>(_derive-with<t>(opt))
   | Enum(names) =>
     let _ = opt;
     let n = length(names);
     quote {
       Gen(
-        <r>(k: &gen-kit) =>> {
-          scope<r, a>(k, (k) =>> {
+        @<r>(k: &gen-kit) => {
+          scope@<r, a>(k, @(k) => {
             with control-bind {
-              bind disc = draw-int(k, 0, unquote {promote {sub-int(n, 1)}}, 0);
+              bind disc = draw-int@(k, 0, unquote {promote {sub-int(n, 1)}}, 0);
               Control-Success(magic cast(int, a, disc))
             }
           })
@@ -992,8 +992,8 @@ define-meta _derive<a>(
     let terminal-count = _terminal-prefix-count(ranked);
     quote {
       Gen(
-        <r>(k: &gen-kit) =>> {
-          scope<r, a>(k, (k) =>> {
+        @<r>(k: &gen-kit) => {
+          scope@<r, a>(k, @(k) => {
             with control-bind {
               bind rank = unquote {_draw-discriminant<a>(n, header, terminal-count, quote {k})};
               unquote {_dispatch<a>(ranked, params, param-num, header, alloc, quote {rank}, quote {k}, opt)}

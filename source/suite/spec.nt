@@ -6,7 +6,7 @@ import {
   core::string {append, empty},
   core::string.builder {make-string-builder},
   core::sync.pool {for-each-parallel},
-  core::vector {for-N, from-list, vector},
+  core::vector {for-N, from-list},
   this::gen {gen},
   this::gen.generic {derive},
   this::suite {_Noa-Kit, _noa-kit-count, _noa-kit-max-size, _noa-kit-verbose, noa-kit},
@@ -37,7 +37,7 @@ define _run-check<a>(
   pin prop = prop;
   pin render = render;
   let detail on trace-builder =
-    check-core(
+    check-core@(
       seed,
       count,
       max-size,
@@ -95,7 +95,7 @@ define _make-test(
   )
 }
 
-inline-meta property<a>(label: '&string, !g: 'gen(a), !prop: '(&a) -> bool) -> 'spec {
+inline-meta property<a>(label: '&string, g: 'gen(a), prop: '(&a) -> bool) -> 'spec {
   let file = magic get-origin-file-name();
   let line = magic get-origin-line();
   let column = magic get-origin-column();
@@ -114,7 +114,7 @@ inline-meta property<a>(label: '&string, !g: 'gen(a), !prop: '(&a) -> bool) -> '
   }
 }
 
-inline-meta example(label: '&string, !property: 'bool) -> 'spec {
+inline-meta example(label: '&string, property: 'bool) -> 'spec {
   let file = magic get-origin-file-name();
   let line = magic get-origin-line();
   let column = magic get-origin-column();
@@ -131,7 +131,7 @@ inline-meta example(label: '&string, !property: 'bool) -> 'spec {
   }
 }
 
-inline-meta quickprop<a>(label: '&string, !prop: '(&a) -> bool) -> 'spec {
+inline-meta quickprop<a>(label: '&string, prop: '(&a) -> bool) -> 'spec {
   property(label, derive(), prop)
 }
 

@@ -5,21 +5,20 @@ import {
   this::gen.list {gen-list},
 }
 
-define _from-list<a>(xs: list(a), acc: array(a)) -> array(a) {
+define _from-list<sized a>(xs: list(a), acc: array(a)) -> array(a) {
   match xs {
   | Nil =>
     acc
   | Cons(x, rest) =>
-    _from-list(rest, push-back(acc, x))
+    _from-list(rest, push-back(acc, ~x))
   }
 }
 
-inline-meta gen-array<a>(!elem: 'gen(a)) -> 'gen(array(a)) {
-  magic assert-mixable(a);
+inline-meta gen-array<sized a>(elem: 'gen(a)) -> 'gen(array(a)) {
   quote {
     gen-map(gen-list(unquote {elem}), (xs: list(a)) => {
       let len on xs = length(xs);
-      let acc: array(a) = make::(len);
+      let acc: array(a) = make(len);
       this::gen.array::_from-list(xs, acc)
     })
   }

@@ -67,7 +67,7 @@ define scenario-length(r: &cell(scenario)) -> int {
 
 inline append-event-simple(r: &cell(scenario), e: event) -> unit {
   mutate(r, (xs0) => {
-    lift {push-back(axiom-T(xs0), e)}
+    lift {push-back(axiom-T(xs0), ~e)}
   });
 }
 

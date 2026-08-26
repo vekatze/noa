@@ -6,8 +6,8 @@ import {
 
 inline gen-float(lo: float, hi: float, pivot: float) -> gen(float) {
   Gen(
-    <r>(k: &gen-kit) =>> {
-      draw-float<r>(k, lo, hi, pivot)
+    @<r>(k: &gen-kit) => {
+      draw-float@<r>(k, lo, hi, pivot)
     },
   )
 }

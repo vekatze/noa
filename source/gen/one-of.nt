@@ -23,10 +23,10 @@ define _list-nth<a>(xs: list(a), i: int) -> a {
 
 define one-of<a>(values: list(a)) -> gen(a) {
   Gen(
-    <r>(k: &gen-kit) =>> {
+    @<r>(k: &gen-kit) => {
       let n on values = length(values);
       with control-bind {
-        bind i = choose<r>(k, n);
+        bind i = choose@<r>(k, n);
         Control-Success(_list-nth(values, i))
       }
     },
