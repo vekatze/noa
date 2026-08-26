@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-neut get noa https://github.com/vekatze/noa/raw/main/archive/0.5.1.tar.zst
+neut get noa https://github.com/vekatze/noa/raw/main/archive/0.5.2.tar.zst
 ```
 
 ## Types
@@ -15,17 +15,17 @@ neut get noa https://github.com/vekatze/noa/raw/main/archive/0.5.1.tar.zst
 ```neut
 data noa-kit
 
-define make-noa-kit(
+define make-noa-kit@(
   sink: descriptor,
   buffer-capacity: int,
   test-count: int, // specifies the number of tests executed for each property.
   max-size: int, // specifies the max size of input generated in `check`.
   verbose: bool, // specifies whether to enable verbose output.
-) ->> noa-kit
+) -> noa-kit
 
-define make-default-noa-kit() ->> noa-kit
+define make-default-noa-kit@() -> noa-kit
 
-define make-verbose-noa-kit() ->> noa-kit
+define make-verbose-noa-kit@() -> noa-kit
 
 // Represents a test case.
 data spec
@@ -35,17 +35,17 @@ define check(k: &noa-kit, cases: list(spec)) -> unit
 
 // Represents a value generator for property-based testing.
 data gen(a) {
-| Gen(run: <r>(&gen-kit) ->> control(r, a))
+| Gen(run: @<r>(&gen-kit) -> control(r, a))
 }
 
 // Creates a property-based test case.
-inline-meta property<a>(label: '&string, !g: 'gen(a), !prop: '(&a) -> bool) -> 'spec
+inline-meta property<a>(label: '&string, g: 'gen(a), prop: '(&a) -> bool) -> 'spec
 
 // Creates a plain test case.
-inline-meta example(label: '&string, !prop: 'bool) -> 'spec
+inline-meta example(label: '&string, property: 'bool) -> 'spec
 
 // Creates a property-based test using a derived generator.
-inline-meta quickprop<a>(label: '&string, !prop: '(&a) -> bool) -> 'spec
+inline-meta quickprop<a>(label: '&string, prop: '(&a) -> bool) -> 'spec
 ```
 
 ## Generators
@@ -55,7 +55,7 @@ inline gen-int(lo: int, hi: int, pivot: int) -> gen(int)
 
 inline gen-float(lo: float, hi: float, pivot: float) -> gen(float)
 
-inline-meta gen-array<a>(!g: 'gen(a)) -> 'gen(array(a))
+inline-meta gen-array<sized a>(g: 'gen(a)) -> 'gen(array(a))
 
 define gen-list<a>(g: gen(a)) -> gen(list(a))
 
@@ -85,28 +85,31 @@ data rune-category {
 ```neut
 import {
   core::eq.generic {eq-data},
-  core::list {append, reverse},
+  core::list {append, length, reverse},
   this::gen.generic {Printable-Ascii, derive},
   this::suite {make-default-noa-kit},
   this::suite.spec {check, example, property},
 }
 
 define zen() -> unit {
-  pin k = make-default-noa-kit();
+  pin k = make-default-noa-kit@();
   check(k, List::[
     // a property-based test
     property::(
       "reverse(ys) ++ reverse(xs) == reverse(xs ++ ys)",
       derive::()[rune-category := Printable-Ascii],
       (p: &pair(list(rune), list(rune))) => {
-        let Pair(!xs, !ys) = p;
-        let left = append(reverse(ys), reverse(xs));
-        let right = reverse(append(xs, ys));
+        tie Pair(xs, ys) = p;
+        pin left = append(reverse(*ys), reverse(*xs));
+        pin right = reverse(append(*xs, *ys));
         eq-data::(left, right)
       },
     ),
     // a plain test
-    example::("the list `List::[1, 2, 3]` contains 2", eq-data::(List::[1, 2, 3], List::[1, 2, 3])),
+    example::("the list `List::[1, 2, 3]` is non-empty", {
+      pin xs: list(int) = List::[1, 2, 3];
+      gt-int(length(xs), 0)
+    }),
   ])
 }
 ```
