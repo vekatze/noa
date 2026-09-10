@@ -1,10 +1,10 @@
 import {
-  core::c-size {C-Size},
+  core::c-size {to-c-size},
   core::float {max-float, min-float},
   core::int {max-int, min-int},
   core::list.meta {fold-left, length},
   core::memory {malloc},
-  core::memory.unsafe {free, memcpy, store-int},
+  core::memory.unsafe {free, memcpy},
   core::pointer {shift},
   core::rune {from-scalar-value},
   core::string {pack},
@@ -48,6 +48,7 @@ import {
     nth-field-pointer,
     payload-start,
     pointer-byte-size,
+    store-at-width,
   },
   this::control {Control-Success, control, control-bind},
   this::gen {
@@ -725,12 +726,12 @@ inline-meta _build-fields<a>(
       };
     let slot-ptr = quote {nth-field-pointer(unquote {promote {cursor}}, unquote {p})};
     match layout {
-    | Direct(_) =>
+    | Direct(width) =>
       quote {
         with control-bind {
           let _ = unquote {set-code};
           bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
-          store-int(magic cast(t, int, v), unquote {slot-ptr});
+          unquote {store-at-width(width, quote {magic cast(t, int, v)}, slot-ptr)};
           unquote {rest-code}
         }
       }
@@ -749,6 +750,18 @@ inline-meta _build-fields<a>(
   }
 }
 
+inline-meta _store-discriminant(size: int, value: 'int, addr: 'pointer) -> 'unit {
+  if eq-int(size, 1) {
+    quote {core::memory.unsafe::store-int8(trunc-int-int8(unquote {value}), unquote {addr})}
+  } else-if eq-int(size, 2) {
+    quote {core::memory.unsafe::store-int16(trunc-int-int16(unquote {value}), unquote {addr})}
+  } else-if eq-int(size, 4) {
+    quote {core::memory.unsafe::store-int32(trunc-int-int32(unquote {value}), unquote {addr})}
+  } else {
+    quote {core::memory.unsafe::store-int(unquote {value}, unquote {addr})}
+  }
+}
+
 inline-meta _store-params<a>(
   params: list(type),
   offset: int,
@@ -762,8 +775,8 @@ inline-meta _store-params<a>(
     unpack-type t = t;
     let rest-code = _store-params<a>(rest, add-int(offset, pointer-byte-size()), p, k-cont);
     quote {
-      store-int(
-        magic cast(type, int, pack-type {t}),
+      core::memory.unsafe::store-pointer(
+        magic cast(type, pointer, pack-type {t}),
         shift(unquote {p}, unquote {promote {offset}}),
       );
       unquote {rest-code}
@@ -785,7 +798,7 @@ inline-meta _build-cons<a>(
   let divisor = _fields-weight(fields);
   let field-cursors = fields-with-cursors(fields, start);
   quote {
-    let p = malloc(C-Size(unquote {promote {alloc}}));
+    let p = malloc(to-c-size(unquote {promote {alloc}}));
     unquote {
       let p-ref = quote {p};
       let fields-code =
@@ -800,7 +813,7 @@ inline-meta _build-cons<a>(
       let params-code = _store-params<a>(params, align-up(pointer-byte-size(), header), p-ref, fields-code);
       if gt-int(header, 0) {
         quote {
-          store-int(unquote {promote {disc-index}}, unquote {p-ref});
+          unquote {_store-discriminant(header, promote {disc-index}, p-ref)};
           unquote {params-code}
         }
       } else {
