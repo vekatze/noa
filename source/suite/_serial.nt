@@ -1,0 +1,12 @@
+// The stand-in for `core::sync.pool` on a platform without `thread`. The
+// worker count is accepted and ignored: a serial run has one worker.
+inline for-each-parallel<a, b>(worker-num: int, xs: vector(a), f: (a) -> b) -> vector(b) {
+  let _ = worker-num;
+  core::vector::for-each(xs, (x, _) => {
+    f(x)
+  })
+}
+
+inline get-cpu-count() -> int {
+  1
+}

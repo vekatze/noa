@@ -80,12 +80,12 @@ define _record-shrink-step<a>(
   }
 }
 
-define _try-candidate@<a>(
+define _try-candidate<a>(
   events: &scenario,
   g: &gen(a),
   e: edit,
   prop: &(&a) -> bool,
-) -> ?edit {
+) ->> ?edit {
   let Pair(is-counterexample, e) = replay-and-test@(events, g, e, prop);
   if is-counterexample {
     Right(e)
@@ -100,7 +100,7 @@ data active-shift {
 | Found(int, int)
 }
 
-define _first-active-shift-in-range@(ops: &scenario, start: int, end: int) -> active-shift {
+define _first-active-shift-in-range(ops: &scenario, start: int, end: int) ->> active-shift {
   if ge-int(start, end) {
     Not-Found
   } else {
@@ -117,20 +117,20 @@ define _first-active-shift-in-range@(ops: &scenario, start: int, end: int) -> ac
   }
 }
 
-define _visit-activate@<a>(
+define _visit-activate<a>(
   ops: &scenario,
   start: int,
   end: int,
   events: &scenario,
   g: &gen(a),
   prop: &(&a) -> bool,
-) -> ?edit {
+) ->> ?edit {
   match _first-active-shift-in-range@(ops, start, end) {
   | Found(index, inner-end) =>
     _visit-activate@(ops, add-int(index, 1), inner-end, events, g, prop)
   | Not-Found =>
     let go =
-      define loop@(index: int) -> ?edit {
+      define loop(index: int) ->> ?edit {
         if ge-int(index, end) {
           none
         } else {
@@ -170,22 +170,22 @@ define _visit-activate@<a>(
   }
 }
 
-define _visit-shrink-fate@<a>(
+define _visit-shrink-fate<a>(
   ops: &scenario,
   start: int,
   end: int,
   events: &scenario,
   g: &gen(a),
   prop: &(&a) -> bool,
-) -> ?edit {
+) ->> ?edit {
   match _first-active-shift-in-range@(ops, start, end) {
   | Found(index, inner-end) =>
     _visit-shrink-fate@(ops, add-int(index, 1), inner-end, events, g, prop)
   | Not-Found =>
     let go =
-      define loop@(index: int) -> ?edit {
+      define loop(index: int) ->> ?edit {
         let try-int-bisect =
-          define loop@(index: int, fail-key: int, pass-key: int, best: ?edit) -> ?edit {
+          define loop(index: int, fail-key: int, pass-key: int, best: ?edit) ->> ?edit {
             let mid-key = _avg-key(fail-key, pass-key);
             if eq-int(mid-key, fail-key) {
               best
@@ -203,7 +203,7 @@ define _visit-shrink-fate@<a>(
             }
           };
         let try-float-bisect =
-          define loop@(index: int, fail-key: int, pass-key: int, best: ?edit) -> ?edit {
+          define loop(index: int, fail-key: int, pass-key: int, best: ?edit) ->> ?edit {
             let mid-key = _avg-key(fail-key, pass-key);
             if eq-int(mid-key, fail-key) {
               best
@@ -290,7 +290,7 @@ define _visit-shrink-fate@<a>(
   }
 }
 
-define _try-one-edit@<a>(
+define _try-one-edit<a>(
   events: scenario,
   mode: _shrink-mode,
   verbose: bool,
@@ -298,7 +298,7 @@ define _try-one-edit@<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) -> pair(scenario, bool) {
+) ->> pair(scenario, bool) {
   let end on events = length(events);
   let found on events =
     match mode {

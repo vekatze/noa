@@ -4,28 +4,28 @@ import {
 }
 
 data gen(a) {
-| Gen(run: @<r>(&gen-kit) -> control(r, a))
+| Gen(run: <r>(&gen-kit) ->> control(r, a))
 }
 
-inline make-gen<a>(run: @<r>(&gen-kit) -> control(r, a)) -> gen(a) {
+inline make-gen<a>(run: <r>(&gen-kit) ->> control(r, a)) -> gen(a) {
   Gen(run)
 }
 
-inline apply@<r, a>(g: gen(a), k: &gen-kit) -> control(r, a) {
+inline apply<r, a>(g: gen(a), k: &gen-kit) ->> control(r, a) {
   let Gen(run) = g;
   run@<r>(k)
 }
 
 inline gen-map<a, b>(g: gen(a), f: (a) -> b) -> gen(b) {
   Gen(
-    @<r>(k: &gen-kit) => {
+    <r>(k: &gen-kit) =>> {
       control-map(apply@<r, a>(g, k), f)
     },
   )
 }
 
 define gen-return<a>(x: a) -> gen(a) {
-  Gen(@<r>(_: &gen-kit) => {
+  Gen(<r>(_: &gen-kit) =>> {
     let tmp: control(r, a) = Control-Success(x);
     tmp
   })
@@ -33,7 +33,7 @@ define gen-return<a>(x: a) -> gen(a) {
 
 inline gen-bind<a, b>(g: gen(a), f: (a) -> gen(b)) -> gen(b) {
   Gen(
-    @<r>(k: &gen-kit) => {
+    <r>(k: &gen-kit) =>> {
       with control-bind {
         bind x = apply@<r, a>(g, k);
         apply@<r, b>(f(x), k)

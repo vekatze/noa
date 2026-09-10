@@ -63,12 +63,12 @@ data outer {
 }
 
 data mixed-rec {
-| Mixed-Rec(~head: inner, tail: int)
+| Mixed-Rec(+head: inner, tail: int)
 }
 
 data mixed-variant {
 | MV-None
-| MV-Some(~payload: inner, tag: int)
+| MV-Some(+payload: inner, tag: int)
 }
 
 define _list-in-range(xs: &list(int), lo: int, hi: int) -> bool {
@@ -201,7 +201,7 @@ define _inner-in-range(p: &inner, lo: int, hi: int) -> bool {
 }
 
 define _mixed-rec-in-range(m: &mixed-rec, lo: int, hi: int) -> bool {
-  tie Mixed-Rec(~head, tail) = m;
+  tie Mixed-Rec(+head, tail) = m;
   if _inner-in-range(head, lo, hi) {
     _int-in-range(*tail, lo, hi)
   } else {
@@ -213,7 +213,7 @@ define _mixed-variant-in-range(m: &mixed-variant, lo: int, hi: int) -> bool {
   case m {
   | MV-None =>
     True
-  | MV-Some(~payload, tag) =>
+  | MV-Some(+payload, tag) =>
     if _inner-in-range(payload, lo, hi) {
       _int-in-range(*tag, lo, hi)
     } else {

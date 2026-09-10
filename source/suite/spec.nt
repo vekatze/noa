@@ -1,11 +1,9 @@
 import {
   core::doc {doc},
   core::path.io {get-current-directory},
-  core::platform {get-cpu-count},
   core::show.generic {to-doc},
   core::string {append, empty},
   core::string.builder {make-string-builder},
-  core::sync.pool {for-each-parallel},
   core::vector {for-N, from-list},
   this::gen {gen},
   this::gen.generic {derive},
@@ -13,6 +11,12 @@ import {
   this::suite._engine.explore {check-core},
   this::suite._report {Report, report},
   this::suite._report.io {flush, print-report},
+  if thread {
+    core::platform {get-cpu-count},
+    core::sync.pool {for-each-parallel},
+  } else {
+    this::suite._serial {for-each-parallel, get-cpu-count},
+  },
 }
 
 data spec {

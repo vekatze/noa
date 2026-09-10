@@ -6,7 +6,7 @@ import {
   core::memory {malloc},
   core::memory.unsafe {free, memcpy, store-int},
   core::pointer {shift},
-  core::rune {from-int},
+  core::rune {from-scalar-value},
   core::string {pack},
   core::type-value {
     Algebraic,
@@ -37,16 +37,18 @@ import {
     field,
   },
   core::type-value.meta {
-    algebraic-header-slot-count,
+    algebraic-cell-byte-size,
+    algebraic-header-byte-size,
+    align-up,
     constructor-fields,
-    constructor-payload-slot-count,
     field-layout-of,
-    field-slot-count,
+    field-storage-byte-size,
     field-type,
     fields-with-cursors,
-    nth-field-slot-pointer,
+    nth-field-pointer,
+    payload-start,
+    pointer-byte-size,
   },
-  core::word,
   this::control {Control-Success, control, control-bind},
   this::gen {
     Gen,
@@ -61,17 +63,6 @@ import {
   this::gen.vector {gen-vector},
   this::suite {gen-kit},
   this::suite.combinator {choose, draw-disc, draw-int, draw-int-fixed, read-budget, scope, set-budget},
-}
-
-inline-meta _mmax-payload-slots(cons: list(constructor)) -> int {
-  fold-left(0, cons, (acc, c) => {
-    let here = constructor-payload-slot-count(c);
-    if gt-int(here, acc) {
-      here
-    } else {
-      acc
-    }
-  })
 }
 
 inline-meta _field-is-structural(f: field) -> bool {
@@ -245,8 +236,8 @@ inline _mix-specials<a>(ratio: float, main: gen(a), special: gen(a)) -> gen(a) {
     main
   } else {
     Gen(
-      @<r>(k: &gen-kit) => {
-        scope@<r, a>(k, @(k) => {
+      <r>(k: &gen-kit) =>> {
+        scope@<r, a>(k, (k) =>> {
           with control-bind {
             bind roll = choose@<a>(k, _special-ratio-denominator);
             if ge-int(roll, threshold) {
@@ -270,8 +261,8 @@ define _int-special-gen(lo: int, hi: int, pivot: int) -> gen(int) {
   let above = _clamp-int(lo, hi, add-int(target, 1));
   let below = _clamp-int(lo, hi, sub-int(target, 1));
   Gen(
-    @<r>(k: &gen-kit) => {
-      scope@<r, int>(k, @(k) => {
+    <r>(k: &gen-kit) =>> {
+      scope@<r, int>(k, (k) =>> {
         with control-bind {
           bind idx = choose@<int>(k, 5);
           draw-int-fixed@(
@@ -390,7 +381,7 @@ define _any-float-special-gen(pivot: float) -> gen(float) {
 }
 
 define _cp-to-rune(cp: int) -> rune {
-  match from-int@(cp) {
+  match from-scalar-value@(cp) {
   | Right(r) =>
     r
   | Left(_) =>
@@ -703,8 +694,6 @@ inline-meta _derive-with<t>(opt: _gen-opt) -> 'gen(t) {
 
 inline-meta _build-fields<a>(
   field-cursors: list(pair(field, int)),
-  header: int,
-  data-arg-num: int,
   divisor: int,
   p: 'pointer,
   kk: '&gen-kit,
@@ -720,10 +709,10 @@ inline-meta _build-fields<a>(
     let Pair(f-raw, cursor) = entry;
     let !f = f-raw;
     let t = field-type(f);
-    let !layout = field-layout-of(f);
-    let slot-count = field-slot-count(layout);
+    let layout = field-layout-of(f);
+    let byte-size = field-storage-byte-size(f);
     unpack-type t = t;
-    let rest-code = _build-fields<a>(rest, header, data-arg-num, divisor, p, kk, rem-ref, opt);
+    let rest-code = _build-fields<a>(rest, divisor, p, kk, rem-ref, opt);
     let set-code =
       if gt-int(divisor, 0) {
         if _field-is-structural(f) {
@@ -734,17 +723,9 @@ inline-meta _build-fields<a>(
       } else {
         quote {Unit}
       };
-    let slot-ptr =
-      quote {
-        nth-field-slot-pointer(
-          unquote {promote {header}},
-          unquote {promote {data-arg-num}},
-          unquote {promote {cursor}},
-          unquote {p},
-        )
-      };
+    let slot-ptr = quote {nth-field-pointer(unquote {promote {cursor}}, unquote {p})};
     match layout {
-    | Direct =>
+    | Direct(_) =>
       quote {
         with control-bind {
           let _ = unquote {set-code};
@@ -759,11 +740,7 @@ inline-meta _build-fields<a>(
           let _ = unquote {set-code};
           bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
           let v-ptr = magic cast(t, pointer, v);
-          memcpy(
-            unquote {slot-ptr},
-            v-ptr,
-            mul-int(core::word::size, unquote {promote {slot-count}}),
-          );
+          memcpy(unquote {slot-ptr}, v-ptr, unquote {promote {byte-size}});
           free(v-ptr);
           unquote {rest-code}
         }
@@ -774,7 +751,7 @@ inline-meta _build-fields<a>(
 
 inline-meta _store-params<a>(
   params: list(type),
-  slot: int,
+  offset: int,
   p: 'pointer,
   k-cont: 'control(a, a),
 ) -> 'control(a, a) {
@@ -783,11 +760,11 @@ inline-meta _store-params<a>(
     k-cont
   | Cons(t, rest) =>
     unpack-type t = t;
-    let rest-code = _store-params<a>(rest, add-int(slot, 1), p, k-cont);
+    let rest-code = _store-params<a>(rest, add-int(offset, pointer-byte-size()), p, k-cont);
     quote {
       store-int(
         magic cast(type, int, pack-type {t}),
-        shift(unquote {p}, mul-int(core::word::size, unquote {promote {slot}})),
+        shift(unquote {p}, unquote {promote {offset}}),
       );
       unquote {rest-code}
     }
@@ -799,28 +776,28 @@ inline-meta _build-cons<a>(
   !fields: list(field),
   disc-index: int,
   header: int,
-  param-num: int,
+  start: int,
   alloc: int,
   kk: '&gen-kit,
   opt: _gen-opt,
 ) -> 'control(a, a) {
   let field-count = length(fields);
   let divisor = _fields-weight(fields);
-  let field-cursors = fields-with-cursors(fields, 0);
+  let field-cursors = fields-with-cursors(fields, start);
   quote {
-    let p = malloc(C-Size(mul-int(core::word::size, unquote {promote {alloc}})));
+    let p = malloc(C-Size(unquote {promote {alloc}}));
     unquote {
       let p-ref = quote {p};
       let fields-code =
         if gt-int(field-count, 0) {
           quote {
             let rem = read-budget(unquote {kk});
-            unquote {_build-fields<a>(field-cursors, header, param-num, divisor, p-ref, kk, quote {rem}, opt)}
+            unquote {_build-fields<a>(field-cursors, divisor, p-ref, kk, quote {rem}, opt)}
           }
         } else {
-          _build-fields<a>(field-cursors, header, param-num, divisor, p-ref, kk, quote {0}, opt)
+          _build-fields<a>(field-cursors, divisor, p-ref, kk, quote {0}, opt)
         };
-      let params-code = _store-params<a>(params, header, p-ref, fields-code);
+      let params-code = _store-params<a>(params, align-up(pointer-byte-size(), header), p-ref, fields-code);
       if gt-int(header, 0) {
         quote {
           store-int(unquote {promote {disc-index}}, unquote {p-ref});
@@ -839,6 +816,7 @@ inline-meta _dispatch-clauses<a>(
   !params: list(type),
   param-num: int,
   header: int,
+  start: int,
   alloc: int,
   kk: '&gen-kit,
   !opt: _gen-opt,
@@ -849,10 +827,10 @@ inline-meta _dispatch-clauses<a>(
   | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
     let fields = constructor-fields(c);
-    let body = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
+    let body = _build-cons<a>(params, fields, decl-index, header, start, alloc, kk, opt);
     Cons(
       Pair(rank-pos, body),
-      _dispatch-clauses<a>(rest, add-int(rank-pos, 1), params, param-num, header, alloc, kk, opt),
+      _dispatch-clauses<a>(rest, add-int(rank-pos, 1), params, param-num, header, start, alloc, kk, opt),
     )
   }
 }
@@ -862,6 +840,7 @@ inline-meta _dispatch<a>(
   !params: list(type),
   param-num: int,
   header: int,
+  start: int,
   alloc: int,
   rank: 'int,
   kk: '&gen-kit,
@@ -877,8 +856,8 @@ inline-meta _dispatch<a>(
   | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
     let fields = constructor-fields(c);
-    let fallback = _build-cons<a>(params, fields, decl-index, header, param-num, alloc, kk, opt);
-    let clauses = _dispatch-clauses<a>(rest, 1, params, param-num, header, alloc, kk, opt);
+    let fallback = _build-cons<a>(params, fields, decl-index, header, start, alloc, kk, opt);
+    let clauses = _dispatch-clauses<a>(rest, 1, params, param-num, header, start, alloc, kk, opt);
     magic make-switch(rank, fallback, clauses)
   }
 }
@@ -973,8 +952,8 @@ define-meta _derive<a>(
     let n = length(names);
     quote {
       Gen(
-        @<r>(k: &gen-kit) => {
-          scope@<r, a>(k, @(k) => {
+        <r>(k: &gen-kit) =>> {
+          scope@<r, a>(k, (k) =>> {
             with control-bind {
               bind disc = draw-int@(k, 0, unquote {promote {sub-int(n, 1)}}, 0);
               Control-Success(magic cast(int, a, disc))
@@ -986,17 +965,18 @@ define-meta _derive<a>(
   | Algebraic(_, !params, !cons) =>
     let param-num = length(params);
     let n = length(cons);
-    let header = algebraic-header-slot-count(cons);
-    let alloc = add-int(header, add-int(param-num, _mmax-payload-slots(cons)));
+    let header = algebraic-header-byte-size(cons);
+    let start = payload-start(cons, param-num);
+    let alloc = algebraic-cell-byte-size(cons, param-num);
     let !ranked = _sort-ranked(_rankable(cons, 0));
     let terminal-count = _terminal-prefix-count(ranked);
     quote {
       Gen(
-        @<r>(k: &gen-kit) => {
-          scope@<r, a>(k, @(k) => {
+        <r>(k: &gen-kit) =>> {
+          scope@<r, a>(k, (k) =>> {
             with control-bind {
               bind rank = unquote {_draw-discriminant<a>(n, header, terminal-count, quote {k})};
-              unquote {_dispatch<a>(ranked, params, param-num, header, alloc, quote {rank}, quote {k}, opt)}
+              unquote {_dispatch<a>(ranked, params, param-num, header, start, alloc, quote {rank}, quote {k}, opt)}
             }
           })
         },

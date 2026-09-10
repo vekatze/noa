@@ -16,12 +16,12 @@ constant _no-edit: edit {
   Edit-Int(-1, 0)
 }
 
-define replay-and-test@<a>(
+define replay-and-test<a>(
   events: &scenario,
   g: &gen(a),
   overlay: edit,
   prop: &(&a) -> bool,
-) -> pair(bool, edit) {
+) ->> pair(bool, edit) {
   tie Gen(run) = g;
   let is-counterexample on overlay = {
     pin k = new-replay-kit(events, overlay);
@@ -44,7 +44,7 @@ define replay-and-test@<a>(
   Pair(is-counterexample, overlay)
 }
 
-define replay-and-render@<a>(events: &scenario, g: &gen(a), render: &(&a) -> doc) -> ?string {
+define replay-and-render<a>(events: &scenario, g: &gen(a), render: &(&a) -> doc) ->> ?string {
   tie Gen(run) = g;
   pin no-edit = _no-edit;
   pin k = new-replay-kit(events, no-edit);

@@ -9,8 +9,8 @@ constant _continue-fanout: int {
   8
 }
 
-define _list-go@<a>(!elem: gen(a), k: &gen-kit) -> control(list(a), list(a)) {
-  scope@<list(a), list(a)>(k, @(k) => {
+define _list-go<a>(!elem: gen(a), k: &gen-kit) ->> control(list(a), list(a)) {
+  scope@<list(a), list(a)>(k, (k) =>> {
     with control-bind {
       bind more = draw-continue@<list(a)>(k, _continue-fanout);
       if eq-int(more, 0) {
@@ -18,7 +18,7 @@ define _list-go@<a>(!elem: gen(a), k: &gen-kit) -> control(list(a), list(a)) {
       } else {
         bind x = apply@(elem, k);
         bind rest =
-          cut@(k, @(k) => {
+          cut@(k, (k) =>> {
             _list-go@(elem, k)
           });
         Control-Success(Cons(x, rest))
@@ -29,8 +29,8 @@ define _list-go@<a>(!elem: gen(a), k: &gen-kit) -> control(list(a), list(a)) {
 
 define gen-list<a>(elem: gen(a)) -> gen(list(a)) {
   Gen(
-    @<r>(k: &gen-kit) => {
-      scope@<r, list(a)>(k, @(k) => {
+    <r>(k: &gen-kit) =>> {
+      scope@<r, list(a)>(k, (k) =>> {
         _list-go@(elem, k)
       })
     },

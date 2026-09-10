@@ -61,7 +61,7 @@ define _record-value<a>(
   _append-verbose-line(tb, iteration, size, verdict, rendered)
 }
 
-define _explore@<a>(
+define _explore<a>(
   seed: int,
   size: int,
   max-size: int,
@@ -71,7 +71,7 @@ define _explore@<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) -> _explore-result {
+) ->> _explore-result {
   let events-cell = make-cell(lift {core::array::make(96)});
   tie Gen(run) = g;
   let status on events-cell = {
@@ -150,7 +150,7 @@ define _size-for-iteration(iteration: int, count: int, max-size: int) -> int {
   }
 }
 
-define check-core@<a>(
+define check-core<a>(
   seed: int,
   count: int,
   max-size: int,
@@ -159,9 +159,9 @@ define check-core@<a>(
   prop: &(&a) -> bool,
   render: &(&a) -> doc,
   tb: &string-builder,
-) -> ?string {
+) ->> ?string {
   let go =
-    define loop@(iteration: int, success-count: int, discards: int) -> ?string {
+    define loop(iteration: int, success-count: int, discards: int) ->> ?string {
       if ge-int(success-count, count) {
         none
       } else-if ge-int(discards, _max-discards) {

@@ -6,7 +6,7 @@ import {
 
 inline gen-int(lo: int, hi: int, pivot: int) -> gen(int) {
   Gen(
-    @<r>(k: &gen-kit) => {
+    <r>(k: &gen-kit) =>> {
       draw-int@<r>(k, lo, hi, pivot)
     },
   )
@@ -14,7 +14,7 @@ inline gen-int(lo: int, hi: int, pivot: int) -> gen(int) {
 
 inline gen-choose(n: int) -> gen(int) {
   Gen(
-    @<r>(k: &gen-kit) => {
+    <r>(k: &gen-kit) =>> {
       choose@<r>(k, n)
     },
   )

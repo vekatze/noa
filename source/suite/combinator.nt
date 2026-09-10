@@ -41,12 +41,12 @@ define _clamp-float(lo: float, hi: float, x: float) -> float {
   max-float(lo, min-float(hi, x))
 }
 
-define _next-event@(
+define _next-event(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
   expected: &string,
-) -> either(failure, &event) {
+) ->> either(failure, &event) {
   let p = clone(pc);
   let end = seam.last-end(ends);
   if ge-int(p, end) {
@@ -58,12 +58,12 @@ define _next-event@(
   }
 }
 
-define _take-choose@<r>(
+define _take-choose<r>(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
   n: int,
-) -> control(r, int) {
+) ->> control(r, int) {
   match _next-event@(events, pc, ends, "Choose") {
   | Left(err) =>
     Control-Failure(err)
@@ -77,14 +77,14 @@ define _take-choose@<r>(
   }
 }
 
-define _take-draw-int@<r>(
+define _take-draw-int<r>(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
   overlay: &edit,
   lo: int,
   hi: int,
-) -> control(r, int) {
+) ->> control(r, int) {
   let index = clone(pc);
   match _next-event@(events, pc, ends, "Draw-Int") {
   | Left(err) =>
@@ -100,14 +100,14 @@ define _take-draw-int@<r>(
   }
 }
 
-define _take-draw-float@<r>(
+define _take-draw-float<r>(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
   overlay: &edit,
   lo: float,
   hi: float,
-) -> control(r, float) {
+) ->> control(r, float) {
   let index = clone(pc);
   match _next-event@(events, pc, ends, "Draw-Float") {
   | Left(err) =>
@@ -123,7 +123,7 @@ define _take-draw-float@<r>(
   }
 }
 
-define _take-reset@(events: &scenario, pc: &cell(int), ends: &cell(vector(int))) -> either(failure, int) {
+define _take-reset(events: &scenario, pc: &cell(int), ends: &cell(vector(int))) ->> either(failure, int) {
   match _next-event@(events, pc, ends, "Reset") {
   | Left(err) =>
     Left(err)
@@ -142,7 +142,7 @@ data _shift-read {
 | _Shift-Read-Ok(shift-mode, int)
 }
 
-define _take-shift@(events: &scenario, pc: &cell(int), ends: &cell(vector(int)), overlay: &edit) -> _shift-read {
+define _take-shift(events: &scenario, pc: &cell(int), ends: &cell(vector(int)), overlay: &edit) ->> _shift-read {
   let index = clone(pc);
   match _next-event@(events, pc, ends, "Shift") {
   | Left(err) =>
@@ -158,7 +158,7 @@ define _take-shift@(events: &scenario, pc: &cell(int), ends: &cell(vector(int)),
   }
 }
 
-define choose@<r>(k: &gen-kit, n: int) -> control(r, int) {
+define choose<r>(k: &gen-kit, n: int) ->> control(r, int) {
   if le-int(n, 0) {
     Control-Failure(Invalid-Generator("choose: n must be positive"))
   } else {
@@ -217,7 +217,7 @@ define set-budget(k: &gen-kit, v: int) -> unit {
   }
 }
 
-define draw-disc@<r>(k: &gen-kit, n: int, terminal-count: int) -> control(r, int) {
+define draw-disc<r>(k: &gen-kit, n: int, terminal-count: int) ->> control(r, int) {
   if le-int(n, 0) {
     Control-Failure(Invalid-Generator("draw-disc: n must be positive"))
   } else {
@@ -242,7 +242,7 @@ define draw-disc@<r>(k: &gen-kit, n: int, terminal-count: int) -> control(r, int
   }
 }
 
-define draw-continue@<r>(k: &gen-kit, fanout: int) -> control(r, int) {
+define draw-continue<r>(k: &gen-kit, fanout: int) ->> control(r, int) {
   if le-int(fanout, 0) {
     Control-Failure(Invalid-Generator("draw-continue: fanout must be positive"))
   } else {
@@ -437,7 +437,7 @@ define _sized-float-value(
   _clamp-float(lo, hi, add-float(target, _make-float(_budget-to-espread(relative-size), rng)))
 }
 
-define draw-int@<r>(k: &gen-kit, lo: int, hi: int, pivot: int) -> control(r, int) {
+define draw-int<r>(k: &gen-kit, lo: int, hi: int, pivot: int) ->> control(r, int) {
   if gt-int(lo, hi) {
     Control-Failure(Invalid-Generator("draw-int: lo > hi"))
   } else {
@@ -452,7 +452,7 @@ define draw-int@<r>(k: &gen-kit, lo: int, hi: int, pivot: int) -> control(r, int
   }
 }
 
-define draw-int-fixed@<r>(k: &gen-kit, lo: int, hi: int, pivot: int, value: int) -> control(r, int) {
+define draw-int-fixed<r>(k: &gen-kit, lo: int, hi: int, pivot: int, value: int) ->> control(r, int) {
   if gt-int(lo, hi) {
     Control-Failure(Invalid-Generator("draw-int-fixed: lo > hi"))
   } else {
@@ -467,7 +467,7 @@ define draw-int-fixed@<r>(k: &gen-kit, lo: int, hi: int, pivot: int, value: int)
   }
 }
 
-define draw-float@<r>(k: &gen-kit, lo: float, hi: float, pivot: float) -> control(r, float) {
+define draw-float<r>(k: &gen-kit, lo: float, hi: float, pivot: float) ->> control(r, float) {
   if gt-float(lo, hi) {
     Control-Failure(Invalid-Generator("draw-float: lo > hi"))
   } else {
@@ -486,7 +486,7 @@ constant _placeholder-end: int {
   -1
 }
 
-define _generate-scope@<r, a>(events: &cell(scenario), body: @(&gen-kit) -> control(a, a), k: &gen-kit) -> control(r, a) {
+define _generate-scope<r, a>(events: &cell(scenario), body: (&gen-kit) ->> control(a, a), k: &gen-kit) ->> control(r, a) {
   let at = append-event(events, Reset(_placeholder-end));
   let result = body@(k);
   let end = scenario-length(events);
@@ -501,7 +501,7 @@ define _generate-scope@<r, a>(events: &cell(scenario), body: @(&gen-kit) -> cont
   }
 }
 
-define _generate-cut@<a>(events: &cell(scenario), body: @(&gen-kit) -> control(a, a), k: &gen-kit) -> control(a, a) {
+define _generate-cut<a>(events: &cell(scenario), body: (&gen-kit) ->> control(a, a), k: &gen-kit) ->> control(a, a) {
   let at = append-event(events, Shift(Inactive, _placeholder-end));
   let result = body@(k);
   let end = scenario-length(events);
@@ -516,13 +516,13 @@ define _generate-cut@<a>(events: &cell(scenario), body: @(&gen-kit) -> control(a
   }
 }
 
-define _replay-scope@<r, a>(
+define _replay-scope<r, a>(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
-  body: @(&gen-kit) -> control(a, a),
+  body: (&gen-kit) ->> control(a, a),
   k: &gen-kit,
-) -> control(r, a) {
+) ->> control(r, a) {
   match _take-reset@(events, pc, ends) {
   | Left(err) =>
     Control-Failure(err)
@@ -542,14 +542,14 @@ define _replay-scope@<r, a>(
   }
 }
 
-define _replay-cut@<a>(
+define _replay-cut<a>(
   events: &scenario,
   pc: &cell(int),
   ends: &cell(vector(int)),
   overlay: &edit,
-  body: @(&gen-kit) -> control(a, a),
+  body: (&gen-kit) ->> control(a, a),
   k: &gen-kit,
-) -> control(a, a) {
+) ->> control(a, a) {
   match _take-shift@(events, pc, ends, overlay) {
   | _Shift-Read-Failure(err) =>
     Control-Failure(err)
@@ -574,7 +574,7 @@ define _replay-cut@<a>(
   }
 }
 
-define scope@<r, a>(k: &gen-kit, body: @(&gen-kit) -> control(a, a)) -> control(r, a) {
+define scope<r, a>(k: &gen-kit, body: (&gen-kit) ->> control(a, a)) ->> control(r, a) {
   case k {
   | _Gen-Kit-Generate(events, _, _, _, _) =>
     _generate-scope@(*events, body, k)
@@ -583,7 +583,7 @@ define scope@<r, a>(k: &gen-kit, body: @(&gen-kit) -> control(a, a)) -> control(
   }
 }
 
-define cut@<a>(k: &gen-kit, body: @(&gen-kit) -> control(a, a)) -> control(a, a) {
+define cut<a>(k: &gen-kit, body: (&gen-kit) ->> control(a, a)) ->> control(a, a) {
   case k {
   | _Gen-Kit-Generate(events, _, _, _, _) =>
     _generate-cut@(*events, body, k)
