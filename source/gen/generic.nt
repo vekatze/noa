@@ -50,7 +50,8 @@ import {
     pointer-byte-size,
     store-at-width,
   },
-  this::control {Control-Success, control, control-bind},
+  core::unsafe {cast},
+  this::control {Control-Success, control, control-bind, control-map},
   this::gen {
     Gen,
     apply,
@@ -696,16 +697,16 @@ inline-meta _derive-with<t>(opt: _gen-opt) -> 'gen(t) {
 inline-meta _build-fields<a>(
   field-cursors: list(pair(field, int)),
   divisor: int,
-  p: 'pointer,
   kk: '&gen-kit,
   rem-ref: 'int,
   !opt: _gen-opt,
-) -> 'control(a, a) {
+  alloc-code: 'control(a, pointer),
+) -> 'control(a, pointer) {
   match field-cursors {
   | Nil =>
     let _ = opt;
     let _ = rem-ref;
-    quote {Control-Success(magic cast(pointer, a, unquote {p}))}
+    alloc-code
   | Cons(entry, rest) =>
     let Pair(f-raw, cursor) = entry;
     let !f = f-raw;
@@ -713,7 +714,7 @@ inline-meta _build-fields<a>(
     let layout = field-layout-of(f);
     let byte-size = field-storage-byte-size(f);
     unpack-type t = t;
-    let rest-code = _build-fields<a>(rest, divisor, p, kk, rem-ref, opt);
+    let rest-code = _build-fields<a>(rest, divisor, kk, rem-ref, opt, alloc-code);
     let set-code =
       if gt-int(divisor, 0) {
         if _field-is-structural(f) {
@@ -724,15 +725,21 @@ inline-meta _build-fields<a>(
       } else {
         quote {Unit}
       };
-    let slot-ptr = quote {nth-field-pointer(unquote {promote {cursor}}, unquote {p})};
     match layout {
     | Direct(width) =>
       quote {
         with control-bind {
           let _ = unquote {set-code};
           bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
-          unquote {store-at-width(width, quote {magic cast(t, int, v)}, slot-ptr)};
-          unquote {rest-code}
+          bind p = unquote {rest-code};
+          unquote {
+            store-at-width(
+              width,
+              quote {magic cast(t, int, v)},
+              quote {nth-field-pointer(unquote {promote {cursor}}, p)},
+            )
+          };
+          Control-Success(p)
         }
       }
     | Mixed(_) =>
@@ -740,10 +747,11 @@ inline-meta _build-fields<a>(
         with control-bind {
           let _ = unquote {set-code};
           bind v = apply@<a, t>(unquote {_derive-with<t>(opt)}, unquote {kk});
-          let v-ptr = magic cast(t, pointer, v);
-          memcpy(unquote {slot-ptr}, v-ptr, unquote {promote {byte-size}});
+          bind p = unquote {rest-code};
+          let v-ptr = cast<t, pointer>(v);
+          memcpy(nth-field-pointer(unquote {promote {cursor}}, p), v-ptr, unquote {promote {byte-size}});
           free(v-ptr);
-          unquote {rest-code}
+          Control-Success(p)
         }
       }
     }
@@ -762,18 +770,18 @@ inline-meta _store-discriminant(size: int, value: 'int, addr: 'pointer) -> 'unit
   }
 }
 
-inline-meta _store-params<a>(
+inline-meta _store-params<r, b>(
   params: list(type),
   offset: int,
   p: 'pointer,
-  k-cont: 'control(a, a),
-) -> 'control(a, a) {
+  k-cont: 'control(r, b),
+) -> 'control(r, b) {
   match params {
   | Nil =>
     k-cont
   | Cons(t, rest) =>
     unpack-type t = t;
-    let rest-code = _store-params<a>(rest, add-int(offset, pointer-byte-size()), p, k-cont);
+    let rest-code = _store-params<r, b>(rest, add-int(offset, pointer-byte-size()), p, k-cont);
     quote {
       core::memory.unsafe::store-pointer(
         magic cast(type, pointer, pack-type {t}),
@@ -797,29 +805,35 @@ inline-meta _build-cons<a>(
   let field-count = length(fields);
   let divisor = _fields-weight(fields);
   let field-cursors = fields-with-cursors(fields, start);
-  quote {
-    let p = malloc(to-c-size(unquote {promote {alloc}}));
-    unquote {
-      let p-ref = quote {p};
-      let fields-code =
-        if gt-int(field-count, 0) {
+  let alloc-code =
+    quote {
+      let p = malloc(to-c-size(unquote {promote {alloc}}));
+      unquote {
+        let p-ref = quote {p};
+        let params-code = _store-params<a, pointer>(params, align-up(pointer-byte-size(), header), p-ref, quote {Control-Success(p)});
+        if gt-int(header, 0) {
           quote {
-            let rem = read-budget(unquote {kk});
-            unquote {_build-fields<a>(field-cursors, divisor, p-ref, kk, quote {rem}, opt)}
+            unquote {_store-discriminant(header, promote {disc-index}, p-ref)};
+            unquote {params-code}
           }
         } else {
-          _build-fields<a>(field-cursors, divisor, p-ref, kk, quote {0}, opt)
-        };
-      let params-code = _store-params<a>(params, align-up(pointer-byte-size(), header), p-ref, fields-code);
-      if gt-int(header, 0) {
-        quote {
-          unquote {_store-discriminant(header, promote {disc-index}, p-ref)};
-          unquote {params-code}
+          params-code
         }
-      } else {
-        params-code
       }
-    }
+    };
+  let fields-code =
+    if gt-int(field-count, 0) {
+      quote {
+        let rem = read-budget(unquote {kk});
+        unquote {_build-fields<a>(field-cursors, divisor, kk, quote {rem}, opt, alloc-code)}
+      }
+    } else {
+      _build-fields<a>(field-cursors, divisor, kk, quote {0}, opt, alloc-code)
+    };
+  quote {
+    control-map(unquote {fields-code}, (p) => {
+      magic cast(pointer, a, p)
+    })
   }
 }
 
