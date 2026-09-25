@@ -40,11 +40,12 @@ import {
     algebraic-cell-byte-size,
     algebraic-header-byte-size,
     align-up,
+    concrete-field-type,
     constructor-fields,
+    constructor-fields-with-cursors,
+    ensure-constructible,
     field-layout-of,
     field-storage-byte-size,
-    field-type,
-    fields-with-cursors,
     nth-field-pointer,
     payload-start,
     pointer-byte-size,
@@ -68,7 +69,7 @@ import {
 }
 
 inline-meta _field-is-structural(f: field) -> bool {
-  let t = field-type(f);
+  let t = concrete-field-type(f);
   unpack-type t = t;
   let tv = magic inspect-type(t);
   match tv {
@@ -710,7 +711,7 @@ inline-meta _build-fields<a>(
   | Cons(entry, rest) =>
     let Pair(f-raw, cursor) = entry;
     let !f = f-raw;
-    let t = field-type(f);
+    let t = concrete-field-type(f);
     let layout = field-layout-of(f);
     let byte-size = field-storage-byte-size(f);
     unpack-type t = t;
@@ -794,7 +795,7 @@ inline-meta _store-params<r, b>(
 
 inline-meta _build-cons<a>(
   params: list(type),
-  !fields: list(field),
+  !c: constructor,
   disc-index: int,
   header: int,
   start: int,
@@ -802,9 +803,11 @@ inline-meta _build-cons<a>(
   kk: '&gen-kit,
   opt: _gen-opt,
 ) -> 'control(a, a) {
+  ensure-constructible(c);
+  let !fields = constructor-fields(c);
   let field-count = length(fields);
   let divisor = _fields-weight(fields);
-  let field-cursors = fields-with-cursors(fields, start);
+  let field-cursors = constructor-fields-with-cursors(c, start);
   let alloc-code =
     quote {
       let p = malloc(to-c-size(unquote {promote {alloc}}));
@@ -853,8 +856,7 @@ inline-meta _dispatch-clauses<a>(
     Nil
   | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
-    let fields = constructor-fields(c);
-    let body = _build-cons<a>(params, fields, decl-index, header, start, alloc, kk, opt);
+    let body = _build-cons<a>(params, c, decl-index, header, start, alloc, kk, opt);
     Cons(
       Pair(rank-pos, body),
       _dispatch-clauses<a>(rest, add-int(rank-pos, 1), params, param-num, header, start, alloc, kk, opt),
@@ -882,8 +884,7 @@ inline-meta _dispatch<a>(
     magic compile-error("BUG: derive dispatched with no constructors")
   | Cons(entry, rest) =>
     let Pair(_, Pair(decl-index, c)) = entry;
-    let fields = constructor-fields(c);
-    let fallback = _build-cons<a>(params, fields, decl-index, header, start, alloc, kk, opt);
+    let fallback = _build-cons<a>(params, c, decl-index, header, start, alloc, kk, opt);
     let clauses = _dispatch-clauses<a>(rest, 1, params, param-num, header, start, alloc, kk, opt);
     magic make-switch(rank, fallback, clauses)
   }
