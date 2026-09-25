@@ -7,7 +7,7 @@ import {
   core::int {abs-int},
   core::list {length},
   core::vector.unsafe {access-unchecked},
-  this::gen {gen-map},
+  this::gen {gen-bind, gen-map},
   this::gen.array {gen-array},
   this::gen.float {gen-float},
   this::gen.generic {
@@ -359,6 +359,18 @@ define _correctness-cases() -> list(spec) {
         } else {
           eq-int(v, 6)
         }
+      },
+    ),
+    property::(
+      "gen-bind hands the first value to the second generator",
+      gen-bind(gen-int(0, 10, 0), (n) => {
+        gen-map(gen-list(gen-int(0, n, 0)), (xs) => {
+          Pair(n, xs)
+        })
+      }),
+      (p: &pair(int, list(int))) => {
+        tie Pair(n, xs) = p;
+        _list-in-range(xs, 0, *n)
       },
     ),
     property::(
