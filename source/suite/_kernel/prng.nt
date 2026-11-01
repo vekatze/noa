@@ -53,14 +53,13 @@ define _reject-mask(range: int) -> int {
 
 define bounded-int-cell(range: int, r: &cell(prng)) -> int {
   let mask = _reject-mask(range);
-  let go =
-    define loop() -> int {
-      let x = and-int(next-int-cell(r), mask);
-      if lt-int(x, range) {
-        x
-      } else {
-        loop()
-      }
-    };
+  define go() -> int {
+    let x = and-int(next-int-cell(r), mask);
+    if lt-int(x, range) {
+      x
+    } else {
+      go()
+    }
+  };
   go()
 }

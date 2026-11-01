@@ -113,73 +113,70 @@ define _find-int(i: int, xs: &list(int)) -> bool {
 
 define _vector-has(xs: &vector(int), needle: int) -> bool {
   let len = core::vector::length(xs);
-  let go =
-    define loop(i: int) -> bool {
-      if ge-int(i, len) {
-        False
-      } else-if eq-int(*access-unchecked(xs, i), needle) {
-        True
-      } else {
-        loop(add-int(i, 1))
-      }
-    };
+  define go(i: int) -> bool {
+    if ge-int(i, len) {
+      False
+    } else-if eq-int(*access-unchecked(xs, i), needle) {
+      True
+    } else {
+      go(add-int(i, 1))
+    }
+  };
   go(0)
 }
 
 define _vector-in-range(xs: &vector(int), lo: int, hi: int) -> bool {
   let len = core::vector::length(xs);
-  let go =
-    define loop(i: int) -> bool {
-      if ge-int(i, len) {
-        True
-      } else {
-        let v = *access-unchecked(xs, i);
-        if ge-int(v, lo) {
-          if le-int(v, hi) {
-            loop(add-int(i, 1))
-          } else {
-            False
-          }
+  define go(i: int) -> bool {
+    if ge-int(i, len) {
+      True
+    } else {
+      let v = *access-unchecked(xs, i);
+      if ge-int(v, lo) {
+        if le-int(v, hi) {
+          go(add-int(i, 1))
         } else {
           False
         }
+      } else {
+        False
       }
-    };
+    }
+  };
   go(0)
 }
 
 define _array-pairs-in-range(xs: &array(pair(int, bool)), lo: int, hi: int) -> bool {
   let len = core::array::length(xs);
-  let go =
-    define loop(i: int) -> bool {
-      if ge-int(i, len) {
-        True
-      } else {
-        tie Pair(x, flag) = core::array.unsafe::access-unchecked(xs, i);
-        let in-range =
-          if ge-int(*x, lo) {
-            le-int(*x, hi)
-          } else {
-            False
-          };
-        let is-bool =
-          case flag {
-          | True =>
-            True
-          | False =>
-            True
-          };
-        if in-range {
-          if is-bool {
-            loop(add-int(i, 1))
-          } else {
-            False
-          }
+  define go(i: int) -> bool {
+    if ge-int(i, len) {
+      True
+    } else {
+      tie Pair(x, flag) = core::array.unsafe::access-unchecked(xs, i);
+      let in-range =
+        if ge-int(*x, lo) {
+          le-int(*x, hi)
+        } else {
+          False
+        };
+      let is-bool =
+        case flag {
+        | True =>
+          True
+        | False =>
+          True
+        };
+      if in-range {
+        if is-bool {
+          go(add-int(i, 1))
         } else {
           False
         }
+      } else {
+        False
       }
-    };
+    }
+  };
   go(0)
 }
 

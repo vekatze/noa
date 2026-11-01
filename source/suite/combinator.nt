@@ -313,16 +313,15 @@ define _bounded-biased-magnitude(limit: int, rng: &cell(prng)) -> int {
 }
 
 define _magnitude-bit-width(limit: int) -> int {
-  let go =
-    define loop(k: int) -> int {
-      if ge-int(k, 62) {
-        62
-      } else-if ge-int(_magnitude-cap(k), limit) {
-        k
-      } else {
-        loop(add-int(k, 1))
-      }
-    };
+  define go(k: int) -> int {
+    if ge-int(k, 62) {
+      62
+    } else-if ge-int(_magnitude-cap(k), limit) {
+      k
+    } else {
+      go(add-int(k, 1))
+    }
+  };
   if le-int(limit, 0) {
     0
   } else {

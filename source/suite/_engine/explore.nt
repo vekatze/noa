@@ -160,24 +160,23 @@ define check-core<a>(
   render: &(&a) -> doc,
   tb: &string-builder,
 ) ->> ?string {
-  let go =
-    define loop(iteration: int, success-count: int, discards: int) ->> ?string {
-      if ge-int(success-count, count) {
-        none
-      } else-if ge-int(discards, _max-discards) {
-        none
-      } else {
-        let gen-seed = _seed-for-iteration(seed, iteration);
-        let size = _size-for-iteration(iteration, count, max-size);
-        match _explore@(gen-seed, size, max-size, iteration, verbose, g, prop, render, tb) {
-        | _Explore-Discard =>
-          loop@(add-int(iteration, 1), success-count, add-int(discards, 1))
-        | _Explore-Pass =>
-          loop@(add-int(iteration, 1), add-int(success-count, 1), discards)
-        | _Explore-Fail(counterexample) =>
-          Right(counterexample)
-        }
+  define go(iteration: int, success-count: int, discards: int) ->> ?string {
+    if ge-int(success-count, count) {
+      none
+    } else-if ge-int(discards, _max-discards) {
+      none
+    } else {
+      let gen-seed = _seed-for-iteration(seed, iteration);
+      let size = _size-for-iteration(iteration, count, max-size);
+      match _explore@(gen-seed, size, max-size, iteration, verbose, g, prop, render, tb) {
+      | _Explore-Discard =>
+        go@(add-int(iteration, 1), success-count, add-int(discards, 1))
+      | _Explore-Pass =>
+        go@(add-int(iteration, 1), add-int(success-count, 1), discards)
+      | _Explore-Fail(counterexample) =>
+        Right(counterexample)
       }
-    };
+    }
+  };
   go@(0, 0, 0)
 }
