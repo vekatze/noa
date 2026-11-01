@@ -152,26 +152,15 @@ define _array-pairs-in-range(xs: &array(pair(int, bool)), lo: int, hi: int) -> b
     if ge-int(i, len) {
       True
     } else {
-      tie Pair(x, flag) = core::array.unsafe::access-unchecked(xs, i);
+      tie Pair(x, _) = core::array.unsafe::access-unchecked(xs, i);
       let in-range =
         if ge-int(*x, lo) {
           le-int(*x, hi)
         } else {
           False
         };
-      let is-bool =
-        case flag {
-        | True =>
-          True
-        | False =>
-          True
-        };
       if in-range {
-        if is-bool {
-          go(add-int(i, 1))
-        } else {
-          False
-        }
+        go(add-int(i, 1))
       } else {
         False
       }
